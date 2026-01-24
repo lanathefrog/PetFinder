@@ -1,0 +1,254 @@
+<!-- templates/core/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetFinder - Home</title>
+    <link rel="stylesheet" href="../../static/core/css/base.css">
+    <link rel="stylesheet" href="../../static/core/css/home.css">
+    <link rel="stylesheet" href="../../static/core/css/responsive.css">
+</head>
+<body>
+<header>
+    <nav>
+        <a href="home.html" class="logo">
+            <span class="logo-icon">🐾</span>
+            PetFinder
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="about_howitworks.html">How It Works</a></li>
+            <li><a href="announcements_list.html">Recent Posts</a></li>
+            <li><a href="user_dashboard.html">Dashboard</a></li>
+            <li><a href="login.html" class="btn btn-primary">Sign In</a></li>
+        </ul>
+    </nav>
+</header>
+
+<section class="hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <div class="hero-tag">
+                <span>🏠</span>
+                Reuniting Families
+            </div>
+            <h1>
+                Helping pets<br>
+                <span class="highlight">find their way home</span>
+            </h1>
+            <p>Report lost or found pets in your community. Together, we can bring them back to where they belong.</p>
+
+            <div class="cta-buttons">
+                <a href="report_lost.html" class="btn btn-primary">
+                    🔍 Report Lost Pet
+                </a>
+                <a href="report_found.html" class="btn btn-secondary">
+                    ❤️ Report Found Pet
+                </a>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <h3>2,847</h3>
+                        <p>Pets Reunited</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <h3>12,500+</h3>
+                        <p>Active Members</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-image">
+            <!-- You can replace this with an actual image -->
+            <div style="font-size: 20rem; line-height: 1;">🐕🐈</div>
+        </div>
+    </div>
+</section>
+
+<section class="map-section">
+    <div class="map-container">
+        <div class="map-header">
+            <h2>Lost & Found Pets Near You</h2>
+            <p>Explore recent reports on our interactive map</p>
+        </div>
+        <div class="map-wrapper">
+            <p style="color: #999;">Interactive map will be displayed here</p>
+            <!-- Add your map implementation here -->
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <div class="how-it-works-container">
+        <h2>How It Works</h2>
+        <p class="subtitle">Three simple steps to help reunite pets with their families</p>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-icon">📸</div>
+                <h3>1. Post Details</h3>
+                <p>Upload a photo and provide details about the lost or found pet including name, date, and description.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-icon">📍</div>
+                <h3>2. Share Location</h3>
+                <p>Your post appears on our interactive map, making it easy for others in the community to see and help.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-icon">🤝</div>
+                <h3>3. Connect & Reunite</h3>
+                <p>Get notified when someone spots your pet or contact owners directly to help reunite them with their loved ones.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="recent-posts">
+    <div class="recent-posts-container">
+        <div class="section-header">
+            <div>
+                <h2>Recent Posts</h2>
+                <p style="color: #666;">Help us reunite these pets with their families</p>
+            </div>
+            <a href="announcements_list.html" class="btn btn-primary">View All Posts →</a>
+        </div>
+
+        <div class="pet-cards">
+            <!-- Sample cards -->
+            <div class="pet-card">
+                <span class="pet-tag lost">Lost</span>
+                <div class="pet-image" style="display: flex; align-items: center; justify-content: center; font-size: 5rem;">🐕</div>
+                <div class="pet-info">
+                    <h3>Golden Retriever</h3>
+                    <p class="pet-location">📍 Mission District</p>
+                    <p class="pet-time">⏱️ 2 hours ago</p>
+                    <a href="announcement_detail.html" class="btn btn-primary">Contact Owner</a>
+                </div>
+            </div>
+
+            <div class="pet-card">
+                <span class="pet-tag found">Found</span>
+                <div class="pet-image" style="display: flex; align-items: center; justify-content: center; font-size: 5rem;">🐈</div>
+                <div class="pet-info">
+                    <h3>Gray Tabby Cat</h3>
+                    <p class="pet-location">📍 Bay Area</p>
+                    <p class="pet-time">⏱️ 5 hours ago</p>
+                    <a href="announcement_detail.html" class="btn btn-primary">Contact Finder</a>
+                </div>
+            </div>
+
+            <div class="pet-card">
+                <span class="pet-tag lost">Lost</span>
+                <div class="pet-image" style="display: flex; align-items: center; justify-content: center; font-size: 5rem;">🐕</div>
+                <div class="pet-info">
+                    <h3>Beagle</h3>
+                    <p class="pet-location">📍 Pacific Heights</p>
+                    <p class="pet-time">⏱️ 1 day ago</p>
+                    <a href="announcement_detail.html" class="btn btn-primary">Contact Owner</a>
+                </div>
+            </div>
+
+            <div class="pet-card">
+                <span class="pet-tag found">Found</span>
+                <div class="pet-image" style="display: flex; align-items: center; justify-content: center; font-size: 5rem;">🐈</div>
+                <div class="pet-info">
+                    <h3>Tuxedo Cat</h3>
+                    <p class="pet-location">📍 Marina District</p>
+                    <p class="pet-time">⏱️ 2 days ago</p>
+                    <a href="announcement_detail.html" class="btn btn-primary">Contact Finder</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-banner">
+    <div class="cta-banner-content">
+        <div class="cta-banner-icon">❤️</div>
+        <h2>Every Pet Deserves to Come Home</h2>
+        <p>Join our community of pet lovers and help us reunite lost pets with their families. Together, we can make a difference.</p>
+
+        <div class="cta-buttons">
+            <a href="report_lost.html" class="btn btn-secondary">Post a Report</a>
+            <a href="login.html" class="btn btn-primary">Join Community</a>
+        </div>
+
+        <div class="cta-stats">
+            <div class="cta-stat">
+                <h3>98%</h3>
+                <p>Success Rate</p>
+            </div>
+            <div class="cta-stat">
+                <h3>24/7</h3>
+                <p>Support</p>
+            </div>
+            <div class="cta-stat">
+                <h3>Free</h3>
+                <p>Always Free</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <a href="home.html" class="logo">
+                <span class="logo-icon">🐾</span>
+                PetFinder
+            </a>
+            <p>Helping pets find their way home. Reunite lost pets with their families.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3>Quick Links</h3>
+            <ul class="footer-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="about_howitworks.html">How It Works</a></li>
+                <li><a href="announcements_list.html">Recent Posts</a></li>
+                <li><a href="#">Success Stories</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Support</h3>
+            <ul class="footer-links">
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Safety Tips</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Newsletter</h3>
+            <p style="color: #999; font-size: 0.9rem; margin-bottom: 1rem;">Get updates about newly posted pets and tips.</p>
+            <form class="newsletter-form">
+                <input type="email" placeholder="Your email">
+                <button type="submit">→</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2024 PetFinder. All rights reserved.</p>
+        <p>Made with ❤️ for pet lovers everywhere</p>
+    </div>
+</footer>
+</body>
+</html>

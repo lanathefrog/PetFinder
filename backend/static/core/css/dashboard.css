@@ -1,0 +1,364 @@
+/* static/core/css/dashboard.css - Dashboard page styles */
+
+.dashboard-page {
+    background: #ffffff;
+    min-height: 100vh;
+    padding-bottom: 3rem;
+}
+
+.dashboard-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 2rem 1rem;
+}
+
+.dashboard-title h1 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-title p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.notification-btn {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1.2rem;
+    position: relative;
+}
+
+.notification-btn:hover {
+    border-color: #FF6B4A;
+    background: #FFF5F2;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: #FF6B4A;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e0e0e0;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.quick-actions-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.quick-actions-card {
+    background: linear-gradient(135deg, #FFF5F2 0%, #FFE8E0 100%);
+    border-radius: 16px;
+    padding: 2rem;
+}
+
+.quick-actions-card h2 {
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+}
+
+.quick-actions-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.announcements-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 2rem;
+}
+
+.announcements-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.announcements-header h2 {
+    font-size: 1.8rem;
+    color: #1a1a1a;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 0.625rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.filter-btn {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+}
+
+.filter-btn:hover {
+    border-color: #FF6B4A;
+    background: #FFF5F2;
+}
+
+.announcements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.announcement-card-dashboard {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.announcement-card-dashboard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.announcement-card-header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.announcement-thumbnail {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.announcement-info-dashboard {
+    flex: 1;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.status-badge.lost {
+    background: #FFE8E0;
+    color: #FF6B4A;
+}
+
+.status-badge.found {
+    background: #D4F4DD;
+    color: #4CAF50;
+}
+
+.announcement-info-dashboard h3 {
+    font-size: 1.2rem;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.announcement-info-dashboard .breed {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.announcement-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.announcement-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.action-btn.view {
+    background: #f5f5f5;
+    color: #1a1a1a;
+}
+
+.action-btn.view:hover {
+    background: #e8e8e8;
+}
+
+.action-btn.edit {
+    background: #FFF5F2;
+    color: #FF6B4A;
+}
+
+.action-btn.edit:hover {
+    background: #FFE8E0;
+}
+
+.action-btn.delete {
+    background: #FFE8E8;
+    color: #dc3545;
+    flex: 0 0 auto;
+    width: 44px;
+    padding: 0.625rem;
+}
+
+.action-btn.delete:hover {
+    background: #FFD4D4;
+}
+
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.stat-card.orange {
+    background: linear-gradient(135deg, #FFF5F2 0%, #FFE8E0 100%);
+}
+
+.stat-card.green {
+    background: linear-gradient(135deg, #F0FFF4 0%, #D4F4DD 100%);
+}
+
+.stat-card.blue {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+}
+
+.stat-card-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.stat-card.orange .stat-card-icon {
+    background: #FF6B4A;
+}
+
+.stat-card.green .stat-card-icon {
+    background: #4CAF50;
+}
+
+.stat-card.blue .stat-card-icon {
+    background: #3B82F6;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.95rem;
+}

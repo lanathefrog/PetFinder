@@ -1,0 +1,251 @@
+<!-- templates/core/user_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PetFinder</title>
+    <link rel="stylesheet" href="../../static/core/css/base.css">
+    <link rel="stylesheet" href="../../static/core/css/dashboard.css">
+    <link rel="stylesheet" href="../../static/core/css/responsive.css">
+</head>
+<body>
+<header>
+    <nav>
+        <a href="home.html" class="logo">
+            <span class="logo-icon">🐾</span>
+            PetFinder
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="about_howitworks.html">How It Works</a></li>
+            <li><a href="announcements_list.html">Recent Posts</a></li>
+            <li><a href="user_dashboard.html">Dashboard</a></li>
+        </ul>
+        <div class="user-profile">
+            <button class="notification-btn">
+                🔔
+                <span class="notification-badge">3</span>
+            </button>
+            <div class="user-info">
+                <img src="https://via.placeholder.com/40" alt="Sarah Johnson" class="user-avatar">
+                <span class="user-name">Sarah Johnson</span>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div class="dashboard-page">
+    <div class="dashboard-header">
+        <div class="dashboard-title">
+            <h1>Dashboard</h1>
+            <p>Manage your pet announcements and help reunite families</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions-section">
+        <div class="quick-actions-card">
+            <h2>Quick Actions</h2>
+            <div class="quick-actions-buttons">
+                <a href="report_lost.html" class="btn btn-primary">
+                    🔍 Report Lost Pet
+                </a>
+                <a href="report_found.html" class="btn btn-secondary">
+                    🧡 Report Found Pet
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- My Announcements -->
+    <section class="announcements-section">
+        <div class="announcements-header">
+            <h2>My Announcements</h2>
+            <div class="filter-controls">
+                <select class="filter-select">
+                    <option>All Status</option>
+                    <option>Lost</option>
+                    <option>Found</option>
+                    <option>Reunited</option>
+                </select>
+                <button class="filter-btn">🔽</button>
+            </div>
+        </div>
+
+        <div class="announcements-grid">
+            <!-- Announcement Card 1 - Lost -->
+            <div class="announcement-card-dashboard">
+                <div class="announcement-card-header">
+                    <div class="announcement-thumbnail">🐕</div>
+                    <div class="announcement-info-dashboard">
+                        <span class="status-badge lost">Lost</span>
+                        <h3>Max</h3>
+                        <p class="breed">Golden Retriever</p>
+                    </div>
+                </div>
+                <div class="announcement-meta">
+                    <div class="meta-item">
+                        <span>📍</span>
+                        <span>Central Park, NYC</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📅</span>
+                        <span>Posted 2 days ago</span>
+                    </div>
+                </div>
+                <div class="announcement-actions">
+                    <button class="action-btn view">
+                        👁️ View
+                    </button>
+                    <button class="action-btn edit">
+                        ✏️ Edit
+                    </button>
+                    <button class="action-btn delete">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+
+            <!-- Announcement Card 2 - Found -->
+            <div class="announcement-card-dashboard">
+                <div class="announcement-card-header">
+                    <div class="announcement-thumbnail">🐈</div>
+                    <div class="announcement-info-dashboard">
+                        <span class="status-badge found">Found</span>
+                        <h3>Luna</h3>
+                        <p class="breed">Tabby Cat</p>
+                    </div>
+                </div>
+                <div class="announcement-meta">
+                    <div class="meta-item">
+                        <span>📍</span>
+                        <span>Brooklyn Bridge</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📅</span>
+                        <span>Posted 1 week ago</span>
+                    </div>
+                </div>
+                <div class="announcement-actions">
+                    <button class="action-btn view">
+                        👁️ View
+                    </button>
+                    <button class="action-btn edit">
+                        ✏️ Edit
+                    </button>
+                    <button class="action-btn delete">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+
+            <!-- Announcement Card 3 - Lost -->
+            <div class="announcement-card-dashboard">
+                <div class="announcement-card-header">
+                    <div class="announcement-thumbnail">🐕</div>
+                    <div class="announcement-info-dashboard">
+                        <span class="status-badge lost">Lost</span>
+                        <h3>Buddy</h3>
+                        <p class="breed">Beagle</p>
+                    </div>
+                </div>
+                <div class="announcement-meta">
+                    <div class="meta-item">
+                        <span>📍</span>
+                        <span>Times Square</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📅</span>
+                        <span>Posted 3 days ago</span>
+                    </div>
+                </div>
+                <div class="announcement-actions">
+                    <button class="action-btn view">
+                        👁️ View
+                    </button>
+                    <button class="action-btn edit">
+                        ✏️ Edit
+                    </button>
+                    <button class="action-btn delete">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-section">
+            <div class="stat-card orange">
+                <div class="stat-card-icon">🔍</div>
+                <div class="stat-number">3</div>
+                <div class="stat-label">Active Announcements</div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-card-icon">💚</div>
+                <div class="stat-number">1</div>
+                <div class="stat-label">Successful Reunions</div>
+            </div>
+
+            <div class="stat-card blue">
+                <div class="stat-card-icon">👥</div>
+                <div class="stat-number">127</div>
+                <div class="stat-label">Community Views</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <a href="home.html" class="logo">
+                <span class="logo-icon">🐾</span>
+                PetFinder
+            </a>
+            <p>Reuniting lost pets with their families through community support and technology.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3>Quick Links</h3>
+            <ul class="footer-links">
+                <li><a href="home.html">Find Your Lost Pet</a></li>
+                <li><a href="report_lost.html">Report Lost Pet</a></li>
+                <li><a href="report_found.html">Report Found Pet</a></li>
+                <li><a href="announcements_list.html">Browse Lost Pets</a></li>
+                <li><a href="#">Success Stories</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Support</h3>
+            <ul class="footer-links">
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Safety Tips</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Connect</h3>
+            <div class="social-links" style="margin-top: 0.5rem;">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2024 PetFinder. All rights reserved. Made with ❤️ for pets and their families.</p>
+    </div>
+</footer>
+</body>
+</html>

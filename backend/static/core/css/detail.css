@@ -1,0 +1,373 @@
+/* static/core/css/detail.css - Announcement detail page */
+
+.detail-page {
+    background: #FFF5F2;
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.pet-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.pet-image-large {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%);
+    border-radius: 20px;
+    margin: 0 auto 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8rem;
+    position: relative;
+}
+
+.status-badge-large {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-badge-large.lost {
+    background: #FF6B4A;
+    color: white;
+}
+
+.status-badge-large.found {
+    background: #4CAF50;
+    color: white;
+}
+
+.pet-header h1 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.pet-header .pet-status-text {
+    color: #666;
+    font-size: 1rem;
+}
+
+.detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.info-card h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+}
+
+.info-card-icon {
+    color: #FF6B4A;
+    font-size: 1.2rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #1a1a1a;
+    font-weight: 600;
+    text-align: right;
+}
+
+.description-card {
+    grid-column: 1 / -1;
+}
+
+.description-text {
+    color: #666;
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+.action-card {
+    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 4px 20px rgba(255, 107, 74, 0.3);
+}
+
+.action-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.action-btn-large {
+    width: 100%;
+    padding: 1rem;
+    background: white;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.action-btn-large:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.action-btn-large.secondary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+}
+
+.action-note {
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-top: 1rem;
+}
+
+.location-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 2rem;
+}
+
+.location-card h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.location-info h3 {
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.location-info p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.map-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 3rem;
+}
+
+.map-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+}
+
+.map-display {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    border-radius: 12px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.map-pin {
+    width: 60px;
+    height: 60px;
+    background: #FF6B4A;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    margin-bottom: 1rem;
+}
+
+.map-pin::before {
+    content: '📍';
+    transform: rotate(45deg);
+    font-size: 1.5rem;
+}
+
+.map-display p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.map-display .map-location-text {
+    color: #1a1a1a;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.posted-by-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 2rem;
+}
+
+.posted-by-section h2 {
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+}
+
+.poster-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.poster-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.poster-details h3 {
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.poster-details .member-since {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.poster-details .posted-time {
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.poster-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.poster-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.poster-btn.message {
+    background: #FF6B4A;
+    color: white;
+}
+
+.poster-btn.message:hover {
+    background: #e55a3a;
+}
+
+.poster-btn.report {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.poster-btn.report:hover {
+    background: #e8e8e8;
+}
+
+.cta-section {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.cta-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.cta-section h2 {
+    font-size: 2rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta-buttons-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}

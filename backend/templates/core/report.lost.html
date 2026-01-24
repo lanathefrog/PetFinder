@@ -1,0 +1,202 @@
+<!-- templates/core/report_lost.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Lost Pet - PetFinder</title>
+    <link rel="stylesheet" href="../../static/core/css/base.css">
+    <link rel="stylesheet" href="../../static/core/css/forms.css">
+    <link rel="stylesheet" href="../../static/core/css/responsive.css">
+</head>
+<body>
+<header>
+    <nav>
+        <a href="home.html" class="logo">
+            <span class="logo-icon">🐾</span>
+            PetFinder
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="about_howitworks.html">How It Works</a></li>
+            <li><a href="announcements_list.html">Recent Posts</a></li>
+            <li><a href="user_dashboard.html">Dashboard</a></li>
+            <li><a href="login.html" class="btn btn-primary">Sign In</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="form-page">
+    <div class="form-container">
+        <div class="form-header">
+            <div class="form-icon">🧡</div>
+            <h1>Report Your Lost Pet</h1>
+            <p>We understand how stressful losing a pet can be. Fill out this form to help us spread the word and bring your furry friend home safely.</p>
+        </div>
+
+        <div class="form-card">
+            <form id="reportLostForm">
+                <!-- Pet Name and Type -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="form-label-icon">🐾</span>
+                            Pet Name
+                        </label>
+                        <input type="text" class="form-input" placeholder="Enter your pet's name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="form-label-icon">🐾</span>
+                            Pet Type
+                        </label>
+                        <select class="form-select" required>
+                            <option value="">Select pet type</option>
+                            <option value="dog">Dog</option>
+                            <option value="cat">Cat</option>
+                            <option value="bird">Bird</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Breed -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="form-label-icon">🐕</span>
+                        Breed <span class="optional">(optional)</span>
+                    </label>
+                    <input type="text" class="form-input" placeholder="e.g., Golden Retriever, Persian Cat">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="form-label-icon">📝</span>
+                        Description
+                    </label>
+                    <textarea class="form-textarea" placeholder="Describe your pet's appearance, size, color, distinctive markings, and any other helpful details..." required></textarea>
+                </div>
+
+                <!-- Last Seen Location -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="form-label-icon">📍</span>
+                        Last Seen Location
+                    </label>
+                    <input type="text" class="form-input" placeholder="Enter address or neighborhood where your pet was last seen" required>
+                </div>
+
+                <!-- Map Placeholder -->
+                <div class="map-placeholder">
+                    <div class="map-placeholder-icon">🗺️</div>
+                    <p>Interactive map coming soon</p>
+                    <p style="font-size: 0.75rem;">Click to mark last seen location</p>
+                </div>
+
+                <!-- Upload Pet Photo -->
+                <div class="form-group">
+                    <label for="petPhoto" class="form-label">
+                        <span class="form-label-icon">📷</span>
+                        Upload Pet Photo
+                    </label>
+                    <label for="petPhoto" class="upload-area">
+                        <input type="file" id="petPhoto" accept="image/*" multiple>
+                        <div class="upload-content">
+                        <div class="upload-icon">📤</div>
+                        <h3>Upload a clear photo of your pet</h3>
+                        <p>PNG, JPG up to 10MB</p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="contact-section">
+                    <h3>
+                        <span>📞</span>
+                        Contact Information
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Your Name</label>
+                            <input type="text" class="form-input" placeholder="Your Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-input" placeholder="Phone Number" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn">
+                    <span>✉️</span>
+                    Submit Lost Pet Report
+                </button>
+
+                <p class="form-note">We'll share your pet's information across our network to help bring them home safely.</p>
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="help-section">
+            <h2>Need Additional Help?</h2>
+            <p>Our support team is here to assist you during this difficult time. We're committed to helping reunite you with your beloved pet.</p>
+            <div class="help-buttons">
+                <a href="#" class="help-btn">
+                    <span>📞</span>
+                    Call Support
+                </a>
+                <a href="#" class="help-btn">
+                    <span>✉️</span>
+                    Email Us
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <a href="home.html" class="logo">
+                <span class="logo-icon">🐾</span>
+                PetFinder
+            </a>
+            <p>Helping reunite lost pets with their families through community support and technology.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3>Quick Links</h3>
+            <ul class="footer-links">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="about_howitworks.html">How It Works</a></li>
+                <li><a href="announcements_list.html">Recent Posts</a></li>
+                <li><a href="#">Success Stories</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Support</h3>
+            <ul class="footer-links">
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2024 PetFinder. All rights reserved.</p>
+    </div>
+</footer>
+</body>
+</html>

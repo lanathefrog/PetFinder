@@ -1,0 +1,205 @@
+<!-- templates/core/announcement_detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charlie - Lost Pet - PetFinder</title>
+    <link rel="stylesheet" href="../../static/core/css/base.css">
+    <link rel="stylesheet" href="../../static/core/css/detail.css">
+    <link rel="stylesheet" href="../../static/core/css/responsive.css">
+</head>
+<body>
+<header>
+    <nav>
+        <a href="home.html" class="logo">
+            <span class="logo-icon">🐾</span>
+            PetFinder
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="announcements_list.html">Browse Pets</a></li>
+            <li><a href="report_lost.html">Post Announcement</a></li>
+            <li><a href="about_howitworks.html">Help</a></li>
+            <li><a href="login.html" class="btn btn-primary">Sign In</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="detail-page">
+    <div class="detail-container">
+        <!-- Pet Header -->
+        <section class="pet-header">
+            <div class="pet-image-large">
+                <span class="status-badge-large lost">Lost</span>
+                🐕
+            </div>
+            <h1>Charlie</h1>
+            <p class="pet-status-text">Lost pet</p>
+        </section>
+
+        <!-- Detail Content Grid -->
+        <div class="detail-content">
+            <!-- Pet Details Card -->
+            <div class="info-card">
+                <h2>
+                    <span class="info-card-icon">🐾</span>
+                    Pet details
+                </h2>
+                <div class="info-row">
+                    <span class="info-label">Pet type</span>
+                    <span class="info-value">Dog</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Breed</span>
+                    <span class="info-value">Golden Retriever</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Color</span>
+                    <span class="info-value">Golden</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Size</span>
+                    <span class="info-value">Large</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Gender</span>
+                    <span class="info-value">Male</span>
+                </div>
+            </div>
+
+            <!-- Take Action Card -->
+            <div class="action-card">
+                <h2>Take Action</h2>
+                <button class="action-btn-large">
+                    📞 Contact Owner
+                </button>
+                <button class="action-btn-large secondary">
+                    ℹ️ I Have Information
+                </button>
+                <p class="action-note">Please contact only if you have relevant information</p>
+            </div>
+
+            <!-- Date & Time Card -->
+            <div class="info-card">
+                <h2>
+                    <span class="info-card-icon">📅</span>
+                    Date & Time
+                </h2>
+                <div class="info-row">
+                    <span class="info-label">Lost on</span>
+                    <span class="info-value">January 15, 2024</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Time</span>
+                    <span class="info-value">Around 3:30 PM</span>
+                </div>
+            </div>
+
+            <!-- Description Card -->
+            <div class="info-card description-card">
+                <h2>
+                    <span class="info-card-icon">📝</span>
+                    Description
+                </h2>
+                <p class="description-text">
+                    Charlie is a very friendly and energetic Golden Retriever. He was wearing a red collar with his name tag. He's very social and loves people, especially children. Charlie responds to his name and knows basic commands like sit and stay. If you've seen him, please contact us immediately. We miss him dearly and just want him home safe.
+                </p>
+            </div>
+        </div>
+
+        <!-- Location Section -->
+        <section class="location-card">
+            <h2>
+                <span class="info-card-icon">📍</span>
+                Location
+            </h2>
+            <div class="location-info">
+                <h3>Downtown Area</h3>
+                <p>Near Central Park, close to the main entrance on Oak Street</p>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section class="map-section">
+            <h2>
+                <span class="info-card-icon">🗺️</span>
+                Last Known Location
+            </h2>
+            <div class="map-display">
+                <div class="map-pin"></div>
+                <p>Interactive map showing last known location</p>
+                <p class="map-location-text">Downtown Area, near Central Park</p>
+            </div>
+        </section>
+
+        <!-- Posted By Section -->
+        <section class="posted-by-section">
+            <h2>Posted by</h2>
+            <div class="poster-info">
+                <img src="https://via.placeholder.com/60" alt="Sarah Johnson" class="poster-avatar">
+                <div class="poster-details">
+                    <h3>Sarah Johnson</h3>
+                    <p class="member-since">Member since 2022</p>
+                    <p class="posted-time">Posted on January 16, 2024 at 8:41 PM</p>
+                </div>
+            </div>
+            <div class="poster-actions">
+                <button class="poster-btn message">Send Message</button>
+                <button class="poster-btn report">🚩 Report</button>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="cta-icon">🧡</div>
+            <h2>Together we help pets find their way home</h2>
+            <p>Every share, every call, every piece of information matters. Your help can reunite a family with their beloved pet.</p>
+            <div class="cta-buttons-group">
+                <button class="btn btn-primary">📤 Share This Post</button>
+                <button class="btn btn-secondary">📮 Post Your Own</button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <a href="home.html" class="logo">
+                <span class="logo-icon">🐾</span>
+                PetFinder
+            </a>
+            <p>Connecting lost pets with their families through community support and technology.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3>Quick Links</h3>
+            <ul class="footer-links">
+                <li><a href="announcements_list.html">Browse Pets</a></li>
+                <li><a href="report_lost.html">Post Announcement</a></li>
+                <li><a href="#">Success Stories</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Support</h3>
+            <ul class="footer-links">
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2024 PetFinder. All rights reserved.</p>
+    </div>
+</footer>
+</body>
+</html>

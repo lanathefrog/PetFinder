@@ -1,0 +1,372 @@
+/* static/core/css/home.css - Homepage specific styles */
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, #FFF5F2 0%, #FFE8E0 100%);
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+.hero-content {
+    max-width: 600px;
+}
+
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: #1a1a1a;
+}
+
+.hero h1 .highlight {
+    color: #FF6B4A;
+}
+
+.hero p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+}
+
+.hero-image {
+    position: relative;
+    text-align: right;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Stats */
+.stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.stat-info h3 {
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+.stat-info p {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Map Section */
+.map-section {
+    background: #ffffff;
+    padding: 4rem 2rem;
+}
+
+.map-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.map-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.map-header h2 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.map-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.map-wrapper {
+    background: #f5f5f5;
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* How It Works Section */
+.how-it-works {
+    background: #FFFBF8;
+    padding: 4rem 2rem;
+}
+
+.how-it-works-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.how-it-works h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.how-it-works .subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 3rem;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.step-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.step-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.5rem;
+    background: #FF6B4A;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.step-card h3 {
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 0.75rem;
+}
+
+.step-card p {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Recent Posts Section */
+.recent-posts {
+    padding: 4rem 2rem;
+    background: #ffffff;
+}
+
+.recent-posts-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    font-size: 2rem;
+    color: #1a1a1a;
+}
+
+.pet-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.pet-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+
+.pet-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.pet-image {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #FFE8E0 0%, #FFF5F2 100%);
+}
+
+.pet-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.pet-tag.lost {
+    background: #FF6B4A;
+    color: white;
+}
+
+.pet-tag.found {
+    background: #4CAF50;
+    color: white;
+}
+
+.pet-info {
+    padding: 1.25rem;
+}
+
+.pet-info h3 {
+    font-size: 1.15rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.pet-location {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.pet-time {
+    color: #999;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.pet-card .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+}
+
+/* CTA Banner */
+.cta-banner {
+    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+    padding: 5rem 2rem;
+    text-align: center;
+    color: white;
+}
+
+.cta-banner-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.cta-banner-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+}
+
+.cta-banner h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.cta-banner p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.cta-banner .btn-secondary {
+    background: white;
+    color: #FF6B4A;
+    border: none;
+}
+
+.cta-banner .btn-primary {
+    background: #1a1a1a;
+    color: white;
+}
+
+.cta-stats {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    margin-top: 3rem;
+}
+
+.cta-stat h3 {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+}
+
+.cta-stat p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}

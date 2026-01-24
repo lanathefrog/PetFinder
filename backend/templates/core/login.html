@@ -1,0 +1,176 @@
+<!-- templates/core/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - PetFinder</title>
+    <link rel="stylesheet" href="../../static/core/css/base.css">
+    <link rel="stylesheet" href="../../static/core/css/auth-about.css">
+    <link rel="stylesheet" href="../../static/core/css/responsive.css">
+</head>
+<body>
+<div class="login-page">
+    <div class="login-container">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="login-logo">🧡</div>
+            <h1>PetFinder</h1>
+            <p>Reuniting pets with their families</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="login-card">
+            <!-- Tabs -->
+            <div class="login-tabs">
+                <button class="tab-btn active" id="signInTab">Sign In</button>
+                <button class="tab-btn" id="createAccountTab">Create Account</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <form class="login-form" id="signInForm">
+                <div class="form-group-login">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group-login">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="sign-in-btn">Sign In</button>
+            </form>
+
+            <!-- Create Account Form (Hidden by default) -->
+            <form class="login-form" id="createAccountForm" style="display: none;">
+                <div class="form-group-login">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group-login">
+                    <label for="registerEmail">Email address</label>
+                    <input type="email" id="registerEmail" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group-login">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" placeholder="Create a password" required>
+                </div>
+
+                <div class="form-group-login">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                </div>
+
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="agreeTerms" required>
+                        <label for="agreeTerms">I agree to Terms & Conditions</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="sign-in-btn">Create Account</button>
+            </form>
+
+            <!-- Divider -->
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+
+            <!-- Social Login -->
+            <div class="social-login">
+                <button class="social-btn">
+                    <span class="google-icon">G</span>
+                    Continue with Google
+                </button>
+                <button class="social-btn">
+                    <span class="facebook-icon">f</span>
+                    Continue with Facebook
+                </button>
+            </div>
+        </div>
+
+        <!-- Help Link -->
+        <div class="help-link">
+            Need help?<br>
+            <a href="#">Contact support</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab switching functionality with animation
+    const signInTab = document.getElementById('signInTab');
+    const createAccountTab = document.getElementById('createAccountTab');
+    const signInForm = document.getElementById('signInForm');
+    const createAccountForm = document.getElementById('createAccountForm');
+
+    function switchToSignIn() {
+        signInTab.classList.add('active');
+        createAccountTab.classList.remove('active');
+
+        // Fade out current form
+        createAccountForm.classList.add('fade-out');
+
+        setTimeout(() => {
+            createAccountForm.style.display = 'none';
+            createAccountForm.classList.remove('fade-out');
+            signInForm.style.display = 'flex';
+        }, 300);
+    }
+
+    function switchToCreateAccount() {
+        createAccountTab.classList.add('active');
+        signInTab.classList.remove('active');
+
+        // Fade out current form
+        signInForm.classList.add('fade-out');
+
+        setTimeout(() => {
+            signInForm.style.display = 'none';
+            signInForm.classList.remove('fade-out');
+            createAccountForm.style.display = 'flex';
+        }, 300);
+    }
+
+    signInTab.addEventListener('click', switchToSignIn);
+    createAccountTab.addEventListener('click', switchToCreateAccount);
+
+    // Sign In form submission
+    signInForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        console.log('Sign In:', { email, password });
+        alert('Login functionality would be implemented here');
+    });
+
+    // Create Account form submission
+    createAccountForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fullName = document.getElementById('fullName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
+
+        console.log('Create Account:', { fullName, email, password });
+        alert('Account creation functionality would be implemented here');
+    });
+</script>
+</body>
+</html>

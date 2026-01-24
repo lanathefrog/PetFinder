@@ -10,6 +10,11 @@ class Pet(models.Model):
         ('cat', 'Cat'),
         ('other', 'Other'),
     ]
+    GENDER_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('unknown', 'Unknown'),
+    ]
 
     name = models.CharField(max_length=50)
     pet_type = models.CharField(max_length=10, choices=PET_TYPES)
@@ -17,6 +22,7 @@ class Pet(models.Model):
     color = models.CharField(max_length=30, blank=True)
     description = models.TextField(blank=True)
     photo = models.ImageField(upload_to='pets/', blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.pet_type})"
@@ -50,7 +56,9 @@ class Announcement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     description = models.TextField(blank=True)
-
+    contact_phone = models.CharField(max_length=20, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_reunited = models.BooleanField(default=False)
     def __str__(self):
         return f"{self.pet.name} - {self.status}"
 

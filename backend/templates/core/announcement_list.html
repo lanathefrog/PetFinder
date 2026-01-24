@@ -1,0 +1,256 @@
+<!-- templates/core/announcements_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Pet - PetFinder</title>
+    <link rel="stylesheet" href="../../static/core/css/base.css">
+    <link rel="stylesheet" href="../../static/core/css/listing.css">
+    <link rel="stylesheet" href="../../static/core/css/responsive.css">
+</head>
+<body>
+<header>
+    <nav>
+        <a href="home.html" class="logo">
+            <span class="logo-icon">🐾</span>
+            PetFinder
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="announcements_list.html" style="color: #FF6B4A;">Find a Pet</a></li>
+            <li><a href="#">Post Lost Pet</a></li>
+            <li><a href="about_howitworks.html">About</a></li>
+            <li><a href="login.html" class="btn btn-primary">Sign In</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="find-pet-page">
+    <div class="find-pet-header">
+        <h1>Find a Pet</h1>
+        <p>Help reunite lost pets with their families or find a new companion</p>
+    </div>
+
+    <div class="find-pet-content">
+        <!-- Filters Sidebar -->
+        <aside class="filters-sidebar">
+            <h2>Filters</h2>
+
+            <!-- Status Filter -->
+            <div class="filter-group">
+                <h3>Status</h3>
+                <div class="filter-buttons">
+                    <button class="filter-btn-option active">
+                        🔍 Lost
+                    </button>
+                    <button class="filter-btn-option active found">
+                        🧡 Found
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pet Type Filter -->
+            <div class="filter-group">
+                <h3>Pet Type</h3>
+                <div class="filter-buttons">
+                    <button class="filter-btn-option active">
+                        🐕 Dog
+                    </button>
+                    <button class="filter-btn-option active">
+                        🐈 Cat
+                    </button>
+                    <button class="filter-btn-option">
+                        Other
+                    </button>
+                </div>
+            </div>
+
+            <!-- Distance Filter -->
+            <div class="filter-group">
+                <h3>Distance</h3>
+                <select class="distance-select">
+                    <option>Within 5 miles</option>
+                    <option>Within 10 miles</option>
+                    <option>Within 25 miles</option>
+                    <option>Within 50 miles</option>
+                    <option>Anywhere</option>
+                </select>
+            </div>
+        </aside>
+
+        <!-- Map and Results -->
+        <div class="map-results-area">
+            <!-- Interactive Map -->
+            <div class="map-container-large">
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot lost"></span>
+                        <span>Lost pets</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot found"></span>
+                        <span>Found pets</span>
+                    </div>
+                </div>
+
+                <!-- Map Markers (positioned absolutely for demo) -->
+                <div class="map-markers">
+                    <div class="map-marker lost" style="top: 30%; left: 60%;">🐾</div>
+                    <div class="map-marker found" style="top: 20%; right: 15%;">🐾</div>
+                    <div class="map-marker found" style="bottom: 30%; right: 25%;">🐾</div>
+                    <div class="map-marker lost" style="bottom: 40%; left: 20%;">🐾</div>
+                </div>
+
+                <div class="map-placeholder-text">
+                    <h3>Interactive Map</h3>
+                    <p>Click on markers to see pet details</p>
+                </div>
+            </div>
+
+            <!-- Results List -->
+            <div class="results-list">
+                <!-- Result Card 1 -->
+                <div class="result-card">
+                    <div class="result-thumbnail">🐕</div>
+                    <div class="result-info">
+                        <div class="result-header">
+                            <h3>Max</h3>
+                            <span class="result-status lost">Lost</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="result-detail">
+                                <span>📍</span>
+                                <span>Central Park, NYC</span>
+                            </div>
+                            <div class="result-detail">
+                                <span>📅</span>
+                                <span>Posted 2 days ago</span>
+                            </div>
+                        </div>
+                        <div class="result-actions">
+                            <button class="view-details-btn" onclick="window.location.href='announcement_detail.html'">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Card 2 -->
+                <div class="result-card">
+                    <div class="result-thumbnail">🐈</div>
+                    <div class="result-info">
+                        <div class="result-header">
+                            <h3>Whiskers</h3>
+                            <span class="result-status found">Found</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="result-detail">
+                                <span>📍</span>
+                                <span>Brooklyn Heights</span>
+                            </div>
+                            <div class="result-detail">
+                                <span>📅</span>
+                                <span>Posted 4 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="result-actions">
+                            <button class="view-details-btn" onclick="window.location.href='announcement_detail.html'">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Card 3 -->
+                <div class="result-card">
+                    <div class="result-thumbnail">🐕</div>
+                    <div class="result-info">
+                        <div class="result-header">
+                            <h3>Bella</h3>
+                            <span class="result-status lost">Lost</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="result-detail">
+                                <span>📍</span>
+                                <span>Queens, NY</span>
+                            </div>
+                            <div class="result-detail">
+                                <span>📅</span>
+                                <span>Posted 1 day ago</span>
+                            </div>
+                        </div>
+                        <div class="result-actions">
+                            <button class="view-details-btn" onclick="window.location.href='announcement_detail.html'">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <a href="home.html" class="logo">
+                <span class="logo-icon">🐾</span>
+                PetFinder
+            </a>
+            <p>Reuniting lost pets with their families through community support and technology.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <h3>Quick Links</h3>
+            <ul class="footer-links">
+                <li><a href="home.html">Find Your Lost Pet</a></li>
+                <li><a href="report_lost.html">Report Lost Pet</a></li>
+                <li><a href="report_found.html">Report Found Pet</a></li>
+                <li><a href="announcements_list.html">Browse Lost Pets</a></li>
+                <li><a href="#">Success Stories</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Support</h3>
+            <ul class="footer-links">
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Safety Tips</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>Connect</h3>
+            <div class="social-links" style="margin-top: 0.5rem;">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">t</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2024 PetFinder. All rights reserved. Made with ❤️ for pets and their families.</p>
+    </div>
+</footer>
+
+<script>
+    // Filter button toggle functionality
+    document.querySelectorAll('.filter-btn-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('active');
+        });
+    });
+
+    // Map marker click simulation
+    document.querySelectorAll('.map-marker').forEach(marker => {
+        marker.addEventListener('click', function() {
+            alert('Pet details would appear here in a popup!');
+        });
+    });
+</script>
+</body>
+</html>
