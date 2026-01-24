@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { getAnnouncements } from './services/api';
-import Login from './components/Login';
-import ReportPetForm from './components/ReportPetForm';
-import UserDashboard from './components/UserDashboard';
 
-// Correct paths after moving files to src/styles/
-import './styles/base.css';           //
-import './styles/auth-about.css';     //
-import './styles/dashboard.css';      //
-import './styles/responsive.css';     //
+// Components
+import Login from './components/Login';
+import UserDashboard from './components/UserDashboard';
+import ReportLost from './components/ReportLost';
+import Footer from './components/Footer';
+
+// Importing Styles - Ensure forms.css is here!
+import './styles/base.css';
+import './styles/auth-about.css';
+import './styles/dashboard.css';
+import './styles/responsive.css';
+import './styles/forms.css'; // <--- Critical for the new form
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('access_token'));
     const [announcements, setAnnouncements] = useState([]);
-    const [view, setView] = useState('feed');
+    const [view, setView] = useState('dashboard');
 
     const loadFeed = () => {
         getAnnouncements()
@@ -24,85 +28,93 @@ function App() {
     useEffect(() => {
         if (token) {
             loadFeed();
+            setView('dashboard');
         }
     }, [token]);
 
-    const handleLogout = () => {
+    const handleLogout = (e) => {
+        e.preventDefault();
         localStorage.removeItem('access_token');
         setToken(null);
         setView('feed');
     };
 
+    const handleNavClick = (e, viewName) => {
+        e.preventDefault();
+        setView(viewName);
+    };
+
     if (!token) {
         return (
-            <div className="login-page"> {/* Applied from auth-about.css */}
+            <div className="login-page">
                 <Login setToken={setToken} />
             </div>
         );
     }
 
     return (
-        <div className="app-main-wrapper">
+        <div className="app-wrapper">
             <header>
-                <nav> {/* Nav styles from base.css */}
-                    <button
-                        className="logo-btn"
-                        onClick={() => setView('feed')}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    >
-                        <span className="logo">🧡 PetFinder</span>
-                    </button>
-
-                    <div className="nav-links">
-                        <button
-                            className={`nav-btn ${view === 'feed' ? 'active' : ''}`}
-                            onClick={() => setView('feed')}
-                        >
-                            All Pets
+                <nav>
+                    <a href="/" className="logo" onClick={(e) => handleNavClick(e, 'feed')}>
+                        <span className="logo-icon">🐾</span>
+                        PetFinder
+                    </a>
+                    <ul className="nav-links">
+                        <li><a href="/" onClick={(e) => handleNavClick(e, 'feed')}>Home</a></li>
+                        <li><a href="/" onClick={(e) => e.preventDefault()}>How It Works</a></li>
+                        <li><a href="/" onClick={(e) => handleNavClick(e, 'feed')}>Recent Posts</a></li>
+                        <li><a href="/" onClick={(e) => handleNavClick(e, 'dashboard')}>Dashboard</a></li>
+                    </ul>
+                    <div className="user-profile">
+                        <button className="notification-btn">
+                            🔔<span className="notification-badge">3</span>
                         </button>
-                        <button
-                            className={`nav-btn ${view === 'dashboard' ? 'active' : ''}`}
-                            onClick={() => setView('dashboard')}
-                        >
-                            My Dashboard
-                        </button>
-                        <button className="btn-secondary logout-btn" onClick={handleLogout}>
-                            Logout
-                        </button>
+                        <div className="user-info">
+                            <img src="https://via.placeholder.com/40" alt="User" className="user-avatar" />
+                            <span className="user-name">Svitlana</span>
+                        </div>
+                        <a href="/" onClick={handleLogout} style={{marginLeft:'10px', fontSize:'0.8rem', color:'#666', textDecoration:'none'}}>(Logout)</a>
                     </div>
                 </nav>
             </header>
 
-            <main className="container">
+            <main>
                 {view === 'dashboard' ? (
-                    <UserDashboard /> // Uses dashboard.css
+                    <UserDashboard onNavigate={setView} />
+                ) : view === 'report_lost' ? (
+                    <ReportLost
+                        onRefresh={() => { loadFeed(); setView('dashboard'); }}
+                        onCancel={() => setView('dashboard')} // Fixes the Cancel button
+                    />
                 ) : (
-                    <div className="fade-in">
-                        <section className="form-section" style={{ maxWidth: '800px', margin: '2rem auto' }}>
-                            <ReportPetForm onRefresh={loadFeed} />
-                        </section>
-
-                        <section className="listings-section">
-                            <h2 className="section-title">Latest Reports</h2>
-                            <div className="announcements-grid"> {/* Grid logic from responsive.css */}
-                                {announcements.map(ann => (
-                                    <article key={ann.id} className="announcement-card">
-                                        <div className="card-content">
-                                            <span className={`badge ${ann.status}`}>{ann.status}</span>
-                                            <h3>{ann.pet.name} ({ann.pet.gender})</h3>
-                                            <p className="description">{ann.description}</p>
-                                            <p className="contact-info">📞 {ann.contact_phone}</p>
-                                            <div className="card-footer">
-                                                <small>Posted by: {ann.owner.first_name} {ann.owner.last_name}</small>
-                                            </div>
+                    <div className="container" style={{ marginTop: '2rem' }}>
+                        {/* Feed View Content */}
+                        <div className="announcements-grid">
+                            {announcements.map(ann => (
+                                <div key={ann.id} className="announcement-card-dashboard">
+                                    <div className="announcement-card-header">
+                                        <div className="announcement-thumbnail">
+                                            {ann.pet.pet_type === 'Cat' ? '🐈' : '🐕'}
                                         </div>
-                                    </article>
-                                ))}
-                            </div>
-                        </section>
+                                        <div className="announcement-info-dashboard">
+                                            <span className={`status-badge ${ann.status.toLowerCase()}`}>{ann.status}</span>
+                                            <h3>{ann.pet.name}</h3>
+                                            <p className="breed">{ann.pet.breed}</p>
+                                        </div>
+                                    </div>
+                                    <div className="announcement-meta">
+                                        <div className="meta-item"><span>📍</span><span>{ann.location?.city}</span></div>
+                                        <div className="meta-item"><span>📞</span><span>{ann.contact_phone}</span></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </main>
+
+            <Footer />
         </div>
     );
 }
