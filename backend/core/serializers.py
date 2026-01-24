@@ -20,15 +20,21 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AnnouncementSerializer(serializers.ModelSerializer):
-    pet = PetSerializer(read_only=True)
-    location = LocationSerializer(read_only=True)
-    owner = UserSerializer(read_only=True)
+    pet = PetSerializer()
+    # Use PrimaryKeyRelatedField so you can send just the ID (e.g., 1)
+    owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Announcement
-        # Explicitly including 'contact_phone' and 'is_active'
         fields = [
             'id', 'pet', 'owner', 'status', 'location',
-            'contact_phone', 'is_active', 'created_at',
-            'updated_at', 'description'
+            'contact_phone', 'description'
         ]
+
+    def create(self, validated_data):
+        pet_data = validated_data.pop('pet')
+        # Create the pet first
+        pet = Pet.objects.create(**pet_data)
+        # Create the announcement with the existing pet and owner
+        announcement = Announcement.objects.create(pet=pet, **validated_data)
+        return announcement

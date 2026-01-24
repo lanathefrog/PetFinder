@@ -1,0 +1,471 @@
+/* static/core/css/forms.css - Form pages (report_lost, report_found) */
+
+.form-page {
+    background: linear-gradient(135deg, #FFF5F2 0%, #FFE8E0 100%);
+    min-height: 100vh;
+    padding: 3rem 2rem;
+}
+
+.form-container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-icon {
+    width: 60px;
+    height: 60px;
+    background: #FF6B4A;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 1.5rem;
+}
+
+.form-header h1 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.form-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-label-icon {
+    color: #FF6B4A;
+    font-size: 1rem;
+}
+
+.form-label .optional {
+    font-weight: 400;
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #FF6B4A;
+    box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #999;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.upload-area {
+    border: 2px dashed #e0e0e0;
+    display: flex;
+    width: 100%;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #FAFAFA;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upload-content{
+    width: 100%;
+
+}
+.upload-area:hover {
+    border-color: #FF6B4A;
+    background: #FFF5F2;
+}
+
+.upload-icon {
+    width: 60px;
+    height: 60px;
+    background: #FF6B4A;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 1rem;
+}
+
+.upload-area h3 {
+    color: #1a1a1a;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-area p {
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.upload-area input[type="file"] {
+    display: none;
+}
+
+.map-placeholder {
+    background: #f5f5f5;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.map-placeholder-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #999;
+}
+
+.map-placeholder p {
+    color: #999;
+}
+
+.contact-section {
+    background: #FFFBF8;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.contact-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1a1a1a;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: #FF6B4A;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.submit-btn:hover {
+    background: #e55a3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+}
+
+.form-note {
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
+.help-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.help-section h2 {
+    font-size: 1.8rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.help-section p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.help-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.help-btn {
+    padding: 0.875rem 2rem;
+    background: white;
+    color: #1a1a1a;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.help-btn:hover {
+    border-color: #FF6B4A;
+    color: #FF6B4A;
+    transform: translateY(-2px);
+}
+
+/* Pet Type Selection */
+.pet-type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.pet-type-btn {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pet-type-btn:hover {
+    border-color: #FF6B4A;
+    background: #FFF5F2;
+}
+
+.pet-type-btn input[type="radio"] {
+    display: none;
+}
+
+.pet-type-icon {
+    font-size: 2.5rem;
+    filter: grayscale(100%);
+    transition: filter 0.3s;
+}
+
+.pet-type-btn:hover .pet-type-icon {
+    filter: grayscale(0%);
+}
+
+.pet-type-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.pet-type-btn:hover .pet-type-label {
+    color: #1a1a1a;
+}
+
+.location-input-group {
+    position: relative;
+}
+
+.location-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: 1px solid #e0e0e0;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.location-btn:hover {
+    background: #f5f5f5;
+    color: #FF6B4A;
+}
+
+.privacy-notice {
+    background: #FFF5F2;
+    border-left: 4px solid #FF6B4A;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.privacy-notice-icon {
+    font-size: 1.2rem;
+    color: #FF6B4A;
+}
+
+.privacy-notice-content h4 {
+    color: #1a1a1a;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.privacy-notice-content p {
+    color: #666;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn-draft {
+    flex: 0 0 auto;
+    padding: 1rem 2rem;
+    background: white;
+    color: #666;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-draft:hover {
+    border-color: #999;
+    color: #1a1a1a;
+}
+
+.what-happens-next {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.what-happens-next h2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.8rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.what-happens-next > p {
+    color: #666;
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.next-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.next-step {
+    text-align: center;
+}
+
+.next-step-icon {
+    width: 60px;
+    height: 60px;
+    background: #FFF5F2;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 1rem;
+}
+
+.next-step h3 {
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.next-step p {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+}
+
+.helper-text {
+    font-size: 0.85rem;
+    color: #999;
+    margin-top: 0.5rem;
+}

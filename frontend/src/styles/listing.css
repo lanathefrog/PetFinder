@@ -1,0 +1,314 @@
+/* static/core/css/listings.css - Announcements list and detail pages */
+
+/* Announcements List Page */
+.find-pet-page {
+    background: #ffffff;
+    min-height: 100vh;
+}
+
+.find-pet-header {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 2rem 1rem;
+}
+
+.find-pet-header h1 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.find-pet-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.find-pet-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+}
+
+.filters-sidebar {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 2rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.filters-sidebar h2 {
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group {
+    margin-bottom: 2rem;
+}
+
+.filter-group h3 {
+    font-size: 1rem;
+    color: #1a1a1a;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn-option {
+    padding: 0.625rem 1.25rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    background: white;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-btn-option:hover {
+    border-color: #FF6B4A;
+    color: #FF6B4A;
+}
+
+.filter-btn-option.active {
+    background: #FF6B4A;
+    border-color: #FF6B4A;
+    color: white;
+}
+
+.filter-btn-option.active.found {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.distance-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.distance-select:focus {
+    outline: none;
+    border-color: #FF6B4A;
+}
+
+.map-results-area {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.map-container-large {
+    background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%);
+    border-radius: 16px;
+    height: 400px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.map-legend {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.lost {
+    background: #FF6B4A;
+}
+
+.legend-dot.found {
+    background: #4CAF50;
+}
+
+.map-markers {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.map-marker {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.map-marker:hover {
+    transform: scale(1.1);
+}
+
+.map-marker.lost {
+    background: #FF6B4A;
+}
+
+.map-marker.found {
+    background: #4CAF50;
+}
+
+.map-placeholder-text {
+    text-align: center;
+    z-index: 1;
+}
+
+.map-placeholder-text h3 {
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.map-placeholder-text p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.result-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: flex;
+    gap: 1.5rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.result-thumbnail {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    flex-shrink: 0;
+}
+
+.result-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.result-header h3 {
+    font-size: 1.4rem;
+    color: #1a1a1a;
+}
+
+.result-status {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.result-status.lost {
+    color: #FF6B4A;
+}
+
+.result-status.found {
+    color: #4CAF50;
+}
+
+.result-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.result-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.result-actions {
+    margin-top: auto;
+}
+
+.view-details-btn {
+    padding: 0.75rem 2rem;
+    background: #FF6B4A;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+}
+
+.view-details-btn:hover {
+    background: #e55a3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+}
