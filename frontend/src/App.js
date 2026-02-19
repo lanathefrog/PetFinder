@@ -1,23 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { getAnnouncements } from './services/api';
 
-// Components
 import Login from './components/Login';
 import UserDashboard from './components/UserDashboard';
 import ReportLost from './components/ReportLost';
+import ReportFound from './components/ReportFound';
+import AnnouncementDetails from './components/AnnouncementDetails';
 import Footer from './components/Footer';
+import AnnouncementList from './components/AnnouncementList';
+import HomePage from './components/HomePage';
+import HowItWorks from './components/HowItWorks';
+import ProfilePage from './components/ProfilePage';
 
-// Importing Styles - Ensure forms.css is here!
+
+
+
 import './styles/base.css';
 import './styles/auth-about.css';
 import './styles/dashboard.css';
 import './styles/responsive.css';
-import './styles/forms.css'; // <--- Critical for the new form
+import './styles/forms.css';
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('access_token'));
     const [announcements, setAnnouncements] = useState([]);
-    const [view, setView] = useState('dashboard');
+    const [view, setView] = useState('home');
+    const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
     const loadFeed = () => {
         getAnnouncements()
@@ -39,79 +47,151 @@ function App() {
         setView('feed');
     };
 
-    const handleNavClick = (e, viewName) => {
-        e.preventDefault();
-        setView(viewName);
-    };
-
     if (!token) {
-        return (
-            <div className="login-page">
-                <Login setToken={setToken} />
-            </div>
-        );
+        return <Login setToken={setToken} />;
     }
 
     return (
         <div className="app-wrapper">
             <header>
                 <nav>
-                    <a href="/" className="logo" onClick={(e) => handleNavClick(e, 'feed')}>
-                        <span className="logo-icon">🐾</span>
-                        PetFinder
+                    <a
+                        href="/"
+                        className="logo"
+                        onClick={(e)=>{
+                            e.preventDefault();
+                            setView('home');
+                        }}
+                    >
+
+                    🐾 PetFinder
                     </a>
+
                     <ul className="nav-links">
-                        <li><a href="/" onClick={(e) => handleNavClick(e, 'feed')}>Home</a></li>
-                        <li><a href="/" onClick={(e) => e.preventDefault()}>How It Works</a></li>
-                        <li><a href="/" onClick={(e) => handleNavClick(e, 'feed')}>Recent Posts</a></li>
-                        <li><a href="/" onClick={(e) => handleNavClick(e, 'dashboard')}>Dashboard</a></li>
+                        <li>
+                            <a
+                                href="/"
+                                onClick={(e)=>{
+                                    e.preventDefault();
+                                    setView('home');
+                                }}
+                            >
+                                Home
+                            </a>
+                        </li>
+
+                        <li><a href="/" onClick={(e)=>{e.preventDefault();setView('dashboard')}}>Dashboard</a></li>
+                        <li>
+                            <a
+                                href="/"
+                                onClick={(e)=>{
+                                    e.preventDefault();
+                                    setView('profile');
+                                }}
+                            >
+                                Profile
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="/" onClick={(e)=>{e.preventDefault(); setView('listing')}}>
+                                Find a Pet
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="/"
+                                onClick={(e)=>{
+                                    e.preventDefault();
+                                    setView('how');
+                                }}
+                            >
+                                How It Works
+                            </a>
+                        </li>
+
+
                     </ul>
-                    <div className="user-profile">
-                        <button className="notification-btn">
-                            🔔<span className="notification-badge">3</span>
-                        </button>
-                        <div className="user-info">
-                            <img src="https://via.placeholder.com/40" alt="User" className="user-avatar" />
-                            <span className="user-name">Svitlana</span>
-                        </div>
-                        <a href="/" onClick={handleLogout} style={{marginLeft:'10px', fontSize:'0.8rem', color:'#666', textDecoration:'none'}}>(Logout)</a>
-                    </div>
+
+
+                    <a href="/" onClick={handleLogout}>(Logout)</a>
                 </nav>
             </header>
 
             <main>
-                {view === 'dashboard' ? (
-                    <UserDashboard onNavigate={setView} />
-                ) : view === 'report_lost' ? (
-                    <ReportLost
-                        onRefresh={() => { loadFeed(); setView('dashboard'); }}
-                        onCancel={() => setView('dashboard')} // Fixes the Cancel button
+                {view === 'dashboard' && (
+                    <UserDashboard
+                        onNavigate={setView}
+                        onSelect={(ann) => {
+                            setSelectedAnnouncement(ann);
+                            setView('details');
+                        }}
                     />
-                ) : (
-                    <div className="container" style={{ marginTop: '2rem' }}>
-                        {/* Feed View Content */}
+                )}
+
+                {view === 'feed' && (
+                    <div className="container">
                         <div className="announcements-grid">
                             {announcements.map(ann => (
-                                <div key={ann.id} className="announcement-card-dashboard">
-                                    <div className="announcement-card-header">
-                                        <div className="announcement-thumbnail">
-                                            {ann.pet.pet_type === 'Cat' ? '🐈' : '🐕'}
-                                        </div>
-                                        <div className="announcement-info-dashboard">
-                                            <span className={`status-badge ${ann.status.toLowerCase()}`}>{ann.status}</span>
-                                            <h3>{ann.pet.name}</h3>
-                                            <p className="breed">{ann.pet.breed}</p>
-                                        </div>
-                                    </div>
-                                    <div className="announcement-meta">
-                                        <div className="meta-item"><span>📍</span><span>{ann.location?.city}</span></div>
-                                        <div className="meta-item"><span>📞</span><span>{ann.contact_phone}</span></div>
-                                    </div>
+                                <div
+                                    key={ann.id}
+                                    className="announcement-card-dashboard"
+                                    onClick={() => {
+                                        setSelectedAnnouncement(ann);
+                                        setView('details');
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <h3>{ann.pet.name}</h3>
+                                    <p>{ann.pet.breed}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
+
+                {view === 'details' && selectedAnnouncement && (
+                    <AnnouncementDetails
+                        announcement={selectedAnnouncement}
+                        onBack={() => setView('dashboard')}
+                        onDeleted={() => {
+                            loadFeed();
+                            setView('dashboard');
+                        }}
+                    />
+                )}
+
+                {view === 'report_lost' && (
+                    <ReportLost
+                        onRefresh={() => { loadFeed(); setView('dashboard'); }}
+                        onCancel={() => setView('dashboard')}
+                    />
+                )}
+
+                {view === 'report_found' && (
+                    <ReportFound
+                        onRefresh={() => { loadFeed(); setView('dashboard'); }}
+                        onCancel={() => setView('dashboard')}
+                    />
+                )}
+                {view === 'listing' && (
+                    <AnnouncementList
+                        onSelect={(ann)=>{
+                            setSelectedAnnouncement(ann);
+                            setView('details');
+                        }}
+                    />
+                )}
+                {view === 'home' && (
+                    <HomePage onNavigate={setView} />
+                )}
+                {view === 'how' && (
+                    <HowItWorks onNavigate={setView} />
+                )}
+                {view === 'profile' && <ProfilePage />}
+
+
+
             </main>
 
             <Footer />

@@ -1,0 +1,143 @@
+.profile-page {
+    padding: 6rem 2rem;
+    background: linear-gradient(135deg, #fff5f2, #f8ede7);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative background glow */
+.profile-page::before {
+    content: "";
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,107,74,0.25), transparent 70%);
+    top: -150px;
+    left: -150px;
+    filter: blur(60px);
+    animation: floatSlow 12s ease-in-out infinite;
+}
+
+.profile-container {
+    max-width: 850px;
+    margin: auto;
+    position: relative;
+    z-index: 2;
+}
+
+/* HEADER */
+.profile-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    animation: fadeUp 0.8s ease forwards;
+}
+
+.profile-avatar {
+    width: 110px;
+    height: 110px;
+    background: linear-gradient(135deg, #FF6B4A, #ff8f6b);
+    color: white;
+    border-radius: 50%;
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 40px rgba(255,107,74,0.5);
+    animation: float 5s ease-in-out infinite;
+}
+
+.profile-header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-header p {
+    color: #666;
+}
+
+/* CARD */
+.profile-card {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(15px);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.05);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    animation: fadeUp 1s ease forwards;
+}
+
+.profile-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+}
+
+.profile-card h2 {
+    margin-bottom: 1.5rem;
+}
+
+/* INPUTS */
+.profile-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1.2rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: #FF6B4A;
+    box-shadow: 0 0 0 4px rgba(255,107,74,0.15);
+    transform: translateY(-2px);
+}
+
+/* BUTTONS */
+.profile-card .btn {
+    margin-top: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.profile-card .btn-primary:hover {
+    box-shadow: 0 0 20px rgba(255,107,74,0.6);
+    transform: translateY(-3px);
+}
+
+.profile-card .btn-secondary:hover {
+    transform: translateY(-3px);
+}
+
+/* Animations */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%,100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-12px);
+    }
+}
+
+@keyframes floatSlow {
+    0%,100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(40px);
+    }
+}

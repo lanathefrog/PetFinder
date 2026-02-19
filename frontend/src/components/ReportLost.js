@@ -6,16 +6,14 @@ const ReportLost = ({ onRefresh, onCancel }) => { // Added onCancel prop
     const [preview, setPreview] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
-        pet_type: 'Dog',
+        pet_type: 'dog',
         breed: '',
-        gender: 'Male',
-        size: 'Medium', // Added based on typical forms
+        gender: 'male',
+        size: 'medium', // Added based on typical forms
         color: '',
         location: '',
         date_lost: '',
         description: '',
-        contact_phone: '',
-        contact_email: '', // Added field
         image: null
     });
 
@@ -46,17 +44,24 @@ const ReportLost = ({ onRefresh, onCancel }) => { // Added onCancel prop
         }
 
         dataPayload.append('status', 'lost');
-        dataPayload.append('contact_phone', formData.contact_phone);
         dataPayload.append('description', formData.description);
         dataPayload.append('location.address', formData.location);
 
         try {
-            await createAnnouncement(dataPayload);
+            const response = await createAnnouncement(dataPayload);
+
+            console.log("SUCCESS RESPONSE:", response);
             alert("Report submitted successfully!");
+
             if (onRefresh) onRefresh();
+
         } catch (err) {
-            console.error("Submission error:", err);
-            alert("Failed to submit report. Please check your connection.");
+            console.error("FULL ERROR OBJECT:", err);
+            console.error("STATUS:", err.response?.status);
+            console.error("FULL BACKEND DATA:", JSON.stringify(err.response?.data, null, 2));
+            console.error("HEADERS:", err.response?.headers);
+
+            alert("Submission failed. Check console for details.");
         }
     };
 
@@ -97,10 +102,10 @@ const ReportLost = ({ onRefresh, onCancel }) => { // Added onCancel prop
                             <div className="form-group">
                                 <label>Pet Type</label>
                                 <select name="pet_type" className="form-input" onChange={handleChange}>
-                                    <option value="Dog">Dog</option>
-                                    <option value="Cat">Cat</option>
-                                    <option value="Bird">Bird</option>
-                                    <option value="Other">Other</option>
+                                    <option value="dog">Dog</option>
+                                    <option value="cat">Cat</option>
+                                    <option value="bird">Bird</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                         </div>
@@ -120,9 +125,9 @@ const ReportLost = ({ onRefresh, onCancel }) => { // Added onCancel prop
                             <div className="form-group">
                                 <label>Gender</label>
                                 <select name="gender" className="form-input" onChange={handleChange}>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Unknown">Unknown</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="unknown">Unknown</option>
                                 </select>
                             </div>
                             <div className="form-group">
@@ -197,16 +202,7 @@ const ReportLost = ({ onRefresh, onCancel }) => { // Added onCancel prop
                         {/* Section 3: Contact */}
                         <h3 className="form-section-title" style={{marginBottom: '1.5rem', color: '#333'}}>3. Contact Information</h3>
 
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Phone Number</label>
-                                <input name="contact_phone" type="tel" className="form-input" placeholder="+1 (555) 000-0000" required onChange={handleChange} />
-                            </div>
-                            <div className="form-group">
-                                <label>Email (Optional)</label>
-                                <input name="contact_email" type="email" className="form-input" placeholder="you@example.com" onChange={handleChange} />
-                            </div>
-                        </div>
+
 
                         {/* Form Actions */}
                         <div className="form-actions" style={{display: 'flex', gap: '1rem', marginTop: '2rem'}}>

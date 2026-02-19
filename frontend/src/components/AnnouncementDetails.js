@@ -1,72 +1,151 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { deleteAnnouncement, updateAnnouncement } from '../services/api';
+import '../styles/detail.css';
 
-const AnnouncementDetails = ({ announcement, onBack }) => {
-    if (!announcement) return null;
+const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
 
-    // Форматування дати
-    const date = new Date(announcement.created_at).toLocaleDateString();
+    const [isEditing, setIsEditing] = useState(false);
+    const [description, setDescription] = useState(announcement.description);
+    const [phone, setPhone] = useState(announcement.contact_phone);
+
+    const currentUserId = parseInt(localStorage.getItem("user_id"));
+    const isOwner = currentUserId === announcement.owner;
+
+    const handleDelete = async () => {
+        if (window.confirm("Are you sure you want to delete this announcement?")) {
+            await deleteAnnouncement(announcement.id);
+            onDeleted();
+        }
+    };
+
+    const handleSave = async () => {
+        const payload = {
+            pet: announcement.pet,
+            location: announcement.location,
+            status: announcement.status,
+            description: description,
+            contact_phone: phone
+        };
+
+        await updateAnnouncement(announcement.id, payload);
+        setIsEditing(false);
+        alert("Updated successfully!");
+    };
 
     return (
-        <div className="details-container" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-            <button
-                onClick={onBack}
-                className="btn-draft"
-                style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-                ← Back to list
-            </button>
+        <div className="detail-page">
+            <div className="detail-container">
 
-            <div className="details-card" style={{ background: 'white', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                <div className="details-image" style={{ height: '400px', background: '#f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    {announcement.pet.photo ? (
-                        <img src={announcement.pet.photo} alt={announcement.pet.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
-                    ) : (
-                        <span style={{ fontSize: '5rem' }}>{announcement.pet.pet_type === 'Cat' ? '🐈' : '🐕'}</span>
-                    )}
+                {/* Back Button */}
+                <button className="btn-draft" onClick={onBack} style={{marginBottom:'1rem'}}>
+                    ← Back
+                </button>
+
+                {/* Pet Header */}
+                <section className="pet-header">
+                    <div className="pet-image-large">
+                        <span className={`status-badge-large ${announcement.status}`}>
+                            {announcement.status}
+                        </span>
+                        {announcement.pet.photo ? (
+                            <img src={announcement.pet.photo} alt={announcement.pet.name} />
+                        ) : (
+                            announcement.pet.pet_type === 'cat' ? '🐈' : '🐕'
+                        )}
+                    </div>
+                    <h1>{announcement.pet.name}</h1>
+                    <p className="pet-status-text">{announcement.status} pet</p>
+                </section>
+
+                {/* Detail Grid */}
+                <div className="detail-content">
+
+                    {/* Pet Details */}
+                    <div className="info-card">
+                        <h2>🐾 Pet Details</h2>
+                        <div className="info-row">
+                            <span className="info-label">Pet type</span>
+                            <span className="info-value">{announcement.pet.pet_type}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Breed</span>
+                            <span className="info-value">{announcement.pet.breed}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Color</span>
+                            <span className="info-value">{announcement.pet.color}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Gender</span>
+                            <span className="info-value">{announcement.pet.gender}</span>
+                        </div>
+                    </div>
+
+                    {/* Contact */}
+                    <div className="action-card">
+                        <h2>Contact</h2>
+
+                        {isEditing ? (
+                            <>
+                                <input
+                                    value={phone}
+                                    onChange={(e)=>setPhone(e.target.value)}
+                                    className="form-input"
+                                />
+                                <button className="btn btn-primary" onClick={handleSave}>
+                                    Save
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <a
+                                    href={`tel:${phone}`}
+                                    className="action-btn-large"
+                                >
+                                    📞 {phone}
+                                </a>
+                            </>
+                        )}
+
+                        {isOwner && !isEditing && (
+                            <div style={{marginTop:'1rem'}}>
+                                <button className="action-btn-large secondary" onClick={()=>setIsEditing(true)}>
+                                    ✏️ Edit
+                                </button>
+                                <button className="action-btn-large secondary" onClick={handleDelete}>
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Description */}
+                    <div className="info-card description-card">
+                        <h2>📝 Description</h2>
+
+                        {isEditing ? (
+                            <textarea
+                                value={description}
+                                onChange={(e)=>setDescription(e.target.value)}
+                                className="form-input"
+                            />
+                        ) : (
+                            <p className="description-text">
+                                {description}
+                            </p>
+                        )}
+                    </div>
+
                 </div>
 
-                <div className="details-content" style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                        <div>
-                            <span className={`status-badge ${announcement.status.toLowerCase()}`} style={{ fontSize: '0.8rem' }}>
-                                {announcement.status.toUpperCase()}
-                            </span>
-                            <h1 style={{ fontSize: '2.5rem', margin: '0.5rem 0' }}>{announcement.pet.name}</h1>
-                            <p style={{ color: '#666', fontSize: '1.2rem' }}>{announcement.pet.breed || 'Mixed Breed'}</p>
-                        </div>
-                        <p style={{ color: '#999' }}>Posted on {date}</p>
+                {/* Location */}
+                <section className="location-card">
+                    <h2>📍 Location</h2>
+                    <div className="location-info">
+                        <h3>{announcement.location?.address}</h3>
                     </div>
+                </section>
 
-                    <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #eee' }} />
-
-                    <div className="details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                        <div className="info-item">
-                            <label style={{ display: 'block', color: '#999', fontSize: '0.8rem', fontWeight: 'bold' }}>GENDER</label>
-                            <span style={{ fontWeight: 'bold' }}>{announcement.pet.gender}</span>
-                        </div>
-                        <div className="info-item">
-                            <label style={{ display: 'block', color: '#999', fontSize: '0.8rem', fontWeight: 'bold' }}>COLOR</label>
-                            <span style={{ fontWeight: 'bold' }}>{announcement.pet.color || 'N/A'}</span>
-                        </div>
-                        <div className="info-item">
-                            <label style={{ display: 'block', color: '#999', fontSize: '0.8rem', fontWeight: 'bold' }}>LOCATION</label>
-                            <span style={{ fontWeight: 'bold' }}>📍 {announcement.location?.address || 'Unknown'}</span>
-                        </div>
-                    </div>
-
-                    <div className="description-box" style={{ marginBottom: '2rem' }}>
-                        <h3 style={{ marginBottom: '0.5rem' }}>Description</h3>
-                        <p style={{ color: '#444', lineHeight: '1.6' }}>{announcement.description || 'No additional details provided by the owner.'}</p>
-                    </div>
-
-                    <div className="contact-box" style={{ background: '#FFF5F2', padding: '1.5rem', borderRadius: '15px', border: '1px solid #FFE0D6' }}>
-                        <h3 style={{ color: '#FF6B4A', marginBottom: '1rem' }}>Contact Information</h3>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', fontFamily: 'monospace' }}>{announcement.contact_phone}</span>
-                            <a href={`tel:${announcement.contact_phone}`} className="btn btn-primary" style={{ textDecoration: 'none' }}>Call Now</a>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

@@ -362,3 +362,19 @@
     color: #666;
     font-size: 0.95rem;
 }
+
+.my-pets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    align-items: stretch;
+}
+
+
+.stat-card.green {
+    background: #e6f6ec;
+}
+
+.stat-card.purple {
+    background: #ece9ff;
+}

@@ -1,5 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth.models import User
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=20, blank=False)
+
+    def __str__(self):
+        return self.user.username
 
 # ==========================
 # Модель тварини
@@ -56,7 +68,6 @@ class Announcement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     description = models.TextField(blank=True)
-    contact_phone = models.CharField(max_length=20, blank=True)
     is_active = models.BooleanField(default=True)
     is_reunited = models.BooleanField(default=False)
     def __str__(self):
@@ -87,3 +98,10 @@ class Photo(models.Model):
 
     def __str__(self):
         return f"Photo for {self.announcement.pet.name}"
+
+
+
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance, phone_number="0000000000")

@@ -9,17 +9,15 @@ const ReportFound = ({ onRefresh, onCancel }) => {
 
     // Form State
     const [formData, setFormData] = useState({
-        pet_type: 'Dog',
+        pet_type: 'dog',
         breed: '',
-        gender: 'Unknown',
-        size: 'Medium',
+        gender: 'unknown',
+        size: 'medium',
         color: '',
         location: '',
         date_found: '',
         description: '',
         contact_name: '',
-        contact_phone: '',
-        contact_email: '',
         image: null
     });
 
@@ -66,7 +64,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         }
 
         dataPayload.append('status', 'found');
-        dataPayload.append('contact_phone', formData.contact_phone);
         dataPayload.append('location.address', formData.location);
 
         const fullDescription = `Found on: ${formData.date_found}\nFinder: ${formData.contact_name}\n\n${formData.description}`;
@@ -77,9 +74,14 @@ const ReportFound = ({ onRefresh, onCancel }) => {
             alert("Thank you! The pet has been reported as found.");
             if (onRefresh) onRefresh();
         } catch (err) {
-            console.error("Submission error:", err);
-            alert("Failed to submit report. Please try again.");
+            console.error("FULL ERROR OBJECT:", err);
+            console.error("STATUS:", err.response?.status);
+            console.error("BACKEND DATA:", JSON.stringify(err.response?.data, null, 2));
+            console.error("HEADERS:", err.response?.headers);
+
+            alert("Submission failed. Check console.");
         }
+
     };
 
     // Helper to format date
@@ -179,17 +181,17 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                 <div className="form-group">
                                     <label>Gender</label>
                                     <select name="gender" className="form-input" onChange={handleChange}>
-                                        <option value="Unknown">Unknown</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
+                                        <option value="unknown">Unknown</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
                                     <label>Size</label>
                                     <select name="size" className="form-input" onChange={handleChange}>
-                                        <option value="Medium">Medium</option>
-                                        <option value="Small">Small</option>
-                                        <option value="Large">Large</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="small">Small</option>
+                                        <option value="large">Large</option>
                                     </select>
                                 </div>
                             </div>
@@ -236,10 +238,7 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                     <label>Your Name</label>
                                     <input name="contact_name" type="text" className="form-input" required onChange={handleChange} />
                                 </div>
-                                <div className="form-group">
-                                    <label>Phone Number</label>
-                                    <input name="contact_phone" type="tel" className="form-input" required onChange={handleChange} />
-                                </div>
+
                             </div>
 
                             <div className="form-group">
@@ -291,7 +290,11 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                             <button
                                                 className="btn btn-primary"
                                                 style={{width: '100%', padding: '0.5rem', fontSize: '0.9rem', background: '#FF6B4A', border: 'none'}}
-                                                onClick={() => alert(`Please contact the owner immediately:\n\n📞 ${pet.contact_phone}\n\nThank you for helping!`)}
+                                                onClick={() =>
+                                                    alert(
+                                                        `Please contact the owner immediately:\n\n📞 ${pet.phone_number}\n\nThank you for helping!`
+                                                    )
+                                                }
                                             >
                                                 🙌 I Found This Pet!
                                             </button>

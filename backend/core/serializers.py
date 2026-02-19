@@ -23,37 +23,49 @@ class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = '__all__'
-
-
 class AnnouncementSerializer(serializers.ModelSerializer):
     pet = PetSerializer()
-    location = LocationSerializer()  # Handle nested location data
-    owner = serializers.PrimaryKeyRelatedField(read_only=True)  # Backend sets this, not frontend
+    location = LocationSerializer()
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    # 🔥 Додаємо телефон з профілю
+    phone_number = serializers.CharField(
+        source='user.profile.phone_number',
+        read_only=True
+    )
 
     class Meta:
         model = Announcement
         fields = [
-            'id', 'pet', 'owner', 'status', 'location',
-            'contact_phone', 'description'
+            'id',
+            'pet',
+            'user',
+            'status',
+            'location',
+            'description',
+            'phone_number'
         ]
 
     def create(self, validated_data):
-        # 1. Extract nested data
+        request = self.context['request']
+
         pet_data = validated_data.pop('pet')
         location_data = validated_data.pop('location')
 
-        # 2. Create Pet
         pet = Pet.objects.create(**pet_data)
 
-        # 3. Create Location (Default lat/long to 0.0 if missing)
-        if 'latitude' not in location_data: location_data['latitude'] = 0.0
-        if 'longitude' not in location_data: location_data['longitude'] = 0.0
+        if 'latitude' not in location_data:
+            location_data['latitude'] = 0.0
+        if 'longitude' not in location_data:
+            location_data['longitude'] = 0.0
+
         location = Location.objects.create(**location_data)
 
-        # 4. Create Announcement
         announcement = Announcement.objects.create(
+            user=request.user,  # 🔥 ВАЖЛИВО
             pet=pet,
             location=location,
             **validated_data
         )
+
         return announcement

@@ -1,0 +1,68 @@
+.how-hero {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: linear-gradient(135deg, #FFF5F2, #FFE8E2);
+}
+
+.how-hero h1 {
+    font-size: 2.8rem;
+    margin-bottom: 1rem;
+}
+
+.how-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 5rem 2rem;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.step-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+}
+
+.step-card:hover {
+    transform: translateY(-6px);
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: #FF6B4A;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.why-section {
+    padding: 5rem 2rem;
+    background: #f8ede7;
+    text-align: center;
+}
+
+.why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.why-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+.how-cta {
+    padding: 5rem 2rem;
+    text-align: center;
+}

@@ -7,7 +7,14 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 import re  # Import regex
-
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
+from rest_framework import status
 
 # Helper to unflatten keys (pet.name -> pet: {name})
 def expand_data(data):
@@ -24,7 +31,24 @@ def expand_data(data):
 
 
 class AnnouncementList(generics.ListCreateAPIView):
-    queryset = Announcement.objects.all()
+    def get_queryset(self):
+        queryset = Announcement.objects.all()
+
+        status = self.request.query_params.get('status')
+        pet_type = self.request.query_params.get('pet_type')
+        search = self.request.query_params.get('search')
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        if pet_type:
+            queryset = queryset.filter(pet__pet_type__iexact=pet_type)
+
+        if search:
+            queryset = queryset.filter(pet__name__icontains=search)
+
+        return queryset
+
     serializer_class = AnnouncementSerializer
     permission_classes = [IsAuthenticated]  # Ensure only logged-in users can post
 
@@ -47,27 +71,56 @@ class AnnouncementList(generics.ListCreateAPIView):
         serializer.save(owner=self.request.user)
 
 
+
 class AnnouncementDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
+    permission_classes = [IsAuthenticated]
 
+    def perform_update(self, serializer):
+        if self.request.user != self.get_object().owner:
+            raise PermissionDenied("You cannot edit this announcement.")
+        serializer.save()
 
-# ... (Keep your register_user and my_announcements views as they are) ...
+    def perform_destroy(self, instance):
+        if self.request.user != instance.owner:
+            raise PermissionDenied("You cannot delete this announcement.")
+        instance.delete()
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
     data = request.data
+
     try:
+        # 🔹 перевірка обов'язкового поля
+        if not data.get('phone_number'):
+            return Response(
+                {'error': 'Phone number is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         user = User.objects.create_user(
             username=data['username'],
             password=data['password'],
             first_name=data.get('first_name', ''),
             last_name=data.get('last_name', '')
         )
-        return Response({'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 🔥 ДОДАЄМО ТЕЛЕФОН У PROFILE
+        user.profile.phone_number = data['phone_number']
+        user.profile.save()
+
+        return Response(
+            {'message': 'User created successfully'},
+            status=status.HTTP_201_CREATED
+        )
+
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -75,3 +128,46 @@ def my_announcements(request):
     user_announcements = Announcement.objects.filter(owner=request.user)
     serializer = AnnouncementSerializer(user_announcements, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+
+    user = request.user
+
+    if request.method == 'GET':
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        })
+
+    if request.method == 'PUT':
+        user.username = request.data.get('username', user.username)
+        user.email = request.data.get('email', user.email)
+        user.save()
+
+        return Response({
+            "message": "Profile updated successfully"
+        })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+
+    user = request.user
+    old_password = request.data.get("old_password")
+    new_password = request.data.get("new_password")
+
+    if not user.check_password(old_password):
+        return Response(
+            {"error": "Old password is incorrect"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Password updated successfully"})
