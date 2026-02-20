@@ -86,10 +86,13 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
                                 style={{ cursor: 'pointer' }}
                                 onClick={() => onSelect && onSelect(pet)} // 🔥 перехід у деталі
                             >
-                                <div className="announcement-card-header">
-                                    <div className="announcement-thumbnail">
-                                        {pet.pet.pet_type === 'cat' ? '🐈' : '🐕'}
-                                    </div>
+                                 <div className="announcement-thumbnail">
+    {pet.pet.photo ? (
+      <img src={pet.pet.photo} alt={pet.pet.name} />
+    ) : (
+      pet.pet.pet_type === 'cat' ? '🐈' : '🐕'
+    )}
+  </div>
                                     <div className="announcement-info-dashboard">
                                         <span className={`status-badge ${pet.status.toLowerCase()}`}>
                                             {pet.status}
@@ -99,7 +102,6 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
                                             {pet.pet.breed || 'Unknown Breed'}
                                         </p>
                                     </div>
-                                </div>
 
                                 <div className="announcement-meta">
                                     <div className="meta-item">

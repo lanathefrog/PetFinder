@@ -247,8 +247,12 @@ const AnnouncementList = ({ onSelect }) => {
                                 }}
                             >
                                 <div className="result-thumbnail">
-                                    {pet.pet.pet_type === 'cat' ? '🐈' : '🐕'}
-                                </div>
+  {pet.pet.photo ? (
+    <img src={pet.pet.photo} alt={pet.pet.name} />
+  ) : (
+    pet.pet.pet_type === 'cat' ? '🐈' : '🐕'
+  )}
+</div>
 
                                 <div className="result-info">
                                     <div className="result-header">

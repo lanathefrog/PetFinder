@@ -5,16 +5,16 @@ import "../styles/responsive.css";
 import "../styles/profile.css";
 import { useToast } from "./ToastContext";
 
-
 const ProfilePage = () => {
     const { showToast } = useToast();
 
-
     const [user, setUser] = useState(null);
     const [editing, setEditing] = useState(false);
+
     const [formData, setFormData] = useState({
         username: "",
-        email: ""
+        email: "",
+        phone_number: ""
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -35,11 +35,15 @@ const ProfilePage = () => {
                     Authorization: `Bearer ${token}`
                 }
             });
+
             setUser(res.data);
+
             setFormData({
                 username: res.data.username,
-                email: res.data.email
+                email: res.data.email,
+                phone_number: res.data.phone_number || ""
             });
+
         } catch (err) {
             console.error("Failed to load user:", err);
         }
@@ -56,14 +60,14 @@ const ProfilePage = () => {
                     }
                 }
             );
-            showToast("Profile updated successfully", "success");
 
+            showToast("Profile updated successfully", "success");
             setEditing(false);
             loadUser();
+
         } catch (err) {
             console.error(err.response?.data);
             showToast("Failed to update profile", "error");
-
         }
     };
 
@@ -78,19 +82,20 @@ const ProfilePage = () => {
                     }
                 }
             );
-            alert("Password changed successfully");
+
+            showToast("Password changed successfully", "success");
             setPasswordData({ old_password: "", new_password: "" });
+
         } catch (err) {
             console.error(err.response?.data);
-            alert("Failed to change password");
+            showToast("Failed to change password", "error");
         }
     };
 
-    if (!user) return <div style={{padding:"4rem"}}>Loading...</div>;
+    if (!user) return <div style={{ padding: "4rem" }}>Loading...</div>;
 
     return (
         <div className="profile-page">
-
             <div className="profile-container">
 
                 <div className="profile-header">
@@ -99,9 +104,9 @@ const ProfilePage = () => {
                     </div>
                     <h1>{user.username}</h1>
                     <p>{user.email}</p>
+                    <p>{user.phone_number}</p>
                 </div>
 
-                {/* PROFILE INFO */}
                 <div className="profile-card">
                     <h2>Profile Information</h2>
 
@@ -110,13 +115,28 @@ const ProfilePage = () => {
                             <input
                                 className="profile-input"
                                 value={formData.username}
-                                onChange={(e)=>setFormData({...formData, username:e.target.value})}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, username: e.target.value })
+                                }
                             />
+
                             <input
                                 className="profile-input"
                                 value={formData.email}
-                                onChange={(e)=>setFormData({...formData, email:e.target.value})}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, email: e.target.value })
+                                }
                             />
+
+                            <input
+                                className="profile-input"
+                                placeholder="Phone number"
+                                value={formData.phone_number}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, phone_number: e.target.value })
+                                }
+                            />
+
                             <button className="btn btn-primary" onClick={handleUpdateProfile}>
                                 Save Changes
                             </button>
@@ -125,14 +145,15 @@ const ProfilePage = () => {
                         <>
                             <p><strong>Username:</strong> {user.username}</p>
                             <p><strong>Email:</strong> {user.email}</p>
-                            <button className="btn btn-secondary" onClick={()=>setEditing(true)}>
+                            <p><strong>Phone:</strong> {user.phone_number}</p>
+
+                            <button className="btn btn-secondary" onClick={() => setEditing(true)}>
                                 Edit Profile
                             </button>
                         </>
                     )}
                 </div>
 
-                {/* PASSWORD */}
                 <div className="profile-card">
                     <h2>Change Password</h2>
 
@@ -141,7 +162,9 @@ const ProfilePage = () => {
                         placeholder="Current Password"
                         className="profile-input"
                         value={passwordData.old_password}
-                        onChange={(e)=>setPasswordData({...passwordData, old_password:e.target.value})}
+                        onChange={(e) =>
+                            setPasswordData({ ...passwordData, old_password: e.target.value })
+                        }
                     />
 
                     <input
@@ -149,7 +172,9 @@ const ProfilePage = () => {
                         placeholder="New Password"
                         className="profile-input"
                         value={passwordData.new_password}
-                        onChange={(e)=>setPasswordData({...passwordData, new_password:e.target.value})}
+                        onChange={(e) =>
+                            setPasswordData({ ...passwordData, new_password: e.target.value })
+                        }
                     />
 
                     <button className="btn btn-primary" onClick={handleChangePassword}>

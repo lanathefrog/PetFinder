@@ -8,12 +8,23 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
 
-
 class PetSerializer(serializers.ModelSerializer):
+    photo = serializers.SerializerMethodField()
+
     class Meta:
         model = Pet
         fields = '__all__'
 
+    def get_photo(self, obj):
+        if not obj.photo:
+            return None
+
+        request = self.context.get("request")
+
+        if request:
+            return request.build_absolute_uri(obj.photo.url)
+
+        return obj.photo.url
 
 class LocationSerializer(serializers.ModelSerializer):
     # Make lat/long not required since we default them
@@ -24,7 +35,7 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = '__all__'
 class AnnouncementSerializer(serializers.ModelSerializer):
-    pet = PetSerializer()
+    pet = PetSerializer(read_only=True)
     location = LocationSerializer()
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
 

@@ -1,3 +1,5 @@
+from urllib import request
+
 from django.contrib.auth.models import User
 from rest_framework import generics
 from .models import Announcement
@@ -49,6 +51,7 @@ class AnnouncementList(generics.ListCreateAPIView):
 
         return queryset
 
+    queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
     permission_classes = [IsAuthenticated]  # Ensure only logged-in users can post
 
@@ -125,10 +128,15 @@ def register_user(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_announcements(request):
-    user_announcements = Announcement.objects.filter(owner=request.user)
-    serializer = AnnouncementSerializer(user_announcements, many=True)
-    return Response(serializer.data)
+    announcements = Announcement.objects.filter(owner=request.user)
 
+    serializer = AnnouncementSerializer(
+        announcements,
+        many=True,
+        context={'request': request}
+    )
+
+    return Response(serializer.data)
 
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
@@ -148,6 +156,11 @@ def current_user(request):
         user.username = request.data.get('username', user.username)
         user.email = request.data.get('email', user.email)
         user.save()
+
+        phone = request.data.get('phone_number')
+        if phone:
+            user.profile.phone_number = phone
+            user.profile.save()
 
         return Response({
             "message": "Profile updated successfully"

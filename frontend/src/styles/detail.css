@@ -18,8 +18,8 @@
 }
 
 .pet-image-large {
-    width: 300px;
-    height: 300px;
+    width: 50%;
+    height: 50%;
     background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%);
     border-radius: 20px;
     margin: 0 auto 2rem;
@@ -370,4 +370,40 @@
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
+}
+
+.pet-image-large {
+
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+  border-radius: 20px;
+  background: #f3f3f3;
+
+  position: relative;
+  margin: 0 auto;   /* центр */
+}
+
+.pet-image-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.details-map {
+  margin-top: 12px;
+  border-radius: 16px;
+  overflow: hidden;
 }
