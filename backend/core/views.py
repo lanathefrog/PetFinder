@@ -140,7 +140,8 @@ def current_user(request):
         return Response({
             "id": user.id,
             "username": user.username,
-            "email": user.email
+            "email": user.email,
+            "phone_number": getattr(user.profile, "phone_number", "")
         })
 
     if request.method == 'PUT':

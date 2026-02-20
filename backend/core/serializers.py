@@ -26,11 +26,11 @@ class LocationSerializer(serializers.ModelSerializer):
 class AnnouncementSerializer(serializers.ModelSerializer):
     pet = PetSerializer()
     location = LocationSerializer()
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
 
     # 🔥 Додаємо телефон з профілю
     phone_number = serializers.CharField(
-        source='user.profile.phone_number',
+        source='owner.profile.phone_number',
         read_only=True
     )
 
@@ -39,7 +39,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'pet',
-            'user',
+            'owner',
             'status',
             'location',
             'description',
@@ -47,7 +47,10 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        request = self.context['request']
+        request = self.context.get('request')
+
+        # Owner may be passed via serializer.save(owner=...) from the view
+        owner = validated_data.pop('owner', None)
 
         pet_data = validated_data.pop('pet')
         location_data = validated_data.pop('location')
@@ -61,8 +64,11 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
         location = Location.objects.create(**location_data)
 
+        if owner is None and request is not None:
+            owner = request.user
+
         announcement = Announcement.objects.create(
-            user=request.user,  # 🔥 ВАЖЛИВО
+            owner=owner,
             pet=pet,
             location=location,
             **validated_data
