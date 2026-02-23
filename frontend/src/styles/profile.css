@@ -410,3 +410,47 @@
         transform: translateY(40px);
     }
 }
+
+.profile-tabs {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.profile-tab-btn {
+    border: 1px solid #ffd8cc;
+    background: #fff;
+    color: #5f463f;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.profile-tab-btn.active {
+    background: #ff6b4a;
+    color: #fff;
+    border-color: #ff6b4a;
+}
+
+.profile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.profile-list-item {
+    border: 1px solid #f1e5df;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.profile-list-item.unread {
+    border-color: #ffb8a6;
+    background: #fff7f4;
+}

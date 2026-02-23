@@ -20,6 +20,12 @@ export const createAnnouncement = (data) => API.post('announcements/', data);
 export const deleteAnnouncement = (id) => API.delete(`announcements/${id}/`);
 export const updateAnnouncement = (id, data) =>
     API.patch(`announcements/${id}/`, data);
+export const saveAnnouncement = (id) => API.post(`announcements/${id}/save/`);
+export const unsaveAnnouncement = (id) => API.delete(`announcements/${id}/save/`);
+export const getMySavedAnnouncements = () => API.get("users/me/saved/");
+export const getNotifications = () => API.get("notifications/");
+export const markNotificationsRead = (ids = []) =>
+    API.post("notifications/read/", { ids });
 
 export const getChatConversations = (params = {}) =>
     API.get("chat/conversations/", { params });

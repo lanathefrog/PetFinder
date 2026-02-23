@@ -7,10 +7,20 @@ from .serializers import PetSerializer
 
 class ChatUserSerializer(serializers.ModelSerializer):
     profile_image_url = serializers.SerializerMethodField()
+    is_online = serializers.SerializerMethodField()
+    last_seen = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "profile_image_url"]
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "profile_image_url",
+            "is_online",
+            "last_seen",
+        ]
 
     def get_profile_image_url(self, obj):
         profile = getattr(obj, "profile", None)
@@ -21,6 +31,16 @@ class ChatUserSerializer(serializers.ModelSerializer):
         if request:
             return request.build_absolute_uri(profile.profile_image.url)
         return profile.profile_image.url
+
+    def get_is_online(self, obj):
+        presence = getattr(obj, "presence", None)
+        return bool(presence and presence.is_online)
+
+    def get_last_seen(self, obj):
+        presence = getattr(obj, "presence", None)
+        if not presence:
+            return None
+        return presence.last_seen
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):

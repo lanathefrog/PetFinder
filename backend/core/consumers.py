@@ -3,7 +3,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.utils import timezone
 
-from .models import ChatMessage, ConversationParticipant
+from .models import ChatMessage, ConversationParticipant, Notification, UserPresence
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -21,10 +21,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4003)
             return
 
+        await self._set_user_online(user.id)
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
+        user = self.scope.get("user")
+        if user and user.is_authenticated:
+            await self._set_user_offline(user.id)
         if hasattr(self, "room_group_name"):
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -51,6 +55,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         if not message_data:
             return
+        await self._create_message_notifications(
+            conversation_id=self.conversation_id,
+            sender_id=self.scope["user"].id,
+            message_id=message_data["id"],
+        )
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -98,3 +107,46 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "created_at": message.created_at.isoformat(),
             "type": "message",
         }
+
+    @database_sync_to_async
+    def _set_user_online(self, user_id):
+        UserPresence.objects.update_or_create(
+            user_id=user_id,
+            defaults={"is_online": True},
+        )
+
+    @database_sync_to_async
+    def _set_user_offline(self, user_id):
+        UserPresence.objects.update_or_create(
+            user_id=user_id,
+            defaults={"is_online": False, "last_seen": timezone.now()},
+        )
+
+    @database_sync_to_async
+    def _create_message_notifications(self, conversation_id, sender_id, message_id):
+        sender_participant = ConversationParticipant.objects.filter(
+            conversation_id=conversation_id,
+            user_id=sender_id,
+        ).select_related("user").first()
+        sender_username = sender_participant.user.username if sender_participant else "Someone"
+
+        recipients = ConversationParticipant.objects.filter(
+            conversation_id=conversation_id
+        ).exclude(
+            user_id=sender_id
+        ).values_list("user_id", flat=True)
+
+        message = ChatMessage.objects.select_related("conversation__announcement").filter(
+            id=message_id
+        ).first()
+        if not message:
+            return
+
+        for user_id in recipients:
+            Notification.objects.create(
+                user_id=user_id,
+                type=Notification.TYPE_NEW_MESSAGE,
+                title=f"New message from {sender_username}",
+                related_announcement=message.conversation.announcement,
+                related_message=message,
+            )

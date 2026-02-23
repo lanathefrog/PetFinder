@@ -50,6 +50,19 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         );
     };
 
+    const renderPresenceText = (user) => {
+        if (!user) return "Offline";
+        if (user.is_online) return "Online";
+        if (user.last_seen) {
+            const minutes = Math.max(
+                1,
+                Math.round((Date.now() - new Date(user.last_seen).getTime()) / 60000)
+            );
+            return `Last seen ${minutes} min ago`;
+        }
+        return "Offline";
+    };
+
     const fetchConversations = async () => {
         setLoadingConversations(true);
         try {
@@ -218,7 +231,11 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
 
     useEffect(() => {
         fetchConversations();
-        return () => closeSocket();
+        const timer = window.setInterval(fetchConversations, 20000);
+        return () => {
+            window.clearInterval(timer);
+            closeSocket();
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -291,6 +308,9 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                     <h3>{activeConversation.announcement_title}</h3>
                                     <p className="messages-muted">
                                         with {activeConversation.other_user?.username || "user"}
+                                    </p>
+                                    <p className={`presence-indicator ${activeConversation.other_user?.is_online ? "online" : "offline"}`}>
+                                        {activeConversation.other_user?.is_online ? "🟢 " : ""}{renderPresenceText(activeConversation.other_user)}
                                     </p>
                                 </div>
                                 <button

@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { getAnnouncement, getAnnouncements, getChatConversations } from './services/api';
+import {
+    getAnnouncement,
+    getAnnouncements,
+    getChatConversations,
+    getNotifications,
+    markNotificationsRead
+} from './services/api';
 
 import Login from './components/Login';
 import UserDashboard from './components/UserDashboard';
@@ -30,6 +36,9 @@ function App() {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
     const [activeConversationId, setActiveConversationId] = useState(null);
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+    const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
 
     const loadFeed = () => {
         getAnnouncements()
@@ -58,6 +67,19 @@ function App() {
             } catch (e) {
                 // ignore navbar badge fetch errors
             }
+
+            try {
+                const res = await getNotifications();
+                const items = res.data?.results || [];
+                setNotifications(items);
+                setUnreadNotificationsCount(
+                    typeof res.data?.unread_count === "number"
+                        ? res.data.unread_count
+                        : items.filter((item) => !item.is_read).length
+                );
+            } catch (e) {
+                // ignore notification badge fetch errors
+            }
         };
 
         loadUnread();
@@ -71,6 +93,16 @@ function App() {
         localStorage.removeItem('user_id');
         setToken(null);
         setView('feed');
+    };
+
+    const handleMarkNotificationsRead = async () => {
+        try {
+            await markNotificationsRead([]);
+            setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
+            setUnreadNotificationsCount(0);
+        } catch (e) {
+            // ignore
+        }
     };
 
     if (!token) {
@@ -128,6 +160,38 @@ function App() {
                             >
                                 Messages {unreadMessagesCount > 0 ? `(${unreadMessagesCount})` : ""}
                             </a>
+                        </li>
+                        <li className="nav-notifications">
+                            <button
+                                type="button"
+                                className="notification-btn"
+                                onClick={() => setShowNotificationsDropdown((prev) => !prev)}
+                            >
+                                🔔 {unreadNotificationsCount > 0 ? unreadNotificationsCount : ""}
+                            </button>
+                            {showNotificationsDropdown && (
+                                <div className="notifications-dropdown">
+                                    <div className="notifications-dropdown-header">
+                                        <span>Notifications</span>
+                                        <button type="button" onClick={handleMarkNotificationsRead}>
+                                            Mark read
+                                        </button>
+                                    </div>
+                                    {notifications.length === 0 ? (
+                                        <p className="notifications-empty">No notifications</p>
+                                    ) : (
+                                        notifications.slice(0, 8).map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className={`notification-item ${item.is_read ? "" : "unread"}`}
+                                            >
+                                                <strong>{item.title}</strong>
+                                                <span>{new Date(item.created_at).toLocaleString()}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
                         </li>
 
                         <li>

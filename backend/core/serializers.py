@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Pet, Announcement, Location
+from .models import (
+    Announcement,
+    Location,
+    Notification,
+    Pet,
+    SavedAnnouncement,
+)
 from django.contrib.auth.models import User
 from .utils import get_coordinates
 
@@ -39,6 +45,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
     location = LocationSerializer()
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    views_count = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
 
     # 🔥 Додаємо телефон з профілю
     phone_number = serializers.CharField(
@@ -62,7 +70,13 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'location',
             'description',
             'phone_number',
-            'email'
+            'email',
+            'created_at',
+            'updated_at',
+            'is_active',
+            'is_reunited',
+            'views_count',
+            'is_saved',
         ]
 
     def create(self, validated_data):
@@ -156,3 +170,40 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+    def get_views_count(self, obj):
+        annotated = getattr(obj, "views_count_annotated", None)
+        if annotated is not None:
+            return annotated
+        return obj.post_views.count()
+
+    def get_is_saved(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return SavedAnnouncement.objects.filter(
+            user=request.user,
+            announcement=obj,
+        ).exists()
+
+
+class SavedAnnouncementSerializer(serializers.ModelSerializer):
+    announcement = AnnouncementSerializer(read_only=True)
+
+    class Meta:
+        model = SavedAnnouncement
+        fields = ["id", "announcement", "created_at"]
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "type",
+            "title",
+            "related_announcement",
+            "related_message",
+            "is_read",
+            "created_at",
+        ]

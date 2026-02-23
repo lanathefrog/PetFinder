@@ -119,6 +119,19 @@
     color: #1f1f1f;
 }
 
+.presence-indicator {
+    margin-top: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.presence-indicator.online {
+    color: #1f8a4d;
+}
+
+.presence-indicator.offline {
+    color: #74808d;
+}
+
 .chat-link-btn {
     border: 1px solid #ffd9cc;
     background: #fff6f2;
@@ -212,4 +225,3 @@
         grid-template-columns: 1fr;
     }
 }
-

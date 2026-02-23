@@ -18,5 +18,9 @@ path("chat/conversations/<int:conversation_id>/messages/", chat_views.conversati
 path("chat/conversations/<int:conversation_id>/read/", chat_views.mark_conversation_read, name="chat-conversation-read"),
 path("chat/start/", chat_views.start_conversation, name="chat-start"),
 path("chat/messages/", chat_views.send_message_http, name="chat-send-message"),
+path("announcements/<int:announcement_id>/save/", views.toggle_save_announcement, name="announcement-save"),
+path("users/me/saved/", views.my_saved_announcements, name="my-saved-announcements"),
+path("notifications/", views.notifications_list, name="notifications-list"),
+path("notifications/read/", views.notifications_read, name="notifications-read"),
 
 ]

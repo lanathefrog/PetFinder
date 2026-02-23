@@ -118,6 +118,39 @@
     animation: fadeInUp 0.6s ease 0.3s both;
 }
 
+.pet-social-row {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.pet-views {
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #f0d8cf;
+    color: #624b43;
+    font-weight: 600;
+}
+
+.save-toggle-btn {
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #ff6b4a;
+    background: #fff;
+    color: #ff6b4a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.save-toggle-btn.saved {
+    background: #ff6b4a;
+    color: #fff;
+}
+
 /* ============ PHOTO EDIT OVERLAY ============ */
 .photo-edit-wrapper {
     position: relative;

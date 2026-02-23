@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import {
+    getMySavedAnnouncements,
+    getNotifications,
+    markNotificationsRead,
+} from "../services/api";
 import "../styles/base.css";
 import "../styles/responsive.css";
 import "../styles/profile.css";
@@ -12,6 +17,9 @@ const ProfilePage = () => {
     const [editing, setEditing] = useState(false);
     const [profileImagePreview, setProfileImagePreview] = useState(null);
     const [profileImageFile, setProfileImageFile] = useState(null);
+    const [activeTab, setActiveTab] = useState("profile");
+    const [savedItems, setSavedItems] = useState([]);
+    const [notifications, setNotifications] = useState([]);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -30,6 +38,8 @@ const ProfilePage = () => {
 
     useEffect(() => {
         loadUser();
+        loadSaved();
+        loadNotifications();
     }, []);
 
     const loadUser = async () => {
@@ -60,6 +70,34 @@ const ProfilePage = () => {
         if (file) {
             setProfileImageFile(file);
             setProfileImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const loadSaved = async () => {
+        try {
+            const res = await getMySavedAnnouncements();
+            setSavedItems(res.data || []);
+        } catch (err) {
+            // ignore profile secondary tab fetch error
+        }
+    };
+
+    const loadNotifications = async () => {
+        try {
+            const res = await getNotifications();
+            setNotifications(res.data?.results || []);
+        } catch (err) {
+            // ignore profile secondary tab fetch error
+        }
+    };
+
+    const handleMarkAllRead = async () => {
+        try {
+            await markNotificationsRead([]);
+            setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+            showToast("Notifications marked as read", "success");
+        } catch (err) {
+            showToast("Failed to mark notifications as read", "error");
         }
     };
 
@@ -203,7 +241,29 @@ const ProfilePage = () => {
     return (
         <div className="profile-page">
             <div className="profile-container">
+                <div className="profile-tabs">
+                    <button
+                        className={`profile-tab-btn ${activeTab === "profile" ? "active" : ""}`}
+                        onClick={() => setActiveTab("profile")}
+                    >
+                        Profile
+                    </button>
+                    <button
+                        className={`profile-tab-btn ${activeTab === "saved" ? "active" : ""}`}
+                        onClick={() => setActiveTab("saved")}
+                    >
+                        Saved ({savedItems.length})
+                    </button>
+                    <button
+                        className={`profile-tab-btn ${activeTab === "notifications" ? "active" : ""}`}
+                        onClick={() => setActiveTab("notifications")}
+                    >
+                        Notifications ({notifications.filter((n) => !n.is_read).length})
+                    </button>
+                </div>
 
+                {activeTab === "profile" && (
+                    <>
                 <div className="profile-header">
                     <div className="profile-avatar-wrapper">
                         <div className="profile-avatar-container">
@@ -386,6 +446,54 @@ const ProfilePage = () => {
                         </button>
                     </div>
                 </div>
+                    </>
+                )}
+
+                {activeTab === "saved" && (
+                    <div className="profile-card">
+                        <h2>Saved announcements</h2>
+                        {savedItems.length === 0 ? (
+                            <p className="profile-hint">No saved announcements yet.</p>
+                        ) : (
+                            <div className="profile-list">
+                                {savedItems.map((item) => (
+                                    <div key={item.id} className="profile-list-item">
+                                        <strong>{item.announcement?.pet?.name || "Announcement"}</strong>
+                                        <span>
+                                            {item.announcement?.status || "status"} • {new Date(item.created_at).toLocaleString()}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === "notifications" && (
+                    <div className="profile-card">
+                        <div className="profile-card-header">
+                            <h2>Notifications</h2>
+                            <button className="btn btn-secondary" onClick={handleMarkAllRead}>
+                                Mark all read
+                            </button>
+                        </div>
+                        {notifications.length === 0 ? (
+                            <p className="profile-hint">No notifications yet.</p>
+                        ) : (
+                            <div className="profile-list">
+                                {notifications.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className={`profile-list-item ${item.is_read ? "" : "unread"}`}
+                                    >
+                                        <strong>{item.title}</strong>
+                                        <span>{new Date(item.created_at).toLocaleString()}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
             </div>
         </div>

@@ -11,7 +11,7 @@ from .chat_serializers import (
     ConversationListSerializer,
     StartConversationSerializer,
 )
-from .models import Announcement, ChatMessage, Conversation, ConversationParticipant
+from .models import Announcement, ChatMessage, Conversation, ConversationParticipant, Notification
 
 
 def _ensure_participant(conversation, user):
@@ -52,6 +52,14 @@ def start_conversation(request):
         ignore_conflicts=True,
     )
 
+    if created:
+        Notification.objects.create(
+            user=announcement.owner,
+            type=Notification.TYPE_CONTACTED,
+            title=f"{request.user.username} contacted you about {announcement.pet.name}",
+            related_announcement=announcement,
+        )
+
     response_data = ConversationListSerializer(
         conversation,
         context={"request": request}
@@ -73,6 +81,7 @@ def conversations_list(request):
         "announcement__pet"
     ).prefetch_related(
         "participants__user",
+        "participants__user__presence",
         "messages",
         "messages__sender",
     ).annotate(
@@ -165,6 +174,20 @@ def send_message_http(request):
         sender=request.user,
         text=text,
     )
+
+    recipient_users = ConversationParticipant.objects.filter(
+        conversation=conversation
+    ).exclude(
+        user=request.user
+    ).select_related("user")
+    for participant in recipient_users:
+        Notification.objects.create(
+            user=participant.user,
+            type=Notification.TYPE_NEW_MESSAGE,
+            title=f"New message from {request.user.username}",
+            related_announcement=conversation.announcement,
+            related_message=message,
+        )
 
     serializer = ChatMessageSerializer(message, context={"request": request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)

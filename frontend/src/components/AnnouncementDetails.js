@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import axios from "axios";
-import { deleteAnnouncement, startChatConversation, updateAnnouncement } from '../services/api';
+import {
+    deleteAnnouncement,
+    getAnnouncement,
+    saveAnnouncement,
+    startChatConversation,
+    unsaveAnnouncement,
+    updateAnnouncement
+} from '../services/api';
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { useToast } from "./ToastContext";
@@ -19,6 +26,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const { showToast } = useToast();
     const token = localStorage.getItem("access_token");
     const [localAnnouncement, setLocalAnnouncement] = useState(announcement);
+    const [saveLoading, setSaveLoading] = useState(false);
 
     const [isEditing, setIsEditing] = useState(false);
     const [phone, setPhone] = useState(announcement.phone_number || "");
@@ -56,6 +64,22 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         location.latitude !== undefined &&
         location.longitude !== null &&
         location.longitude !== undefined;
+
+    React.useEffect(() => {
+        setLocalAnnouncement(announcement);
+    }, [announcement]);
+
+    React.useEffect(() => {
+        const loadFreshDetails = async () => {
+            try {
+                const res = await getAnnouncement(announcement.id);
+                setLocalAnnouncement(res.data);
+            } catch (err) {
+                // fallback to provided props
+            }
+        };
+        loadFreshDetails();
+    }, [announcement.id]);
 
     const handleMapClick = (e) => {
         const { lat, lng } = e.latlng;
@@ -105,6 +129,28 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         } catch (err) {
             const detail = err.response?.data?.detail;
             showToast(detail || "Failed to start chat", "error");
+        }
+    };
+
+    const handleToggleSave = async () => {
+        if (saveLoading) return;
+        setSaveLoading(true);
+        try {
+            const isSaved = Boolean(localAnnouncement.is_saved);
+            if (isSaved) {
+                await unsaveAnnouncement(localAnnouncement.id);
+            } else {
+                await saveAnnouncement(localAnnouncement.id);
+            }
+            setLocalAnnouncement((prev) => ({
+                ...prev,
+                is_saved: !isSaved,
+            }));
+            showToast(isSaved ? "Removed from saved" : "Saved", "success");
+        } catch (err) {
+            showToast("Failed to update save status", "error");
+        } finally {
+            setSaveLoading(false);
         }
     };
 
@@ -229,6 +275,19 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                     )}
 
                     <p className="pet-status-text">{localAnnouncement.status} pet</p>
+                    <div className="pet-social-row">
+                        <span className="pet-views">👁 {localAnnouncement.views_count || 0} views</span>
+                        {!isOwner && (
+                            <button
+                                type="button"
+                                className={`save-toggle-btn ${localAnnouncement.is_saved ? "saved" : ""}`}
+                                onClick={handleToggleSave}
+                                disabled={saveLoading}
+                            >
+                                {localAnnouncement.is_saved ? "★ Saved" : "☆ Save"}
+                            </button>
+                        )}
+                    </div>
                 </section>
 
                 <div className="detail-content">

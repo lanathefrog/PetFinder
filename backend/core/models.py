@@ -192,6 +192,114 @@ class ChatMessage(models.Model):
         return f"Msg #{self.id} in conversation {self.conversation_id}"
 
 
+class PostView(models.Model):
+    announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.CASCADE,
+        related_name="post_views",
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="announcement_views",
+        null=True,
+        blank=True,
+    )
+    session_key = models.CharField(max_length=64, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["announcement", "user"],
+                name="unique_post_view_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=["announcement", "session_key"],
+                name="unique_post_view_per_session",
+            ),
+        ]
+
+
+class SavedAnnouncement(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="saved_announcements",
+    )
+    announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.CASCADE,
+        related_name="saved_by_users",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "announcement"],
+                name="unique_saved_announcement",
+            )
+        ]
+
+
+class UserPresence(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="presence",
+    )
+    is_online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username}: {'online' if self.is_online else 'offline'}"
+
+
+class Notification(models.Model):
+    TYPE_NEW_MESSAGE = "new_message"
+    TYPE_POST_SAVED = "post_saved"
+    TYPE_POST_LIKED = "post_liked"
+    TYPE_CONTACTED = "contacted"
+    TYPE_CHOICES = [
+        (TYPE_NEW_MESSAGE, "New message"),
+        (TYPE_POST_SAVED, "Post saved"),
+        (TYPE_POST_LIKED, "Post liked"),
+        (TYPE_CONTACTED, "Contacted"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    title = models.CharField(max_length=255)
+    related_announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    related_message = models.ForeignKey(
+        ChatMessage,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.type}"
+
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):

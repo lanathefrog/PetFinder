@@ -1,9 +1,12 @@
-from urllib import request
-
 from django.contrib.auth.models import User
+from django.db.models import Count
 from rest_framework import generics
-from .models import Announcement
-from .serializers import AnnouncementSerializer
+from .models import Announcement, Notification, PostView, SavedAnnouncement
+from .serializers import (
+    AnnouncementSerializer,
+    NotificationSerializer,
+    SavedAnnouncementSerializer,
+)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -34,7 +37,14 @@ def expand_data(data):
 
 class AnnouncementList(generics.ListCreateAPIView):
     def get_queryset(self):
-        queryset = Announcement.objects.all()
+        queryset = Announcement.objects.select_related(
+            "pet",
+            "location",
+            "owner",
+            "owner__profile",
+        ).annotate(
+            views_count_annotated=Count("post_views", distinct=True)
+        )
 
         status = self.request.query_params.get('status')
         pet_type = self.request.query_params.get('pet_type')
@@ -53,7 +63,12 @@ class AnnouncementList(generics.ListCreateAPIView):
 
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
-    permission_classes = [IsAuthenticated]  # Ensure only logged-in users can post
+    permission_classes = [AllowAny]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
         # 1. Transform the flat FormData into nested JSON
@@ -76,9 +91,27 @@ class AnnouncementList(generics.ListCreateAPIView):
 
 
 class AnnouncementDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Announcement.objects.all()
+    queryset = Announcement.objects.select_related(
+        "pet",
+        "location",
+        "owner",
+        "owner__profile",
+    ).annotate(
+        views_count_annotated=Count("post_views", distinct=True)
+    )
     serializer_class = AnnouncementSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._track_view(request, instance)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     def perform_update(self, serializer):
         if self.request.user != self.get_object().owner:
@@ -89,6 +122,22 @@ class AnnouncementDetail(generics.RetrieveUpdateDestroyAPIView):
         if self.request.user != instance.owner:
             raise PermissionDenied("You cannot delete this announcement.")
         instance.delete()
+
+    def _track_view(self, request, announcement):
+        if request.user.is_authenticated:
+            PostView.objects.get_or_create(
+                announcement=announcement,
+                user=request.user,
+            )
+            return
+
+        if not request.session.session_key:
+            request.session.create()
+
+        PostView.objects.get_or_create(
+            announcement=announcement,
+            session_key=request.session.session_key,
+        )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -137,6 +186,72 @@ def my_announcements(request):
     )
 
     return Response(serializer.data)
+
+
+@api_view(["POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+def toggle_save_announcement(request, announcement_id):
+    announcement = Announcement.objects.filter(id=announcement_id).first()
+    if not announcement:
+        return Response({"detail": "Announcement not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "POST":
+        _, created = SavedAnnouncement.objects.get_or_create(
+            user=request.user,
+            announcement=announcement,
+        )
+        if created and announcement.owner_id != request.user.id:
+            Notification.objects.create(
+                user=announcement.owner,
+                type=Notification.TYPE_POST_SAVED,
+                title=f"{request.user.username} saved your announcement",
+                related_announcement=announcement,
+            )
+        return Response({"saved": True})
+
+    SavedAnnouncement.objects.filter(
+        user=request.user,
+        announcement=announcement,
+    ).delete()
+    return Response({"saved": False})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def my_saved_announcements(request):
+    saved = SavedAnnouncement.objects.filter(user=request.user).select_related(
+        "announcement__pet",
+        "announcement__location",
+        "announcement__owner",
+        "announcement__owner__profile",
+    )
+    serializer = SavedAnnouncementSerializer(
+        saved,
+        many=True,
+        context={"request": request},
+    )
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def notifications_list(request):
+    queryset = Notification.objects.filter(user=request.user)
+    serializer = NotificationSerializer(queryset, many=True)
+    unread_count = queryset.filter(is_read=False).count()
+    return Response({"results": serializer.data, "unread_count": unread_count})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def notifications_read(request):
+    ids = request.data.get("ids") or []
+    queryset = Notification.objects.filter(user=request.user, is_read=False)
+    if ids:
+        queryset = queryset.filter(id__in=ids)
+    updated = queryset.update(is_read=True)
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return Response({"updated": updated, "unread_count": unread_count})
 
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
