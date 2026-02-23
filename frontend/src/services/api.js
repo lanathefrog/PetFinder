@@ -14,8 +14,24 @@ API.interceptors.request.use((config) => {
 });
 
 export const getAnnouncements = () => API.get('announcements/');
+export const getAnnouncement = (id) => API.get(`announcements/${id}/`);
 export const getMyAnnouncements = () => API.get('announcements/me/');
 export const createAnnouncement = (data) => API.post('announcements/', data);
 export const deleteAnnouncement = (id) => API.delete(`announcements/${id}/`);
 export const updateAnnouncement = (id, data) =>
     API.patch(`announcements/${id}/`, data);
+
+export const getChatConversations = (params = {}) =>
+    API.get("chat/conversations/", { params });
+
+export const startChatConversation = (announcementId) =>
+    API.post("chat/start/", { announcement_id: announcementId });
+
+export const getConversationMessages = (conversationId, params = {}) =>
+    API.get(`chat/conversations/${conversationId}/messages/`, { params });
+
+export const sendChatMessageHttp = (conversationId, text) =>
+    API.post("chat/messages/", { conversation_id: conversationId, text });
+
+export const markConversationRead = (conversationId) =>
+    API.post(`chat/conversations/${conversationId}/read/`);

@@ -102,6 +102,96 @@ class Photo(models.Model):
         return f"Photo for {self.announcement.pet.name}"
 
 
+class Conversation(models.Model):
+    announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.CASCADE,
+        related_name="conversations"
+    )
+    initiator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="started_conversations"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Future-ready
+    is_closed = models.BooleanField(default=False)
+    related_reunion = models.ForeignKey(
+        Announcement,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reunion_conversations"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["announcement", "initiator"],
+                name="unique_conversation_per_announcement_initiator"
+            )
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Conversation #{self.id} ({self.announcement_id})"
+
+
+class ConversationParticipant(models.Model):
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name="participants"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="chat_participations"
+    )
+    joined_at = models.DateTimeField(auto_now_add=True)
+    last_read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["conversation", "user"],
+                name="unique_user_per_conversation"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} in {self.conversation_id}"
+
+
+class ChatMessage(models.Model):
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="chat_messages"
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    # Future-ready
+    attachment = models.FileField(upload_to="chat_attachments/", null=True, blank=True)
+    image = models.ImageField(upload_to="chat_images/", null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    system_message = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Msg #{self.id} in conversation {self.conversation_id}"
+
+
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):

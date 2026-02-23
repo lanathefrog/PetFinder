@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from "axios";
-import { deleteAnnouncement, updateAnnouncement } from '../services/api';
+import { deleteAnnouncement, startChatConversation, updateAnnouncement } from '../services/api';
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { useToast } from "./ToastContext";
@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 
-const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
+const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) => {
     const { showToast } = useToast();
     const token = localStorage.getItem("access_token");
     const [localAnnouncement, setLocalAnnouncement] = useState(announcement);
@@ -90,6 +90,21 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
         if (window.confirm("Are you sure you want to delete this announcement?")) {
             await deleteAnnouncement(localAnnouncement.id);
             onDeleted();
+        }
+    };
+
+    const handleContactOwner = async () => {
+        try {
+            const res = await startChatConversation(localAnnouncement.id);
+            const conversationId = res.data?.id;
+            if (!conversationId) {
+                showToast("Failed to open chat", "error");
+                return;
+            }
+            onOpenChat?.(conversationId);
+        } catch (err) {
+            const detail = err.response?.data?.detail;
+            showToast(detail || "Failed to start chat", "error");
         }
     };
 
@@ -297,6 +312,12 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
                             <a href={`mailto:${email}`} className="action-btn-large secondary">
                                 {email}
                             </a>
+                        )}
+
+                        {!isEditing && !isOwner && (
+                            <button className="action-btn-large" onClick={handleContactOwner}>
+                                Contact owner
+                            </button>
                         )}
 
                         {isEditing ? (

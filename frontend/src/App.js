@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAnnouncements } from './services/api';
+import { getAnnouncement, getAnnouncements, getChatConversations } from './services/api';
 
 import Login from './components/Login';
 import UserDashboard from './components/UserDashboard';
@@ -11,6 +11,7 @@ import AnnouncementList from './components/AnnouncementList';
 import HomePage from './components/HomePage';
 import HowItWorks from './components/HowItWorks';
 import ProfilePage from './components/ProfilePage';
+import MessagesPage from './components/MessagesPage';
 
 
 
@@ -20,12 +21,15 @@ import './styles/auth-about.css';
 import './styles/dashboard.css';
 import './styles/responsive.css';
 import './styles/forms.css';
+import './styles/messages.css';
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('access_token'));
     const [announcements, setAnnouncements] = useState([]);
     const [view, setView] = useState('home');
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+    const [activeConversationId, setActiveConversationId] = useState(null);
+    const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
     const loadFeed = () => {
         getAnnouncements()
@@ -39,6 +43,27 @@ function App() {
             setView('dashboard');
         }
     }, [token]);
+
+    useEffect(() => {
+        if (!token) return;
+
+        const loadUnread = async () => {
+            try {
+                const res = await getChatConversations({ page: 1, page_size: 50 });
+                const total = (res.data?.results || []).reduce(
+                    (sum, item) => sum + (item.unread_count || 0),
+                    0
+                );
+                setUnreadMessagesCount(total);
+            } catch (e) {
+                // ignore navbar badge fetch errors
+            }
+        };
+
+        loadUnread();
+        const timer = setInterval(loadUnread, 15000);
+        return () => clearInterval(timer);
+    }, [token, view]);
 
     const handleLogout = (e) => {
         e.preventDefault();
@@ -91,6 +116,17 @@ function App() {
                                 }}
                             >
                                 Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="/messages"
+                                onClick={(e)=>{
+                                    e.preventDefault();
+                                    setView('messages');
+                                }}
+                            >
+                                Messages {unreadMessagesCount > 0 ? `(${unreadMessagesCount})` : ""}
                             </a>
                         </li>
 
@@ -159,6 +195,10 @@ function App() {
                             loadFeed();
                             setView('dashboard');
                         }}
+                        onOpenChat={(conversationId) => {
+                            setActiveConversationId(conversationId);
+                            setView('messages');
+                        }}
                     />
                 )}
 
@@ -190,6 +230,20 @@ function App() {
                     <HowItWorks onNavigate={setView} />
                 )}
                 {view === 'profile' && <ProfilePage />}
+                {view === 'messages' && (
+                    <MessagesPage
+                        initialConversationId={activeConversationId}
+                        onOpenAnnouncement={async (announcementId) => {
+                            try {
+                                const res = await getAnnouncement(announcementId);
+                                setSelectedAnnouncement(res.data);
+                                setView('details');
+                            } catch (err) {
+                                setView('listing');
+                            }
+                        }}
+                    />
+                )}
 
 
 
