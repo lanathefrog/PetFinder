@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { createAnnouncement } from '../services/api';
+import { useToast } from './ToastContext';
 import '../styles/forms.css';
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+
+// FIX leaflet icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl: require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+});
+
 const ReportLost = ({ onRefresh, onCancel }) => {
+    const { showToast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingContact, setIsLoadingContact] = useState(true);
     const [preview, setPreview] = useState(null);
     const [contactData, setContactData] = useState({
         email: '',
@@ -25,6 +38,7 @@ const ReportLost = ({ onRefresh, onCancel }) => {
     const token = localStorage.getItem('access_token');
     const [suggestions, setSuggestions] = useState([]);
     const [coords, setCoords] = useState({ lat: null, lon: null });
+    const [position, setPosition] = useState([50.4501, 30.5234]);
 
 
     const searchLocation = async (query) => {
@@ -69,7 +83,7 @@ const ReportLost = ({ onRefresh, onCancel }) => {
             console.log("Reverse geocode error", err);
         }
     };
-    const [position, setPosition] = useState(null);
+
     useEffect(() => {
         const loadContactData = async () => {
             try {
@@ -84,11 +98,14 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                 });
             } catch (err) {
                 console.error('Failed to load contact data:', err);
+                showToast('Could not load your contact information', 'error');
+            } finally {
+                setIsLoadingContact(false);
             }
         };
 
         loadContactData();
-    }, [token]);
+    }, [token, showToast]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -105,50 +122,64 @@ const ReportLost = ({ onRefresh, onCancel }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validation
+        if (!formData.name.trim()) {
+            showToast('Please enter your pet\'s name', 'error');
+            return;
+        }
+        if (!formData.date_lost) {
+            showToast('Please select the date your pet was lost', 'error');
+            return;
+        }
+        if (!formData.location.trim()) {
+            showToast('Please select a location where your pet was lost', 'error');
+            return;
+        }
+
+        setIsSubmitting(true);
+
         const dataPayload = new FormData();
         dataPayload.append('pet.name', formData.name);
         dataPayload.append('pet.pet_type', formData.pet_type);
-        dataPayload.append('pet.breed', formData.breed);
+        dataPayload.append('pet.breed', formData.breed || 'Unknown');
         dataPayload.append('pet.gender', formData.gender);
-        dataPayload.append('pet.color', formData.color);
+        dataPayload.append('pet.color', formData.color || 'Unknown');
         if (formData.image) {
             dataPayload.append('pet.photo', formData.image);
         }
 
         dataPayload.append('status', 'lost');
-        dataPayload.append('description', formData.description);
+        dataPayload.append('description', formData.description || '');
         dataPayload.append("location.address", formData.location);
         if (position) {
-            dataPayload.append("location.latitude", position.lat);
-            dataPayload.append("location.longitude", position.lng);
+            dataPayload.append("location.latitude", position[0]);
+            dataPayload.append("location.longitude", position[1]);
         }
-        dataPayload.append("location.address", formData.location);
-        try {
-            const response = await createAnnouncement(dataPayload);
 
-            console.log('SUCCESS RESPONSE:', response);
-            alert('Report submitted successfully!');
+        try {
+            await createAnnouncement(dataPayload);
+            showToast('🎉 Your lost pet report has been submitted! Help is on the way!', 'success');
 
             if (onRefresh) onRefresh();
+            setTimeout(() => onCancel?.(), 1500);
         } catch (err) {
-            console.error('FULL ERROR OBJECT:', err);
-            console.error('STATUS:', err.response?.status);
-            console.error('FULL BACKEND DATA:', JSON.stringify(err.response?.data, null, 2));
-            console.error('HEADERS:', err.response?.headers);
-
-            alert('Submission failed. Check console for details.');
+            console.error('Submission error:', err);
+            showToast('Failed to submit report. Please try again.', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const LocationPicker = () => {
         useMapEvents({
             click(e) {
-                setPosition(e.latlng);
-                reverseGeocode(e.latlng);
+                const newPosition = [e.latlng.lat, e.latlng.lng];
+                setPosition(newPosition);
+                reverseGeocode({ lat: e.latlng.lat, lng: e.latlng.lng });
             },
         });
 
-        return position ? <Marker position={position} /> : null;
+        return position && Array.isArray(position) ? <Marker position={position} /> : null;
     };
 
     return (
@@ -308,11 +339,23 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Email</label>
-                                <input type="email" className="form-input" value={contactData.email} readOnly />
+                                <input
+                                    type="email"
+                                    className="form-input"
+                                    value={contactData.email}
+                                    placeholder={isLoadingContact ? "Loading..." : "your@email.com"}
+                                    readOnly
+                                />
                             </div>
                             <div className="form-group">
                                 <label>Phone Number</label>
-                                <input type="text" className="form-input" value={contactData.phone_number} readOnly />
+                                <input
+                                    type="tel"
+                                    className="form-input"
+                                    value={contactData.phone_number}
+                                    placeholder={isLoadingContact ? "Loading..." : "+1 (555) 000-0000"}
+                                    readOnly
+                                />
                             </div>
                         </div>
 
@@ -321,19 +364,17 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                                 type="button"
                                 className="btn-draft"
                                 onClick={onCancel}
-                                style={{
-                                    flex: 1,
-                                    padding: '12px',
-                                    background: 'white',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer'
-                                }}
+                                disabled={isSubmitting}
                             >
                                 Cancel
                             </button>
-                            <button type="submit" className="submit-btn" style={{ flex: 2, cursor: 'pointer' }}>
-                                Submit Report
+                            <button
+                                type="submit"
+                                className="submit-btn"
+                                disabled={isSubmitting}
+                                style={{ opacity: isSubmitting ? 0.7 : 1 }}
+                            >
+                                {isSubmitting ? '⏳ Submitting...' : '✓ Submit Report'}
                             </button>
                         </div>
                     </form>

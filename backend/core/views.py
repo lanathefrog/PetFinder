@@ -145,25 +145,124 @@ def current_user(request):
     user = request.user
 
     if request.method == 'GET':
+        # Build profile image URL if it exists
+        profile_image_url = None
+        if hasattr(user, 'profile') and user.profile.profile_image:
+            profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
+
         return Response({
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "phone_number": getattr(user.profile, "phone_number", "")
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone_number": getattr(user.profile, "phone_number", ""),
+            "profile_image_url": profile_image_url
         })
 
     if request.method == 'PUT':
-        user.username = request.data.get('username', user.username)
-        user.email = request.data.get('email', user.email)
-        user.save()
+        import logging
+        logger = logging.getLogger(__name__)
 
+        logger.info(f"📝 PUT request to current_user from user: {user.username}")
+        logger.info(f"📦 Request data keys: {request.data.keys()}")
+        logger.info(f"📦 Request FILES keys: {request.FILES.keys()}")
+        logger.info(f"📦 Full data: {dict(request.data)}")
+
+        # Update username (but don't allow deletion)
+        new_username = request.data.get('username', user.username)
+        if new_username and new_username.strip():
+            user.username = new_username
+            logger.info(f"✏️ Updated username to: {new_username}")
+        else:
+            logger.warning(f"⚠️ Username cannot be empty! Got: '{new_username}'")
+            return Response(
+                {"error": "Username cannot be empty"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update email (but don't allow deletion)
+        new_email = request.data.get('email', user.email)
+        if new_email and new_email.strip():
+            user.email = new_email
+            logger.info(f"✏️ Updated email to: {new_email}")
+        else:
+            logger.warning(f"⚠️ Email cannot be empty! Got: '{new_email}'")
+            return Response(
+                {"error": "Email cannot be empty"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update first name
+        first_name = request.data.get('first_name', user.first_name)
+        if first_name and first_name.strip():
+            user.first_name = first_name
+            logger.info(f"✏️ Updated first_name to: {first_name}")
+        else:
+            logger.warning(f"⚠️ First name cannot be empty! Got: '{first_name}'")
+            return Response(
+                {"error": "First name cannot be empty"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update last name
+        last_name = request.data.get('last_name', user.last_name)
+        if last_name and last_name.strip():
+            user.last_name = last_name
+            logger.info(f"✏️ Updated last_name to: {last_name}")
+        else:
+            logger.warning(f"⚠️ Last name cannot be empty! Got: '{last_name}'")
+            return Response(
+                {"error": "Last name cannot be empty"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.save()
+        logger.info(f"✅ User saved successfully")
+
+        # Handle phone number
         phone = request.data.get('phone_number')
         if phone:
             user.profile.phone_number = phone
             user.profile.save()
+            logger.info(f"✏️ Updated phone_number to: {phone}")
+
+        # Handle profile image
+        if 'profile_image' in request.FILES:
+            logger.info(f"🖼️ Profile image found in FILES!")
+            profile_image = request.FILES['profile_image']
+            logger.info(f"🖼️ File name: {profile_image.name}")
+            logger.info(f"🖼️ File size: {profile_image.size} bytes")
+            logger.info(f"🖼️ File content type: {profile_image.content_type}")
+
+            try:
+                user.profile.profile_image = profile_image
+                user.profile.save()
+                logger.info(f"✅ Profile image saved successfully!")
+            except Exception as e:
+                logger.error(f"❌ Error saving profile image: {str(e)}")
+                return Response(
+                    {"error": f"Failed to upload profile image: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            logger.info(f"ℹ️ No profile_image in FILES")
+
+        # Build profile image URL if it exists
+        profile_image_url = None
+        if user.profile.profile_image:
+            profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
+            logger.info(f"🖼️ Profile image URL: {profile_image_url}")
 
         return Response({
-            "message": "Profile updated successfully"
+            "message": "Profile updated successfully",
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone_number": getattr(user.profile, "phone_number", ""),
+            "profile_image_url": profile_image_url
         })
 
 

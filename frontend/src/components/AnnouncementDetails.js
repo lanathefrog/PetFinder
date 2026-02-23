@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import axios from "axios";
 import { deleteAnnouncement, updateAnnouncement } from '../services/api';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { useToast } from "./ToastContext";
 import 'leaflet/dist/leaflet.css';
@@ -15,42 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 
-// Helper component to handle map click events
-const LocationPickerMap = ({ center, onLocationSelect, selectedLocation }) => {
-    const MapClickHandler = () => {
-        useMapEvents({
-            click(e) {
-                onLocationSelect(e.latlng.lat, e.latlng.lng);
-            },
-        });
-        return null;
-    };
-
-    return (
-        <MapContainer
-            center={center}
-            zoom={14}
-            style={{ height: "400px", width: "100%", cursor: "crosshair" }}
-            onClick={(e) => {
-                if (e.latlng) {
-                    onLocationSelect(e.latlng.lat, e.latlng.lng);
-                }
-            }}
-        >
-            <TileLayer
-                attribution="&copy; OpenStreetMap"
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapClickHandler />
-            {selectedLocation?.latitude && selectedLocation?.longitude && (
-                <Marker position={[selectedLocation.latitude, selectedLocation.longitude]}>
-                    <Popup>New Location</Popup>
-                </Marker>
-            )}
-        </MapContainer>
-    );
-};
-
 const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
     const { showToast } = useToast();
     const token = localStorage.getItem("access_token");
@@ -59,13 +23,12 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [description, setDescription] = useState(localAnnouncement.description || "");
     const [phone, setPhone] = useState(localAnnouncement.phone_number || "");
-    const [email, setEmail] = useState(localAnnouncement.email || "");
+    const email = localAnnouncement.email || "";
 
     const currentUserId = parseInt(localStorage.getItem("user_id"));
     const isOwner = currentUserId === localAnnouncement.owner;
     const [preview, setPreview] = useState(null);
     const [newPhoto, setNewPhoto] = useState(null);
-    const [removePhoto, setRemovePhoto] = useState(false);
 
     const lat = localAnnouncement.location?.latitude;
     const lng = localAnnouncement.location?.longitude;
@@ -78,10 +41,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
         longitude: lng || null,
     });
     const [isPickingLocation, setIsPickingLocation] = useState(false);
-    const [originalLocation, setOriginalLocation] = useState({
-        latitude: lat || null,
-        longitude: lng || null,
-    });
 
     const [formData, setFormData] = useState({
         name: localAnnouncement.pet.name,
@@ -100,38 +59,23 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
         lng !== null &&
         lng !== undefined;
 
-    const handleMapClick = (lat, lng) => {
+    const handleMapClick = (e) => {
+        const { lat: newLat, lng: newLng } = e.latlng;
         setEditingLocation({
-            latitude: lat,
-            longitude: lng,
+            latitude: newLat,
+            longitude: newLng,
         });
     };
 
     const handleConfirmLocation = () => {
         setLocation(editingLocation);
-        setOriginalLocation(editingLocation);
         setIsPickingLocation(false);
         showToast("Location updated!", "success");
     };
 
     const handleCancelLocationPick = () => {
-        // Reset editing location to original before canceling
-        setEditingLocation(originalLocation);
+        setEditingLocation(location);
         setIsPickingLocation(false);
-        showToast("Location change cancelled", "info");
-    };
-
-    const handleCancelEdit = () => {
-        setIsEditing(false);
-        setPreview(null);
-        setNewPhoto(null);
-        setRemovePhoto(false);
-        setEditingLocation(originalLocation);
-        setLocation(originalLocation);
-        // Reset description and phone to original
-        setDescription(localAnnouncement.description || "");
-        setPhone(localAnnouncement.phone_number || "");
-        setEmail(localAnnouncement.email || "");
     };
 
     const handlePhotoChange = (e) => {
@@ -139,14 +83,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
         if (file) {
             setNewPhoto(file);
             setPreview(URL.createObjectURL(file));
-            setRemovePhoto(false);
         }
-    };
-
-    const handlePhotoRemove = () => {
-        setNewPhoto(null);
-        setPreview(null);
-        setRemovePhoto(true);
     };
 
 
@@ -171,13 +108,8 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
         if (formData.description)
             payload.append("description", formData.description);
 
-        // Handle photo upload
-        if (newPhoto) {
+        if (newPhoto)
             payload.append("pet.photo", newPhoto);
-        } else if (removePhoto) {
-            // Send a flag to remove photo on backend
-            payload.append("pet.photo", "");
-        }
 
         // Add location if it exists
         if (location.latitude && location.longitude) {
@@ -186,13 +118,10 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
         }
 
         try {
-            // 🔹 update phone and email
+            // 🔹 update phone
             await axios.put(
                 "http://127.0.0.1:8001/api/users/me/",
-                {
-                    phone_number: phone,
-                    email: email
-                },
+                { phone_number: phone },
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -204,12 +133,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
             // 💥 оновлюємо UI БЕЗ перезавантаження
             setLocalAnnouncement(res.data);
 
-            // Reset edit state
             setIsEditing(false);
             setPreview(null);
             setNewPhoto(null);
-            setRemovePhoto(false);
-            setOriginalLocation(location);
 
             showToast("Announcement updated successfully.", "success");
 
@@ -235,12 +161,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
                             <button className="btn-draft" onClick={handleDelete}>🗑️ Delete</button>
                         </div>
                     )}
-
-                    {isEditing && (
-                        <div className="detail-actions-top">
-                            <button className="btn-draft" onClick={handleCancelEdit} style={{color: '#999'}}>✕ Cancel</button>
-                        </div>
-                    )}
                 </div>
 
                 {/* 🐾 HEADER */}
@@ -249,7 +169,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
                     {/* 🐾 IMAGE */}
                     <div className="pet-image-large photo-edit-wrapper">
 
-                        {(preview || (localAnnouncement.pet.photo && !removePhoto)) ? (
+                        {preview || localAnnouncement.pet.photo ? (
                             <img
                                 src={preview || localAnnouncement.pet.photo}
                                 alt="pet"
@@ -267,10 +187,10 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
                             <div className="photo-overlay">
                                 <label className="photo-btn">
                                     Change
-                                    <input type="file" hidden onChange={handlePhotoChange} accept="image/*" />
+                                    <input type="file" hidden onChange={handlePhotoChange} />
                                 </label>
 
-                                <button className="photo-btn" onClick={handlePhotoRemove}>Remove</button>
+                                <button onClick={() => setPreview(null)}>Remove</button>
                             </div>
                         )}
 
@@ -282,11 +202,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
                             onChange={(e) =>
                                 setFormData({ ...formData, name: e.target.value })
                             }
-                            className="pet-name-input"
-                            placeholder="Enter pet name"
                         />
                     ) : (
-                        <h1 className="pet-name">{localAnnouncement.pet.name}</h1>
+                        <h1>{localAnnouncement.pet.name}</h1>
                     )}
 
                     <p className="pet-status-text">{localAnnouncement.status} pet</p>
@@ -367,54 +285,34 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
 
                     {/* 📞 CONTACT */}
                     <div className="action-card">
-                        <h2>📞 Contact Information</h2>
+                        <h2>Contact</h2>
+
+                        {email && (
+                            <a href={`mailto:${email}`} className="action-btn-large secondary">
+                                📧 {email}
+                            </a>
+                        )}
 
                         {isEditing ? (
-                            <div className="contact-form-group">
-                                <div className="form-group-item">
-                                    <label>📧 Email</label>
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e)=>setEmail(e.target.value)}
-                                        className="form-input"
-                                        placeholder="your@email.com"
-                                    />
-                                </div>
+                            <>
+                                <input
+                                    value={phone}
+                                    onChange={(e)=>setPhone(e.target.value)}
+                                    className="form-input"
+                                />
 
-                                <div className="form-group-item">
-                                    <label>📞 Phone</label>
-                                    <input
-                                        type="tel"
-                                        value={phone}
-                                        onChange={(e)=>setPhone(e.target.value)}
-                                        className="form-input"
-                                        placeholder="+1 (555) 000-0000"
-                                    />
-                                </div>
-
-                                <button className="btn btn-primary" onClick={handleSave}>
-                                    💾 Save Changes
-                                </button>
-                            </div>
+                                {/* Save moved to the single Save Changes button below to keep the UI clean */}
+                            </>
                         ) : (
-                            <div className="contact-info-display">
-                                {email && (
-                                    <a href={`mailto:${email}`} className="action-btn-large secondary contact-btn">
-                                        📧 {email}
-                                    </a>
-                                )}
-
-                                {phone && (
-                                    <a href={`tel:${phone}`} className="action-btn-large secondary contact-btn">
-                                        📞 {phone}
-                                    </a>
-                                )}
-                            </div>
+                            phone && (
+                                <a href={`tel:${phone}`} className="action-btn-large">
+                                    📞 {phone}
+                                </a>
+                            )
                         )}
 
                         {isOwner && !isEditing && (
-                            <div className="action-buttons-group">
+                            <div style={{marginTop:'1rem'}}>
                                 <button
                                     className="action-btn-large secondary"
                                     onClick={()=>setIsEditing(true)}
@@ -451,67 +349,33 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
 
                 </div>
 
-                {isEditing && (
-                    <button className="btn btn-primary" onClick={handleSave}>
-                        Save Changes
-                    </button>
-                )}
-
+                {/* LOCATION EDIT (moved inside detail-content) */}
                 {hasCoords && (
-                    <div className="details-map">
-                        <MapContainer
-                            center={[lat, lng]}
-                            zoom={14}
-                            style={{ height: "300px", width: "100%" }}
-                        >
-                            <TileLayer
-                                attribution="&copy; OpenStreetMap"
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            />
-                            <Marker position={[lat, lng]}>
-                                <Popup>{localAnnouncement.pet.name}</Popup>
-                            </Marker>
-                        </MapContainer>
-                    </div>
-                )}
+                     <div className="details-map">
+                         <MapContainer
+                             center={[lat, lng]}
+                             zoom={14}
+                             style={{ height: "300px", width: "100%" }}
+                         >
+                             <TileLayer
+                                 attribution="&copy; OpenStreetMap"
+                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                             />
+                             <Marker position={[lat, lng]}>
+                                 <Popup>{localAnnouncement.pet.name}</Popup>
+                             </Marker>
+                         </MapContainer>
+                     </div>
+                 )}
 
                 {isEditing && (
-                    <div className="location-edit-section">
-                        <h3>📍 Edit Location</h3>
-                        <p className="location-help-text">Click on the map to select a new location</p>
-                        {!isPickingLocation ? (
-                            <button
-                                className="btn btn-primary btn-location"
-                                onClick={() => {
-                                    setIsPickingLocation(true);
-                                    setEditingLocation(location);
-                                }}
-                            >
-                                🗺️ Pick Location on Map
-                            </button>
-                        ) : (
-                            <div className="location-picker-wrapper">
-                                <LocationPickerMap
-                                    center={[editingLocation.latitude || 50.4501, editingLocation.longitude || 30.5234]}
-                                    onLocationSelect={handleMapClick}
-                                    selectedLocation={editingLocation}
-                                />
-                                <div className="location-picker-controls">
-                                    <button
-                                        className="btn btn-success"
-                                        onClick={handleConfirmLocation}
-                                    >
-                                        ✓ Confirm Location
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={handleCancelLocationPick}
-                                    >
-                                        ✕ Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                    <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-primary" onClick={handleSave}>
+                            Save Changes
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                            Cancel
+                        </button>
                     </div>
                 )}
 
@@ -521,3 +385,4 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted }) => {
 };
 
 export default AnnouncementDetails;
+

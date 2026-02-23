@@ -1,12 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { createAnnouncement, getAnnouncements } from '../services/api';
+import { useToast } from './ToastContext';
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import L from "leaflet";
 import '../styles/forms.css';
 
+// FIX leaflet icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl: require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+});
+
 const ReportFound = ({ onRefresh, onCancel }) => {
+    const { showToast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingContact, setIsLoadingContact] = useState(true);
     const [activeTab, setActiveTab] = useState('new');
     const [lostPets, setLostPets] = useState([]);
     const [preview, setPreview] = useState(null);
+    const [position, setPosition] = useState([50.4501, 30.5234]);
+    const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [contactData, setContactData] = useState({
         email: '',
         phone_number: ''
@@ -18,12 +34,42 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         size: 'medium',
         color: '',
         location: '',
-        date_found: '',
+        date_found: new Date().toISOString().split('T')[0], // Default to today
         description: '',
         contact_name: '',
         image: null
     });
     const token = localStorage.getItem('access_token');
+
+    const reverseGeocode = async ({ lat, lng }) => {
+        try {
+            const res = await axios.get(
+                "http://127.0.0.1:8001/api/reverse-geocode/",
+                {
+                    params: { lat, lon: lng },
+                }
+            );
+
+            setFormData((prev) => ({
+                ...prev,
+                location: res.data.address,
+            }));
+        } catch (err) {
+            console.log("Reverse geocode error", err);
+        }
+    };
+
+    const LocationPickerMap = () => {
+        useMapEvents({
+            click(e) {
+                const newPosition = [e.latlng.lat, e.latlng.lng];
+                setPosition(newPosition);
+                reverseGeocode({ lat: e.latlng.lat, lng: e.latlng.lng });
+            },
+        });
+
+        return position && Array.isArray(position) ? <Marker position={position} /> : null;
+    };
 
     useEffect(() => {
         if (activeTab === 'match') {
@@ -50,11 +96,14 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                 });
             } catch (err) {
                 console.error('Failed to load contact data:', err);
+                showToast('Could not load your contact information', 'error');
+            } finally {
+                setIsLoadingContact(false);
             }
         };
 
         loadContactData();
-    }, [token]);
+    }, [token, showToast]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -75,33 +124,62 @@ const ReportFound = ({ onRefresh, onCancel }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validation
+        if (!formData.pet_type) {
+            showToast('Please select the pet type', 'error');
+            return;
+        }
+        if (!formData.location.trim()) {
+            showToast('Please enter the location where you found the pet', 'error');
+            return;
+        }
+        if (!formData.date_found) {
+            showToast('Please select the date you found the pet', 'error');
+            return;
+        }
+        if (!formData.contact_name.trim()) {
+            showToast('Please enter your name', 'error');
+            return;
+        }
+
+        setIsSubmitting(true);
+
         const dataPayload = new FormData();
         dataPayload.append('pet.name', 'Unknown');
         dataPayload.append('pet.pet_type', formData.pet_type);
-        dataPayload.append('pet.breed', formData.breed);
-        dataPayload.append('pet.gender', formData.gender);
-        dataPayload.append('pet.color', formData.color);
+        dataPayload.append('pet.breed', formData.breed || 'Unknown');
+        dataPayload.append('pet.gender', formData.gender || 'unknown');
+        dataPayload.append('pet.color', formData.color || 'Unknown');
         if (formData.image) {
             dataPayload.append('pet.photo', formData.image);
         }
 
         dataPayload.append('status', 'found');
         dataPayload.append('location.address', formData.location);
+        if (position) {
+            dataPayload.append("location.latitude", position[0]);
+            dataPayload.append("location.longitude", position[1]);
+        }
 
-        const fullDescription = `Found on: ${formData.date_found}\nFinder: ${formData.contact_name}\nEmail: ${contactData.email}\nPhone: ${contactData.phone_number}\n\n${formData.description}`;
+        const fullDescription = `Found on: ${formData.date_found}\nFinder: ${formData.contact_name}\nEmail: ${contactData.email}\nPhone: ${contactData.phone_number}\n\n${formData.description || ''}`;
         dataPayload.append('description', fullDescription);
 
         try {
-            await createAnnouncement(dataPayload);
-            alert('Thank you! The pet has been reported as found.');
+            const response = await createAnnouncement(dataPayload);
+            showToast('🎉 Thank you! The found pet report has been posted!', 'success');
+
+            // Navigate to the created announcement after a short delay
+            setTimeout(() => {
+                onCancel?.();
+                window.location.href = `/announcement/${response.data.id}`;
+            }, 1500);
+
             if (onRefresh) onRefresh();
         } catch (err) {
-            console.error('FULL ERROR OBJECT:', err);
-            console.error('STATUS:', err.response?.status);
-            console.error('BACKEND DATA:', JSON.stringify(err.response?.data, null, 2));
-            console.error('HEADERS:', err.response?.headers);
-
-            alert('Submission failed. Check console.');
+            console.error('Submission error:', err);
+            showToast('Failed to submit report. Please try again.', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -242,18 +320,70 @@ const ReportFound = ({ onRefresh, onCancel }) => {
 
                             <h3 className="form-section-title" style={{ margin: '2rem 0 1rem', color: '#333' }}>2. Location & Contact</h3>
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Location Found</label>
-                                    <input name="location" type="text" className="form-input" required onChange={handleChange} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Date Found</label>
-                                    <input name="date_found" type="date" className="form-input" required onChange={handleChange} />
-                                </div>
+                            <div className="form-group">
+                                <label>📍 Location Found</label>
+                                {!isPickingLocation ? (
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary btn-location"
+                                        onClick={() => setIsPickingLocation(true)}
+                                    >
+                                        🗺️ Pick Location on Map
+                                    </button>
+                                ) : (
+                                    <div className="location-picker-wrapper">
+                                        <MapContainer
+                                            center={position}
+                                            zoom={14}
+                                            style={{ height: "400px", width: "100%", borderRadius: "16px" }}
+                                        >
+                                            <TileLayer
+                                                attribution="&copy; OpenStreetMap"
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            />
+                                            <LocationPickerMap />
+                                        </MapContainer>
+                                        <div className="location-picker-controls" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                            <button
+                                                type="button"
+                                                className="btn btn-success"
+                                                onClick={() => setIsPickingLocation(false)}
+                                            >
+                                                ✓ Confirm
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary"
+                                                onClick={() => setIsPickingLocation(false)}
+                                            >
+                                                ✕ Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                                <input
+                                    name="location"
+                                    type="text"
+                                    className="form-input"
+                                    value={formData.location}
+                                    placeholder="Location will appear here after picking on map"
+                                    readOnly
+                                    style={{ marginTop: '1rem' }}
+                                />
                             </div>
 
                             <div className="form-row">
+                                <div className="form-group">
+                                    <label>Date Found</label>
+                                    <input
+                                        name="date_found"
+                                        type="date"
+                                        className="form-input"
+                                        value={formData.date_found}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
                                 <div className="form-group">
                                     <label>Your Name</label>
                                     <input name="contact_name" type="text" className="form-input" required onChange={handleChange} />
@@ -263,11 +393,23 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Email</label>
-                                    <input type="email" className="form-input" value={contactData.email} readOnly />
+                                    <input
+                                        type="email"
+                                        className="form-input"
+                                        value={contactData.email}
+                                        placeholder={isLoadingContact ? "Loading..." : "your@email.com"}
+                                        readOnly
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Phone Number</label>
-                                    <input type="text" className="form-input" value={contactData.phone_number} readOnly />
+                                    <input
+                                        type="tel"
+                                        className="form-input"
+                                        value={contactData.phone_number}
+                                        placeholder={isLoadingContact ? "Loading..." : "+1 (555) 000-0000"}
+                                        readOnly
+                                    />
                                 </div>
                             </div>
 
@@ -277,8 +419,10 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                             </div>
 
                             <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                                <button type="button" className="btn-draft" onClick={onCancel} style={{ flex: 1 }}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>Submit Report</button>
+                                <button type="button" className="btn-draft" onClick={onCancel} disabled={isSubmitting}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1 }}>
+                                    {isSubmitting ? '⏳ Submitting...' : '✓ Submit Report'}
+                                </button>
                             </div>
                         </form>
                     ) : (

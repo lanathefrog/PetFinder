@@ -91,21 +91,20 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                     latitude=lat or 0,
                     longitude=lng or 0,
                 )
+            else:
+                # Create location with default coordinates if no address or lat/lng
+                location = Location.objects.create(
+                    address="",
+                    latitude=0.0,
+                    longitude=0.0,
+                )
 
         # Owner may be passed via serializer.save(owner=...) from the view
         owner = validated_data.pop('owner', None)
 
         pet_data = validated_data.pop('pet')
-        location_data = validated_data.pop('location')
 
         pet = Pet.objects.create(**pet_data)
-
-        if 'latitude' not in location_data:
-            location_data['latitude'] = 0.0
-        if 'longitude' not in location_data:
-            location_data['longitude'] = 0.0
-
-        location = Location.objects.create(**location_data)
 
         if owner is None and request is not None:
             owner = request.user
@@ -117,7 +116,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
-        print("LOCATION DATA:", location_data)
 
         return announcement
 
