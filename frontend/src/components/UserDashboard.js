@@ -39,6 +39,25 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
         return new Date(dateString).toLocaleDateString();
 
     };
+
+    // Shorten full address to: Street, City, Country (best-effort heuristic)
+    const formatShortAddress = (address) => {
+        if (!address) return 'Location N/A';
+        const parts = address.split(',').map(p => p.trim()).filter(Boolean);
+        if (parts.length === 0) return 'Location N/A';
+
+        const street = parts[0];
+        const country = parts[parts.length - 1];
+        // Try to pick a city-like part: second from the end if available, otherwise the second element
+        const city = parts.length >= 2 ? parts[parts.length - 2] : (parts[1] || '');
+
+        const elems = [];
+        if (street) elems.push(street);
+        if (city && city !== street && city !== country) elems.push(city);
+        if (country && country !== city) elems.push(country);
+
+        return elems.join(', ');
+    };
     const activeCount = myPets.length;
     const lostCount = myPets.filter(p => p.status === 'lost').length;
     const foundCount = myPets.filter(p => p.status === 'found').length;
@@ -106,7 +125,7 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
                                 <div className="announcement-meta">
                                     <div className="meta-item">
                                         <span>📍</span>
-                                        <span>{pet.location?.address || 'Location N/A'}</span>
+                                        <span>{formatShortAddress(pet.location?.address)}</span>
                                     </div>
                                     <div className="meta-item">
                                         <span>📅</span>

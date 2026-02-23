@@ -185,3 +185,18 @@ def change_password(request):
     user.save()
 
     return Response({"message": "Password updated successfully"})
+
+from geopy.geocoders import Nominatim
+
+@api_view(['GET'])
+def reverse_geocode(request):
+    lat = request.GET.get("lat")
+    lon = request.GET.get("lon")
+
+    geolocator = Nominatim(user_agent="pet_finder")
+
+    location = geolocator.reverse(f"{lat}, {lon}")
+
+    return Response({
+        "address": location.address if location else ""
+    })

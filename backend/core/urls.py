@@ -1,7 +1,8 @@
 from django.urls import path
 
+
 from . import views
-from .views import AnnouncementList, AnnouncementDetail, register_user
+from .views import AnnouncementList, AnnouncementDetail, register_user, reverse_geocode
 
 urlpatterns = [
     path('announcements/', AnnouncementList.as_view(), name='announcement-list'),
@@ -10,5 +11,6 @@ urlpatterns = [
     path('announcements/me/', views.my_announcements, name='my-announcements'),
 path('users/me/', views.current_user, name='current-user'),
 path('users/change-password/', views.change_password, name='change-password'),
+path("reverse-geocode/", reverse_geocode),
 
 ]

@@ -1,7 +1,7 @@
-/* static/core/css/detail.css - Announcement detail page */
+/* Announcement Detail Page - Enhanced Styling */
 
 .detail-page {
-    background: #FFF5F2;
+    background: linear-gradient(135deg, #FFF5F2 0%, #FFE8E0 100%);
     min-height: 100vh;
     padding: 2rem 0;
 }
@@ -12,420 +12,77 @@
     padding: 0 2rem;
 }
 
+/* ============ HEADER SECTION ============ */
+.detail-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.detail-actions-top {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-draft {
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.btn-draft:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(255, 107, 74, 0.2);
+    border-color: #FF6B4A;
+    color: #FF6B4A;
+}
+
+.btn-draft:active {
+    transform: translateY(-1px);
+}
+
+/* ============ PET HEADER SECTION ============ */
 .pet-header {
     text-align: center;
     margin-bottom: 3rem;
+    animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .pet-image-large {
-    width: 50%;
-    height: 50%;
+    aspect-ratio: 1 / 1;
     background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%);
-    border-radius: 20px;
+    border-radius: 24px;
     margin: 0 auto 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 8rem;
     position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    max-width: 400px;
+    transition: all 0.3s ease;
 }
 
-.status-badge-large {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.status-badge-large.lost {
-    background: #FF6B4A;
-    color: white;
-}
-
-.status-badge-large.found {
-    background: #4CAF50;
-    color: white;
-}
-
-.pet-header h1 {
-    font-size: 2.5rem;
-    color: #1a1a1a;
-    margin-bottom: 0.5rem;
-}
-
-.pet-header .pet-status-text {
-    color: #666;
-    font-size: 1rem;
-}
-
-.detail-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.info-card {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-}
-
-.info-card h2 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.3rem;
-    color: #1a1a1a;
-    margin-bottom: 1.5rem;
-}
-
-.info-card-icon {
-    color: #FF6B4A;
-    font-size: 1.2rem;
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.info-row:last-child {
-    border-bottom: none;
-}
-
-.info-label {
-    color: #666;
-    font-weight: 500;
-}
-
-.info-value {
-    color: #1a1a1a;
-    font-weight: 600;
-    text-align: right;
-}
-
-.description-card {
-    grid-column: 1 / -1;
-}
-
-.description-text {
-    color: #666;
-    line-height: 1.8;
-    font-size: 1rem;
-}
-
-.action-card {
-    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
-    border-radius: 16px;
-    padding: 2rem;
-    color: white;
-    box-shadow: 0 4px 20px rgba(255, 107, 74, 0.3);
-}
-
-.action-card h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    color: white;
-}
-
-.action-btn-large {
-    width: 100%;
-    padding: 1rem;
-    background: white;
-    color: #1a1a1a;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.action-btn-large:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.action-btn-large.secondary {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 2px solid white;
-}
-
-.action-note {
-    text-align: center;
-    font-size: 0.85rem;
-    opacity: 0.9;
-    margin-top: 1rem;
-}
-
-.location-card {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    margin-bottom: 2rem;
-}
-
-.location-card h2 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.3rem;
-    color: #1a1a1a;
-    margin-bottom: 1rem;
-}
-
-.location-info h3 {
-    font-size: 1.1rem;
-    color: #1a1a1a;
-    margin-bottom: 0.5rem;
-}
-
-.location-info p {
-    color: #666;
-    line-height: 1.6;
-}
-
-.map-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    margin-bottom: 3rem;
-}
-
-.map-section h2 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.3rem;
-    color: #1a1a1a;
-    margin-bottom: 1.5rem;
-}
-
-.map-display {
-    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-    border-radius: 12px;
-    height: 300px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.map-pin {
-    width: 60px;
-    height: 60px;
-    background: #FF6B4A;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    margin-bottom: 1rem;
-}
-
-.map-pin::before {
-    content: '📍';
-    transform: rotate(45deg);
-    font-size: 1.5rem;
-}
-
-.map-display p {
-    color: #666;
-    font-size: 0.95rem;
-}
-
-.map-display .map-location-text {
-    color: #1a1a1a;
-    font-weight: 600;
-    margin-top: 0.5rem;
-}
-
-.posted-by-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    margin-bottom: 2rem;
-}
-
-.posted-by-section h2 {
-    font-size: 1.3rem;
-    color: #1a1a1a;
-    margin-bottom: 1.5rem;
-}
-
-.poster-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.poster-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.poster-details h3 {
-    font-size: 1.1rem;
-    color: #1a1a1a;
-    margin-bottom: 0.25rem;
-}
-
-.poster-details .member-since {
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
-
-.poster-details .posted-time {
-    color: #999;
-    font-size: 0.85rem;
-}
-
-.poster-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.poster-btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.poster-btn.message {
-    background: #FF6B4A;
-    color: white;
-}
-
-.poster-btn.message:hover {
-    background: #e55a3a;
-}
-
-.poster-btn.report {
-    background: #f5f5f5;
-    color: #666;
-}
-
-.poster-btn.report:hover {
-    background: #e8e8e8;
-}
-
-.cta-section {
-    background: white;
-    border-radius: 16px;
-    padding: 3rem 2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.cta-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-}
-
-.cta-section h2 {
-    font-size: 2rem;
-    color: #1a1a1a;
-    margin-bottom: 1rem;
-}
-
-.cta-section p {
-    color: #666;
-    font-size: 1rem;
-    margin-bottom: 2rem;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.cta-buttons-group {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.pet-image-large {
-
-  aspect-ratio: 1 / 1;
-
-  overflow: hidden;
-  border-radius: 20px;
-  background: #f3f3f3;
-
-  position: relative;
-  margin: 0 auto;   /* центр */
+.pet-image-large:hover {
+    transform: scale(1.02);
+    box-shadow: 0 16px 48px rgba(255, 107, 74, 0.15);
 }
 
 .pet-image-large img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-}
-
-.details-map {
-  margin-top: 12px;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.photo-edit-wrapper {
-    position: relative;
-}
-
-.photo-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    opacity: 0;
-    transition: .3s;
-}
-
-.photo-edit-wrapper:hover .photo-overlay {
-    opacity: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .pet-image-placeholder {
@@ -435,4 +92,946 @@
     align-items: center;
     justify-content: center;
     font-size: 6rem;
+    animation: pulse 2s infinite;
 }
+
+.pet-header h1 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+.pet-header .pet-status-text {
+    color: #666;
+    font-size: 1rem;
+    animation: fadeInUp 0.6s ease 0.3s both;
+}
+
+/* ============ PHOTO EDIT OVERLAY ============ */
+.photo-edit-wrapper {
+    position: relative;
+}
+
+.photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 24px;
+    backdrop-filter: blur(4px);
+}
+
+.photo-edit-wrapper:hover .photo-overlay {
+    opacity: 1;
+}
+
+.photo-btn {
+    padding: 0.75rem 1.5rem;
+    background: white;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.photo-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.photo-overlay button {
+    padding: 0.75rem 1.5rem;
+    background: #FF6B4A;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.photo-overlay button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+}
+
+/* ============ DETAIL CONTENT GRID ============ */
+.detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .detail-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============ INFO CARDS ============ */
+.info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid transparent;
+    animation: fadeInUp 0.6s ease 0.1s both;
+}
+
+.info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    border-color: #FFE8E0;
+}
+
+.info-card h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row:hover {
+    background: #fafafa;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.info-label {
+    color: #666;
+    font-weight: 600;
+}
+
+.info-value {
+    color: #1a1a1a;
+    font-weight: 700;
+    text-align: right;
+}
+
+.description-card {
+    grid-column: 1 / -1;
+}
+
+.description-text {
+    color: #555;
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+/* ============ ACTION CARD / CONTACT SECTION ============ */
+.action-card {
+    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 8px 24px rgba(255, 107, 74, 0.25);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: fadeInUp 0.6s ease 0.2s both;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(255, 107, 74, 0.35);
+}
+
+.action-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    font-weight: 700;
+}
+
+.action-btn-large {
+    width: 100%;
+    padding: 1rem;
+    background: white;
+    color: #FF6B4A;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn-large:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    background: #FFF5F2;
+}
+
+.action-btn-large:active {
+    transform: translateY(-1px);
+}
+
+.action-btn-large.secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+    backdrop-filter: blur(8px);
+}
+
+.action-btn-large.secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+}
+
+/* ============ BUTTONS ============ */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(255, 107, 74, 0.25);
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(255, 107, 74, 0.35);
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+    color: white;
+    flex: 1;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+}
+
+.btn-secondary {
+    background: #f5f5f5;
+    color: #666;
+    flex: 1;
+}
+
+.btn-secondary:hover {
+    background: #e8e8e8;
+    transform: translateY(-2px);
+}
+
+.btn-location {
+    background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.25);
+}
+
+.btn-location:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.35);
+}
+
+/* ============ LOCATION EDIT SECTION ============ */
+.location-edit-section {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    grid-column: 1 / -1;
+}
+
+.location-edit-section h3 {
+    font-size: 1.2rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.location-picker-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.location-picker-wrapper > div {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.location-picker-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+/* ============ MAP SECTION ============ */
+.details-map {
+    margin-top: 2rem;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    grid-column: 1 / -1;
+}
+
+.map-section {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s ease;
+}
+
+.map-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+/* ============ INPUT STYLING ============ */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: #f9f9f9;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #FF6B4A;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-input {
+    margin-bottom: 1rem;
+}
+
+/* ============ ANIMATIONS ============ */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* ============ STAGGER ANIMATION FOR ELEMENTS ============ */
+.info-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.info-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.action-card {
+    animation-delay: 0.2s;
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+@media (max-width: 768px) {
+    .detail-container {
+        padding: 0 1rem;
+    }
+
+    .pet-header h1 {
+        font-size: 2rem;
+    }
+
+    .detail-header-top {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .detail-actions-top {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .btn-draft {
+        flex: 1;
+    }
+
+    .detail-content {
+        gap: 1.5rem;
+    }
+
+    .location-picker-controls {
+        flex-direction: column;
+    }
+
+    .location-picker-controls .btn {
+        width: 100%;
+    }
+}
+
+/* ============ PET NAME STYLING ============ */
+.pet-name {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin: 0;
+    padding: 0.5rem 0;
+}
+
+.pet-name-input {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -1px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0.75rem 1.5rem !important;
+    border: 3px dashed #FF6B4A !important;
+    border-radius: 16px !important;
+    background: #FFF9F7 !important;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.pet-name-input:focus {
+    border-color: #FF6B4A !important;
+    background: white !important;
+    box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.2) !important;
+    transform: scale(1.02);
+}
+
+/* ============ CONTACT FORM IMPROVEMENTS ============ */
+.contact-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group-item label {
+    font-weight: 700;
+    color: white;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contact-info-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.contact-btn {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.contact-btn:hover {
+    transform: translateX(4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.action-buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.action-buttons-group .action-btn-large {
+    border-radius: 14px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============ ENHANCED INPUT STYLING ============ */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.85rem 1.1rem;
+    border: 2px solid #e8e8e8;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: #f9f9f9;
+    font-weight: 500;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="tel"]::placeholder,
+textarea::placeholder {
+    color: #999;
+    font-weight: 400;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #FF6B4A;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.12);
+    transform: translateY(-2px);
+}
+
+.action-card input[type="text"],
+.action-card input[type="email"],
+.action-card input[type="tel"],
+.action-card textarea,
+.action-card select {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.action-card input[type="text"]::placeholder,
+.action-card input[type="email"]::placeholder,
+.action-card input[type="tel"]::placeholder,
+.action-card textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.action-card input[type="text"]:focus,
+.action-card input[type="email"]:focus,
+.action-card input[type="tel"]:focus,
+.action-card textarea:focus,
+.action-card select:focus {
+    background: white;
+    border-color: white;
+    color: #1a1a1a;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.25);
+}
+
+.action-card .btn-primary {
+    margin-top: 0.5rem;
+}
+
+.location-help-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+    padding: 0 0 1rem 0;
+    text-align: center;
+}
+
+/* ============ INFO CARD ENHANCEMENTS ============ */
+.info-card input[type="text"],
+.info-card input[type="email"],
+.info-card input[type="tel"],
+.info-card textarea,
+.info-card select {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: #f5f5f5;
+    font-weight: 500;
+}
+
+.info-card input[type="text"]:focus,
+.info-card input[type="email"]:focus,
+.info-card input[type="tel"]:focus,
+.info-card textarea:focus,
+.info-card select:focus {
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
+}
+
+/* ============ LOCATION HELP TEXT ============ */
+.location-edit-section .location-help-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* ============ STATUS BADGE ============ */
+.status-badge-large {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+
+.status-badge-large.lost {
+    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+    color: white;
+}
+
+.status-badge-large.found {
+    background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+    color: white;
+}
+
+/* ============ DETAIL HEADER TOP IMPROVEMENTS ============ */
+.detail-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.detail-actions-top {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-draft {
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.btn-draft:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(255, 107, 74, 0.2);
+    border-color: #FF6B4A;
+    color: #FF6B4A;
+}
+
+.btn-draft:active {
+    transform: translateY(-1px);
+}
+
+/* ============ EDIT INDICATOR ============ */
+.edit-indicator {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+    color: white;
+    border-radius: 50px;
+    box-shadow: 0 6px 20px rgba(255, 107, 74, 0.3);
+    font-weight: 700;
+    z-index: 100;
+    animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============ ADDITIONAL HOVER EFFECTS ============ */
+.info-card select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF6B4A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+.action-card select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+/* ============ PET DETAILS CARD IMPROVEMENTS ============ */
+.info-card select {
+    background: #f5f5f5;
+    font-weight: 500;
+}
+
+.info-card select:focus {
+    background: white;
+}
+
+/* ============ SMOOTH TRANSITIONS FOR EDIT MODE ============ */
+.detail-content {
+    transition: all 0.3s ease;
+}
+
+/* ============ LOCATION MAP CURSOR ============ */
+.leaflet-container {
+    border-radius: 16px;
+}
+
+.leaflet-container.leaflet-touch .leaflet-bar a {
+    border-radius: 8px;
+}
+
+/* ============ FORM LABELS STYLING ============ */
+label.photo-btn {
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ============ DESCRIPTION CARD IMPROVEMENTS ============ */
+.description-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
+    animation: fadeInUp 0.6s ease 0.3s both;
+}
+
+.description-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    border-color: #FFE8E0;
+}
+
+.description-card h2 {
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.description-text {
+    color: #555;
+    line-height: 2;
+    font-size: 1rem;
+    word-spacing: 0.1em;
+}
+
+.description-card textarea {
+    background: #f5f5f5;
+    font-weight: 500;
+    line-height: 1.8;
+}
+
+/* ============ PET DETAILS ANIMATION ============ */
+.info-card h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.3rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover h2 {
+    transform: translateX(4px);
+    color: #FF6B4A;
+}
+
+/* ============ ENHANCED ACTION CARD STYLING ============ */
+.action-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover h2 {
+    transform: translateX(-4px);
+}
+
+/* ============ LEAFLET MAP STYLING ============ */
+.leaflet-popup-content {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.leaflet-popup-tip {
+    background: #FF6B4A;
+}
+
+.leaflet-popup {
+    border-radius: 12px;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    background: white;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* ============ VISUAL SEPARATOR ============ */
+.detail-content::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 60%;
+    background: linear-gradient(135deg, transparent, rgba(255, 107, 74, 0.1), transparent);
+    left: 50%;
+    top: 20%;
+}
+
+@media (max-width: 768px) {
+    .detail-content::before {
+        display: none;
+    }
+}
+
+/* ============ SUCCESS MESSAGE ANIMATION ============ */
+@keyframes checkMark {
+    0% {
+        transform: scale(0) rotate(-45deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(0);
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+/* ============ IMPROVED CONTACT LINKS ============ */
+.action-btn-large {
+    word-break: break-word;
+    white-space: normal;
+}
+
+.action-btn-large.secondary {
+    text-decoration: none;
+}
+
+/* ============ FOCUS VISIBLE STATES ============ */
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #FF6B4A;
+    outline-offset: 2px;
+}
+
+/* ============ PET DETAILS CARD SPACING ============ */
+.info-card {
+    position: relative;
+}
+

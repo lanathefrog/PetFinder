@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Pet, Announcement, Location
 from django.contrib.auth.models import User
-
+from .utils import get_coordinates
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,6 +46,12 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    # 🔥 Додаємо email з User
+    email = serializers.CharField(
+        source='owner.email',
+        read_only=True
+    )
+
     class Meta:
         model = Announcement
         fields = [
@@ -55,11 +61,36 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'status',
             'location',
             'description',
-            'phone_number'
+            'phone_number',
+            'email'
         ]
 
     def create(self, validated_data):
         request = self.context.get('request')
+        location_data = validated_data.pop('location', None)
+
+        location = None
+
+        if location_data:
+            address = location_data.get("address")
+            lat = location_data.get("latitude")
+            lng = location_data.get("longitude")
+
+            if lat and lng:
+                location = Location.objects.create(
+                    address=address or "",
+                    latitude=float(lat),
+                    longitude=float(lng),
+                )
+
+            elif address:
+                lat, lng = get_coordinates(address)
+
+                location = Location.objects.create(
+                    address=address,
+                    latitude=lat or 0,
+                    longitude=lng or 0,
+                )
 
         # Owner may be passed via serializer.save(owner=...) from the view
         owner = validated_data.pop('owner', None)
@@ -86,6 +117,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
+        print("LOCATION DATA:", location_data)
+
         return announcement
 
     def update(self, instance, validated_data):
@@ -99,10 +132,24 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                 setattr(instance.pet, attr, value)
             instance.pet.save()
 
-        # 🔹 update location (якщо колись будеш)
+        # 🔹 update location with proper latitude and longitude
         if location_data:
-            for attr, value in location_data.items():
-                setattr(instance.location, attr, value)
+            lat = location_data.get("latitude")
+            lng = location_data.get("longitude")
+            address = location_data.get("address", instance.location.address)
+
+            # If we have coordinates, use them directly
+            if lat is not None and lng is not None:
+                instance.location.latitude = float(lat)
+                instance.location.longitude = float(lng)
+                instance.location.address = address
+            else:
+                # Otherwise try to get coordinates from address
+                lat, lng = get_coordinates(address)
+                instance.location.address = address
+                instance.location.latitude = lat or instance.location.latitude
+                instance.location.longitude = lng or instance.location.longitude
+
             instance.location.save()
 
         # 🔹 update announcement fields

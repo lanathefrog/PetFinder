@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { createAnnouncement } from '../services/api';
 import '../styles/forms.css';
-
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import L from "leaflet";
 const ReportLost = ({ onRefresh, onCancel }) => {
     const [preview, setPreview] = useState(null);
     const [contactData, setContactData] = useState({
@@ -22,7 +23,53 @@ const ReportLost = ({ onRefresh, onCancel }) => {
         image: null
     });
     const token = localStorage.getItem('access_token');
+    const [suggestions, setSuggestions] = useState([]);
+    const [coords, setCoords] = useState({ lat: null, lon: null });
 
+
+    const searchLocation = async (query) => {
+        if (!query) {
+            setSuggestions([]);
+            return;
+        }
+
+        try {
+            const res = await axios.get(
+                `https://nominatim.openstreetmap.org/search`,
+                {
+                    params: {
+                        q: query,
+                        format: "json",
+                        addressdetails: 1,
+                        limit: 5,
+                    },
+                }
+            );
+
+            setSuggestions(res.data);
+        } catch (err) {
+            console.log("Location search error", err);
+        }
+    };
+
+    const reverseGeocode = async ({ lat, lng }) => {
+        try {
+            const res = await axios.get(
+                "http://127.0.0.1:8001/api/reverse-geocode/",
+                {
+                    params: { lat, lon: lng },
+                }
+            );
+
+            setFormData((prev) => ({
+                ...prev,
+                location: res.data.address,
+            }));
+        } catch (err) {
+            console.log("Reverse geocode error", err);
+        }
+    };
+    const [position, setPosition] = useState(null);
     useEffect(() => {
         const loadContactData = async () => {
             try {
@@ -70,8 +117,12 @@ const ReportLost = ({ onRefresh, onCancel }) => {
 
         dataPayload.append('status', 'lost');
         dataPayload.append('description', formData.description);
-        dataPayload.append('location.address', formData.location);
-
+        dataPayload.append("location.address", formData.location);
+        if (position) {
+            dataPayload.append("location.latitude", position.lat);
+            dataPayload.append("location.longitude", position.lng);
+        }
+        dataPayload.append("location.address", formData.location);
         try {
             const response = await createAnnouncement(dataPayload);
 
@@ -87,6 +138,17 @@ const ReportLost = ({ onRefresh, onCancel }) => {
 
             alert('Submission failed. Check console for details.');
         }
+    };
+
+    const LocationPicker = () => {
+        useMapEvents({
+            click(e) {
+                setPosition(e.latlng);
+                reverseGeocode(e.latlng);
+            },
+        });
+
+        return position ? <Marker position={position} /> : null;
     };
 
     return (
@@ -197,16 +259,36 @@ const ReportLost = ({ onRefresh, onCancel }) => {
 
                         <h3 className="form-section-title" style={{ marginBottom: '1.5rem', color: '#333' }}>2. Location & Time</h3>
 
-                        <div className="form-row">
+                        <div className="form-row location-row">
                             <div className="form-group">
                                 <label>Last Seen Location</label>
-                                <input name="location" type="text" className="form-input" placeholder="e.g. Central Park near the lake" required onChange={handleChange} />
+                                <MapContainer
+                                    center={[51.505, -0.09]}
+                                    zoom={13}
+                                    style={{ height: "500px", width: "100%" }}
+                                >
+                                    <TileLayer
+                                        attribution="&copy; OpenStreetMap"
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+
+                                    <LocationPicker />
+                                </MapContainer>
+
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={formData.location}
+                                    readOnly
+                                />
                             </div>
-                            <div className="form-group">
-                                <label>Date Lost</label>
-                                <input name="date_lost" type="date" className="form-input" required onChange={handleChange} />
-                            </div>
+
                         </div>
+                        <div className="form-group">
+                            <label>Date Lost</label>
+                            <input name="date_lost" type="date" className="form-input" required onChange={handleChange} />
+                        </div>
+
 
                         <div className="form-group">
                             <label>Description</label>

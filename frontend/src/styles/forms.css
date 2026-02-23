@@ -497,3 +497,8 @@
     display: block;
     margin-bottom: 0.5rem;
 }
+
+.location-row
+{
+    display: inline;
+}
