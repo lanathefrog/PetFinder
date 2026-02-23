@@ -20,6 +20,7 @@ class Pet(models.Model):
     PET_TYPES = [
         ('dog', 'Dog'),
         ('cat', 'Cat'),
+        ('bird', 'Bird'),
         ('other', 'Other'),
     ]
     GENDER_CHOICES = [

@@ -43,6 +43,7 @@ function App() {
     const handleLogout = (e) => {
         e.preventDefault();
         localStorage.removeItem('access_token');
+        localStorage.removeItem('user_id');
         setToken(null);
         setView('feed');
     };

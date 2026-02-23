@@ -18,4 +18,4 @@ export const getMyAnnouncements = () => API.get('announcements/me/');
 export const createAnnouncement = (data) => API.post('announcements/', data);
 export const deleteAnnouncement = (id) => API.delete(`announcements/${id}/`);
 export const updateAnnouncement = (id, data) =>
-    API.put(`announcements/${id}/`, data);
+    API.patch(`announcements/${id}/`, data);

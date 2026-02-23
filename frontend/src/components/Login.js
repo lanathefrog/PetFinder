@@ -9,6 +9,7 @@ const Login = ({ setToken }) => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
 
     // Trigger animation whenever the tab changes
     useEffect(() => {
@@ -19,13 +20,32 @@ const Login = ({ setToken }) => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+
         try {
-            const response = await axios.post('http://127.0.0.1:8001/api/token/', {
-                username, password
-            });
-            localStorage.setItem('access_token', response.data.access);
-            setToken(response.data.access);
-        } catch (err) {
+            const response = await axios.post(
+                "http://127.0.0.1:8001/api/token/",
+                { username, password }
+            );
+
+            const token = response.data.access;
+
+            localStorage.setItem("access_token", token);
+
+            // 🔥 отримуємо поточного юзера
+            const me = await axios.get(
+                "http://127.0.0.1:8001/api/users/me/",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            localStorage.setItem("user_id", me.data.id);
+
+            setToken(token);
+
+        } catch {
             alert("Invalid login details.");
         }
     };
@@ -42,7 +62,9 @@ const Login = ({ setToken }) => {
                 username,
                 password,
                 first_name: firstName,
-                last_name: lastNameParts.join(' ')
+                last_name: lastNameParts.join(' '),
+                phone_number: phone
+
             });
             alert("Account created! Please sign in.");
             setIsRegistering(false);

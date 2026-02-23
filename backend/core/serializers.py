@@ -35,7 +35,8 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = '__all__'
 class AnnouncementSerializer(serializers.ModelSerializer):
-    pet = PetSerializer(read_only=True)
+    pet = PetSerializer()
+
     location = LocationSerializer()
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
 
@@ -86,3 +87,27 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         )
 
         return announcement
+
+    def update(self, instance, validated_data):
+
+        pet_data = validated_data.pop('pet', None)
+        location_data = validated_data.pop('location', None)
+
+        # 🔹 update pet
+        if pet_data:
+            for attr, value in pet_data.items():
+                setattr(instance.pet, attr, value)
+            instance.pet.save()
+
+        # 🔹 update location (якщо колись будеш)
+        if location_data:
+            for attr, value in location_data.items():
+                setattr(instance.location, attr, value)
+            instance.location.save()
+
+        # 🔹 update announcement fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
