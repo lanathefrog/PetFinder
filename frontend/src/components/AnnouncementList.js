@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { getAnnouncements } from '../services/api';
+import { useToast } from './ToastContext';
 import '../styles/base.css';
 import '../styles/listing.css';
 import '../styles/responsive.css';
@@ -22,9 +23,17 @@ const AnnouncementList = ({ onSelect }) => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
     const [genderFilter, setGenderFilter] = useState('all');
+    const [breedFilter, setBreedFilter] = useState('');
+    const [colorFilter, setColorFilter] = useState('');
+    const [sizeFilter, setSizeFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
     const [sortBy, setSortBy] = useState('newest');
     const [currentPage, setCurrentPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const { showToast } = useToast();
 
     const itemsPerPage = 6;
 
@@ -32,12 +41,22 @@ const AnnouncementList = ({ onSelect }) => {
         loadAnnouncements();
     }, []);
 
+    // debounce search input for performance
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
+        return () => clearTimeout(t);
+    }, [searchTerm]);
+
     const loadAnnouncements = async () => {
+        setIsLoading(true);
         try {
             const res = await getAnnouncements();
             setAnnouncements(res.data);
         } catch (err) {
             console.error("Error loading announcements:", err);
+            showToast && showToast('Failed to load announcements', 'error');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -55,13 +74,30 @@ const AnnouncementList = ({ onSelect }) => {
                 const genderMatch =
                     genderFilter === 'all' || a.pet.gender === genderFilter;
 
-                const searchMatch =
-                    a.pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (a.location?.address || '')
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase());
+                const sizeMatch =
+                    sizeFilter === 'all' || (a.pet.size || 'medium') === sizeFilter;
 
-                return statusMatch && typeMatch && genderMatch && searchMatch;
+                const breedMatch =
+                    !breedFilter || (a.pet.breed || '').toLowerCase().includes(breedFilter.toLowerCase());
+
+                const colorMatch =
+                    !colorFilter || (a.pet.color || '').toLowerCase().includes(colorFilter.toLowerCase());
+
+                const dateFromMatch = !dateFrom || new Date(a.created_at) >= new Date(dateFrom);
+                const dateToMatch = !dateTo || new Date(a.created_at) <= new Date(dateTo);
+
+                const searchTermLower = debouncedSearch.toLowerCase();
+                const searchMatch =
+                    !searchTermLower ||
+                    (a.pet.name || '').toLowerCase().includes(searchTermLower) ||
+                    (a.pet.breed || '').toLowerCase().includes(searchTermLower) ||
+                    (a.pet.color || '').toLowerCase().includes(searchTermLower) ||
+                    (a.description || '').toLowerCase().includes(searchTermLower) ||
+                    (a.location?.address || '').toLowerCase().includes(searchTermLower);
+
+                return (
+                    statusMatch && typeMatch && genderMatch && sizeMatch && breedMatch && colorMatch && dateFromMatch && dateToMatch && searchMatch
+                );
             })
             .sort((a, b) => {
                 if (sortBy === 'newest') {
@@ -72,7 +108,7 @@ const AnnouncementList = ({ onSelect }) => {
                 }
                 return 0;
             });
-    }, [announcements, statusFilter, typeFilter, genderFilter, searchTerm, sortBy]);
+    }, [announcements, statusFilter, typeFilter, genderFilter, sizeFilter, breedFilter, colorFilter, dateFrom, dateTo, debouncedSearch, sortBy]);
 
     const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
@@ -184,6 +220,34 @@ const AnnouncementList = ({ onSelect }) => {
                     </div>
 
                     <div className="filter-group">
+                        <h3>Breed</h3>
+                        <input className="distance-select" placeholder="e.g. Beagle" value={breedFilter} onChange={e=>setBreedFilter(e.target.value)} />
+                    </div>
+
+                    <div className="filter-group">
+                        <h3>Color</h3>
+                        <input className="distance-select" placeholder="e.g. Brown" value={colorFilter} onChange={e=>setColorFilter(e.target.value)} />
+                    </div>
+
+                    <div className="filter-group">
+                        <h3>Size</h3>
+                        <div style={{display:'flex', gap:'0.5rem'}}>
+                            <button className={`filter-btn-option ${sizeFilter==='small'?'active':''}`} onClick={()=>setSizeFilter('small')}>Small</button>
+                            <button className={`filter-btn-option ${sizeFilter==='medium'?'active':''}`} onClick={()=>setSizeFilter('medium')}>Medium</button>
+                            <button className={`filter-btn-option ${sizeFilter==='large'?'active':''}`} onClick={()=>setSizeFilter('large')}>Large</button>
+                            <button className={`filter-btn-option ${sizeFilter==='all'?'active':''}`} onClick={()=>setSizeFilter('all')}>Any</button>
+                        </div>
+                    </div>
+
+                    <div className="filter-group">
+                        <h3>Date Range</h3>
+                        <div style={{display:'flex', gap:'0.5rem'}}>
+                            <input type="date" className="distance-select" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} />
+                            <input type="date" className="distance-select" value={dateTo} onChange={e=>setDateTo(e.target.value)} />
+                        </div>
+                    </div>
+
+                    <div className="filter-group">
                         <h3>Sort By</h3>
                         <select
                             className="distance-select"
@@ -193,6 +257,13 @@ const AnnouncementList = ({ onSelect }) => {
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                         </select>
+                    </div>
+
+                    <div className="filter-group">
+                        <button className="filter-btn-option" onClick={()=>{
+                            setStatusFilter('all'); setTypeFilter('all'); setGenderFilter('all'); setBreedFilter(''); setColorFilter(''); setSizeFilter('all'); setSearchTerm(''); setDateFrom(''); setDateTo('');
+                            showToast && showToast('Filters cleared', 'info');
+                        }}>Clear Filters</button>
                     </div>
 
                 </aside>
@@ -232,6 +303,11 @@ const AnnouncementList = ({ onSelect }) => {
 
                     </div>
 
+
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem'}}>
+                        <div style={{fontSize:'0.95rem', color:'#666'}}>{filtered.length} results</div>
+                        {isLoading ? <div style={{fontSize:'0.9rem', color:'#666'}}>Loading...</div> : null}
+                    </div>
 
                     <div className="results-list">
 

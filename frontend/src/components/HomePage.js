@@ -1,9 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/base.css";
 import "../styles/responsive.css";
 import "../styles/home.css";
+import { getAnnouncements } from '../services/api';
+import { useToast } from './ToastContext';
 
 const HomePage = ({ onNavigate }) => {
+    const [recent, setRecent] = useState([]);
+    const { showToast } = useToast();
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await getAnnouncements();
+                // show latest 4
+                setRecent(res.data.slice(0, 4));
+            } catch (err) {
+                console.error('Failed to load recent posts', err);
+                showToast && showToast('Could not load recent posts', 'error');
+            }
+        };
+        load();
+    }, [showToast]);
+
     return (
         <div className="home-page">
 
@@ -53,8 +72,9 @@ const HomePage = ({ onNavigate }) => {
                     </div>
 
                     <div className="hero-right">
-                        <div className="hero-image-placeholder">
-                            🐕 🐈
+                        <div className="hero-image-placeholder" aria-hidden>
+                            <div className="floating-pet pet-dog">🐕</div>
+                            <div className="floating-pet pet-cat">🐈</div>
                         </div>
                     </div>
 
@@ -117,13 +137,25 @@ const HomePage = ({ onNavigate }) => {
                 </div>
 
                 <div className="recent-grid">
-                    {[1,2,3,4].map((item) => (
-                        <div key={item} className="recent-card">
+                    {recent.length === 0 && (
+                        <div className="recent-card">
                             <div className="recent-img">🐾</div>
                             <div className="recent-content">
-                                <span className="lost-badge">Lost</span>
-                                <h3>Golden Retriever</h3>
-                                <p>📍 Mission District</p>
+                                <h3>No recent posts</h3>
+                                <p>Be the first to report a pet!</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {recent.map((r) => (
+                        <div key={r.id} className="recent-card" onClick={()=>onNavigate('details', r.id)} style={{cursor:'pointer'}}>
+                            <div className="recent-img">
+                                {r.pet.photo ? <img src={r.pet.photo} alt={r.pet.name} /> : (r.pet.pet_type==='cat' ? '🐈' : '🐕')}
+                            </div>
+                            <div className="recent-content">
+                                <span className="lost-badge">{r.status}</span>
+                                <h3>{r.pet.name || (r.pet.pet_type === 'cat' ? 'Cat' : 'Dog')}</h3>
+                                <p>📍 {r.location?.address || 'Unknown'}</p>
                                 <button className="btn btn-primary small">
                                     Contact Owner
                                 </button>
