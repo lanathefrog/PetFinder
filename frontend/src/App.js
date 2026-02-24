@@ -48,27 +48,93 @@ function App() {
             .catch(err => console.error("Error loading feed:", err));
     };
 
+    // Simple in-app navigation that also pushes a hash to browser history
+    const navigateTo = (targetView, opts = {}) => {
+        const entryHashParts = [targetView];
+        if (opts.announcement && opts.announcement.id) entryHashParts.push(`details:${opts.announcement.id}`);
+        if (opts.announcementId) entryHashParts.push(`details:${opts.announcementId}`);
+        if (opts.userId) entryHashParts.push(`user:${opts.userId}`);
+
+        const hash = `#${entryHashParts.join('@')}`;
+        window.history.pushState({ view: targetView, opts }, '', hash);
+
+        // apply view and params
+        setView(targetView);
+        if (opts.announcement) setSelectedAnnouncement(opts.announcement);
+        if (opts.announcementId) {
+            // try to find announcement locally first
+            const found = announcements.find(a => a.id === opts.announcementId);
+            if (found) setSelectedAnnouncement(found);
+            else setSelectedAnnouncement(null);
+        }
+        if (opts.userId) setSelectedUserId(opts.userId);
+    };
+
+    const parseHashAndNavigate = async () => {
+        const raw = window.location.hash.slice(1);
+        if (!raw) return;
+        // examples: "details:123" or "user:45" or "dashboard"
+        if (raw.startsWith('details:')) {
+            const id = parseInt(raw.split(':')[1], 10);
+            if (!isNaN(id)) {
+                try {
+                    const res = await getAnnouncement(id);
+                    setSelectedAnnouncement(res.data);
+                    setView('details');
+                } catch (err) {
+                    setView('listing');
+                }
+            }
+            return;
+        }
+        if (raw.startsWith('user:')) {
+            const id = parseInt(raw.split(':')[1], 10);
+            if (!isNaN(id)) {
+                setSelectedUserId(id);
+                setView('public_profile');
+            }
+            return;
+        }
+
+        // default: use as view name
+        setView(raw);
+    };
+
     useEffect(() => {
         const handleOpenUser = (e) => {
             const userId = e.detail;
             if (!userId) return;
             const me = Number(localStorage.getItem('user_id'));
             if (me && Number(userId) === me) {
-                setView('profile');
+                navigateTo('profile');
             } else {
-                setSelectedUserId(userId);
-                setView('public_profile');
+                navigateTo('public_profile', { userId });
             }
         };
         window.addEventListener('openUserProfile', handleOpenUser);
 
-        return () => window.removeEventListener('openUserProfile', handleOpenUser);
+        // popstate -> sync UI
+        const onPop = () => {
+            parseHashAndNavigate();
+        };
+        window.addEventListener('popstate', onPop);
+
+        return () => {
+            window.removeEventListener('openUserProfile', handleOpenUser);
+            window.removeEventListener('popstate', onPop);
+        };
+    }, []);
+
+    // On first load, reflect hash state if present
+    useEffect(() => {
+        parseHashAndNavigate();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         if (token) {
             loadFeed();
-            setView('dashboard');
+            navigateTo('dashboard');
         }
     }, [token]);
 
@@ -137,7 +203,7 @@ function App() {
                         className="logo"
                         onClick={(e)=>{
                             e.preventDefault();
-                            setView('home');
+                            navigateTo('home');
                         }}
                     >
 
@@ -150,20 +216,20 @@ function App() {
                                 href="/"
                                 onClick={(e)=>{
                                     e.preventDefault();
-                                    setView('home');
+                                    navigateTo('home');
                                 }}
                             >
                                 Home
                             </a>
                         </li>
 
-                        <li><a href="/" onClick={(e)=>{e.preventDefault();setView('dashboard')}}>Dashboard</a></li>
+                        <li><a href="/" onClick={(e)=>{e.preventDefault();navigateTo('dashboard')}}>Dashboard</a></li>
                         <li>
                             <a
                                 href="/"
                                 onClick={(e)=>{
                                     e.preventDefault();
-                                    setView('profile');
+                                    navigateTo('profile');
                                 }}
                             >
                                 Profile
@@ -174,7 +240,7 @@ function App() {
                                 href="/messages"
                                 onClick={(e)=>{
                                     e.preventDefault();
-                                    setView('messages');
+                                    navigateTo('messages');
                                 }}
                             >
                                 Messages {unreadMessagesCount > 0 ? `(${unreadMessagesCount})` : ""}
@@ -214,7 +280,7 @@ function App() {
                         </li>
 
                         <li>
-                            <a href="/" onClick={(e)=>{e.preventDefault(); setView('listing')}}>
+                            <a href="/" onClick={(e)=>{e.preventDefault(); navigateTo('listing')}}>
                                 Find a Pet
                             </a>
                         </li>
@@ -223,7 +289,7 @@ function App() {
                                 href="/"
                                 onClick={(e)=>{
                                     e.preventDefault();
-                                    setView('how');
+                                    navigateTo('how');
                                 }}
                             >
                                 How It Works
@@ -241,10 +307,10 @@ function App() {
             <main>
                 {view === 'dashboard' && (
                     <UserDashboard
-                        onNavigate={setView}
+                        onNavigate={navigateTo}
                         onSelect={(ann) => {
                             setSelectedAnnouncement(ann);
-                            setView('details');
+                            navigateTo('details', { announcement: ann });
                         }}
                     />
                 )}
@@ -258,7 +324,7 @@ function App() {
                                     className="announcement-card-dashboard"
                                     onClick={() => {
                                         setSelectedAnnouncement(ann);
-                                        setView('details');
+                                        navigateTo('details', { announcement: ann });
                                     }}
                                     style={{ cursor: 'pointer' }}
                                 >
@@ -273,44 +339,44 @@ function App() {
                 {view === 'details' && selectedAnnouncement && (
                     <AnnouncementDetails
                         announcement={selectedAnnouncement}
-                        onBack={() => setView('dashboard')}
+                        onBack={() => window.history.back()}
                         onDeleted={() => {
                             loadFeed();
-                            setView('dashboard');
+                            navigateTo('dashboard');
                         }}
                         onOpenChat={(conversationId) => {
                             setActiveConversationId(conversationId);
-                            setView('messages');
+                            navigateTo('messages');
                         }}
                     />
                 )}
 
                 {view === 'report_lost' && (
                     <ReportLost
-                        onRefresh={() => { loadFeed(); setView('dashboard'); }}
-                        onCancel={() => setView('dashboard')}
+                        onRefresh={() => { loadFeed(); navigateTo('dashboard'); }}
+                        onCancel={() => navigateTo('dashboard')}
                     />
                 )}
 
                 {view === 'report_found' && (
                     <ReportFound
-                        onRefresh={() => { loadFeed(); setView('dashboard'); }}
-                        onCancel={() => setView('dashboard')}
+                        onRefresh={() => { loadFeed(); navigateTo('dashboard'); }}
+                        onCancel={() => navigateTo('dashboard')}
                     />
                 )}
                 {view === 'listing' && (
                     <AnnouncementList
                         onSelect={(ann)=>{
                             setSelectedAnnouncement(ann);
-                            setView('details');
+                            navigateTo('details', { announcement: ann });
                         }}
                     />
                 )}
                 {view === 'home' && (
-                    <HomePage onNavigate={setView} />
+                    <HomePage onNavigate={navigateTo} />
                 )}
                 {view === 'how' && (
-                    <HowItWorks onNavigate={setView} />
+                    <HowItWorks onNavigate={navigateTo} />
                 )}
                 {view === 'profile' && <ProfilePage />}
                 {view === 'public_profile' && selectedUserId && (
@@ -325,9 +391,9 @@ function App() {
                             try {
                                 const res = await getAnnouncement(announcementId);
                                 setSelectedAnnouncement(res.data);
-                                setView('details');
+                                navigateTo('details', { announcement: res.data });
                             } catch (err) {
-                                setView('listing');
+                                navigateTo('listing');
                             }
                         }}
                     />
