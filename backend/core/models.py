@@ -267,6 +267,7 @@ class Notification(models.Model):
     TYPE_COMMENT_ON_ANNOUNCEMENT = "comment_on_announcement"
     TYPE_COMMENT_REACTION = "comment_reaction"
     TYPE_POST_REACTED = "post_reacted"
+    TYPE_POSSIBLE_MATCH = "possible_match"
     TYPE_CHOICES = [
         (TYPE_NEW_MESSAGE, "New message"),
         (TYPE_POST_SAVED, "Post saved"),
@@ -275,12 +276,20 @@ class Notification(models.Model):
         (TYPE_COMMENT_ON_ANNOUNCEMENT, "Comment on announcement"),
         (TYPE_COMMENT_REACTION, "Reaction on comment"),
         (TYPE_POST_REACTED, "Announcement reacted"),
+        (TYPE_POSSIBLE_MATCH, "Possible match"),
     ]
 
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="notifications",
+    )
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='actor_notifications'
     )
     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
     title = models.CharField(max_length=255)

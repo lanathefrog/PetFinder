@@ -295,7 +295,18 @@ function App() {
                             <button
                                 type="button"
                                 className="notification-btn"
-                                onClick={() => setShowNotificationsDropdown((prev) => !prev)}
+                                onClick={async () => {
+                                    const next = !showNotificationsDropdown;
+                                    setShowNotificationsDropdown(next);
+                                    // when opening the dropdown, mark all notifications read
+                                    if (next) {
+                                        try {
+                                            await handleMarkNotificationsRead();
+                                        } catch (e) {
+                                            // ignore
+                                        }
+                                    }
+                                }}
                             >
                                 🔔 {unreadNotificationsCount > 0 ? unreadNotificationsCount : ""}
                             </button>
@@ -314,6 +325,33 @@ function App() {
                                             <div
                                                 key={item.id}
                                                 className={`notification-item ${item.is_read ? "" : "unread"}`}
+                                                style={{ cursor: 'pointer' }}
+                                                onClick={async () => {
+                                                    try {
+                                                        // mark this notification read
+                                                        await markNotificationsRead([item.id]);
+                                                        setNotifications((prev) => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+                                                        setUnreadNotificationsCount((c) => Math.max(0, c - (item.is_read ? 0 : 1)));
+                                                    } catch (e) {
+                                                        // ignore error
+                                                    }
+
+                                                    // navigate: prefer announcement -> actor/profile
+                                                    if (item.related_announcement) {
+                                                        try {
+                                                            const res = await getAnnouncement(item.related_announcement);
+                                                            setSelectedAnnouncement(res.data);
+                                                            navigateTo('details', { announcement: res.data });
+                                                        } catch (err) {
+                                                            navigateTo('listing');
+                                                        }
+                                                    } else if (item.actor && item.actor.id) {
+                                                        const me = Number(localStorage.getItem('user_id'));
+                                                        if (me && Number(item.actor.id) === me) navigateTo('profile');
+                                                        else navigateTo('public_profile', { userId: item.actor.id });
+                                                    }
+                                                    setShowNotificationsDropdown(false);
+                                                }}
                                             >
                                                 <strong>{item.title}</strong>
                                                 <span>{new Date(item.created_at).toLocaleString()}</span>

@@ -300,6 +300,8 @@ class SavedAnnouncementSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    actor = UserSerializer(read_only=True)
+    related_announcement_detail = serializers.SerializerMethodField()
     class Meta:
         model = Notification
         fields = [
@@ -307,7 +309,18 @@ class NotificationSerializer(serializers.ModelSerializer):
             "type",
             "title",
             "related_announcement",
+            "related_announcement_detail",
+            "actor",
             "related_message",
             "is_read",
             "created_at",
         ]
+
+    def get_related_announcement_detail(self, obj):
+        try:
+            ann = obj.related_announcement
+            if not ann:
+                return None
+            return { 'id': ann.id, 'pet_name': ann.pet.name if ann.pet else None, 'owner_id': ann.owner_id }
+        except Exception:
+            return None

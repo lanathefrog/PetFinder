@@ -42,6 +42,15 @@ const ProfilePage = () => {
         loadNotifications();
     }, []);
 
+    // When notifications tab becomes active, mark all notifications as read
+    useEffect(() => {
+        if (activeTab === "notifications" && notifications.length > 0) {
+            // mark all read in background
+            handleMarkAllRead();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
+
     const loadUser = async () => {
         try {
             const res = await axios.get("http://127.0.0.1:8001/api/users/me/", {
@@ -485,6 +494,22 @@ const ProfilePage = () => {
                                     <div
                                         key={item.id}
                                         className={`profile-list-item ${item.is_read ? "" : "unread"}`}
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={async () => {
+                                            try {
+                                                await markNotificationsRead([item.id]);
+                                                setNotifications((prev) => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+                                            } catch (err) {
+                                                // ignore
+                                            }
+
+                                            // navigate using custom events App listens for
+                                            if (item.related_announcement) {
+                                                window.dispatchEvent(new CustomEvent('openAnnouncement', { detail: item.related_announcement }));
+                                            } else if (item.actor && item.actor.id) {
+                                                window.dispatchEvent(new CustomEvent('openUserProfile', { detail: item.actor.id }));
+                                            }
+                                        }}
                                     >
                                         <strong>{item.title}</strong>
                                         <span>{new Date(item.created_at).toLocaleString()}</span>

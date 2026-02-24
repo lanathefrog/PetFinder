@@ -89,6 +89,36 @@ class AnnouncementList(generics.ListCreateAPIView):
         self.perform_create(serializer)
 
         headers = self.get_success_headers(serializer.data)
+
+        # If a 'found' announcement was created, attempt to find possible matches
+        try:
+            created_ann = serializer.instance
+            if getattr(created_ann, 'status', None) == 'found':
+                from .utils import find_matches_for_announcement
+                from .serializers import AnnouncementSerializer as AnnSerializer
+
+                matches = find_matches_for_announcement(created_ann)
+                match_announcements = [m[0] for m in matches]
+                matches_data = AnnSerializer(match_announcements, many=True, context={'request': request}).data
+
+                # notify owners of candidate lost announcements
+                for candidate in match_announcements:
+                    if candidate.owner_id != request.user.id:
+                        try:
+                            Notification.objects.create(
+                                user=candidate.owner,
+                                actor=request.user,
+                                type=Notification.TYPE_POSSIBLE_MATCH,
+                                title=f"Possible match: {created_ann.pet.name} may match your lost pet",
+                                related_announcement=created_ann,
+                            )
+                        except Exception:
+                            pass
+
+                return Response({'announcement': serializer.data, 'matches': matches_data}, status=status.HTTP_201_CREATED, headers=headers)
+        except Exception:
+            pass
+
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
@@ -173,6 +203,7 @@ class AnnouncementCommentList(generics.ListCreateAPIView):
             if announcement and announcement.owner_id != self.request.user.id:
                 Notification.objects.create(
                     user=announcement.owner,
+                    actor=self.request.user,
                     type=Notification.TYPE_COMMENT_ON_ANNOUNCEMENT,
                     title=f"{self.request.user.username} commented on your announcement",
                     related_announcement=announcement,
@@ -261,12 +292,13 @@ def toggle_save_announcement(request, announcement_id):
             announcement=announcement,
         )
         if created and announcement.owner_id != request.user.id:
-            Notification.objects.create(
-                user=announcement.owner,
-                type=Notification.TYPE_POST_SAVED,
-                title=f"{request.user.username} saved your announcement",
-                related_announcement=announcement,
-            )
+                Notification.objects.create(
+                    user=announcement.owner,
+                    actor=request.user,
+                    type=Notification.TYPE_POST_SAVED,
+                    title=f"{request.user.username} saved your announcement",
+                    related_announcement=announcement,
+                )
         # badge check for the saver
         try:
             from .utils import check_and_assign_badges
@@ -304,6 +336,7 @@ def toggle_reaction(request, announcement_id):
         if announcement.owner_id != request.user.id:
             Notification.objects.create(
                 user=announcement.owner,
+                actor=request.user,
                 type=Notification.TYPE_POST_LIKED,
                 title=f"{request.user.username} reacted to your announcement",
                 related_announcement=announcement,
@@ -356,6 +389,7 @@ def toggle_comment_reaction(request, comment_id):
             try:
                 Notification.objects.create(
                     user=comment.user,
+                    actor=request.user,
                     type=Notification.TYPE_COMMENT_REACTION,
                     title=f"{request.user.username} reacted to your comment",
                     related_announcement=comment.announcement,

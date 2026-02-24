@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import (
+    Badge,
     Pet,
     Location,
     Announcement,
@@ -11,7 +12,9 @@ from .models import (
     ChatMessage,
     Notification,
     PostView,
+    Reaction,
     SavedAnnouncement,
+    UserBadge,
     UserPresence,
 )
 
