@@ -494,7 +494,7 @@ select {
     font-size: 0.95rem;
     font-family: inherit;
     transition: all 0.3s ease;
-    background: #f9f9f9;
+    background: #ffffff;
 }
 
 input[type="text"]:focus,

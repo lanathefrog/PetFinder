@@ -74,7 +74,8 @@ const Login = ({ setToken }) => {
     };
 
     return (
-        <div className="login-container">
+        <div className="login-page">
+            <div className="login-container">
             <div className="login-header">
                 <div className="login-logo floating-animation">🧡</div>
                 <h1>PetFinder</h1>
@@ -134,6 +135,7 @@ const Login = ({ setToken }) => {
                         </form>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );
