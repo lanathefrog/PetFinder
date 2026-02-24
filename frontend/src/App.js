@@ -48,21 +48,30 @@ function App() {
             .catch(err => console.error("Error loading feed:", err));
     };
 
-    // Simple in-app navigation that also pushes a hash to browser history
+    // Simple in-app navigation that pushes pretty paths and updates state
     const navigateTo = (targetView, opts = {}) => {
-        const entryHashParts = [targetView];
-        if (opts.announcement && opts.announcement.id) entryHashParts.push(`details:${opts.announcement.id}`);
-        if (opts.announcementId) entryHashParts.push(`details:${opts.announcementId}`);
-        if (opts.userId) entryHashParts.push(`user:${opts.userId}`);
+        let path = '/';
+        if (targetView === 'details') {
+            const id = opts.announcement?.id || opts.announcementId;
+            path = id ? `/announcements/${id}` : '/announcements';
+        } else if (targetView === 'public_profile') {
+            const uid = opts.userId;
+            path = uid ? `/users/${uid}` : '/users';
+        } else if (targetView === 'dashboard') path = '/dashboard';
+        else if (targetView === 'messages') path = '/messages';
+        else if (targetView === 'listing') path = '/announcements';
+        else if (targetView === 'home') path = '/';
+        else if (targetView === 'profile') path = '/users/me';
+        else if (targetView === 'how') path = '/how';
+        else if (targetView === 'report_lost') path = '/report/lost';
+        else if (targetView === 'report_found') path = '/report/found';
 
-        const hash = `#${entryHashParts.join('@')}`;
-        window.history.pushState({ view: targetView, opts }, '', hash);
+        window.history.pushState({ view: targetView, opts }, '', path);
 
         // apply view and params
         setView(targetView);
         if (opts.announcement) setSelectedAnnouncement(opts.announcement);
         if (opts.announcementId) {
-            // try to find announcement locally first
             const found = announcements.find(a => a.id === opts.announcementId);
             if (found) setSelectedAnnouncement(found);
             else setSelectedAnnouncement(null);
@@ -70,12 +79,12 @@ function App() {
         if (opts.userId) setSelectedUserId(opts.userId);
     };
 
-    const parseHashAndNavigate = async () => {
-        const raw = window.location.hash.slice(1);
-        if (!raw) return;
-        // examples: "details:123" or "user:45" or "dashboard"
-        if (raw.startsWith('details:')) {
-            const id = parseInt(raw.split(':')[1], 10);
+    const parseLocationAndNavigate = async () => {
+        const p = window.location.pathname || '/';
+        // /announcements/123
+        const annMatch = p.match(/^\/announcements\/(\d+)/);
+        if (annMatch) {
+            const id = parseInt(annMatch[1], 10);
             if (!isNaN(id)) {
                 try {
                     const res = await getAnnouncement(id);
@@ -87,8 +96,10 @@ function App() {
             }
             return;
         }
-        if (raw.startsWith('user:')) {
-            const id = parseInt(raw.split(':')[1], 10);
+
+        const userMatch = p.match(/^\/users\/(\d+)/);
+        if (userMatch) {
+            const id = parseInt(userMatch[1], 10);
             if (!isNaN(id)) {
                 setSelectedUserId(id);
                 setView('public_profile');
@@ -96,8 +107,29 @@ function App() {
             return;
         }
 
-        // default: use as view name
-        setView(raw);
+        if (p === '/dashboard') {
+            setView('dashboard');
+            return;
+        }
+        if (p === '/messages') {
+            setView('messages');
+            return;
+        }
+        if (p === '/' || p === '/home') {
+            setView('home');
+            return;
+        }
+        if (p === '/announcements') {
+            setView('listing');
+            return;
+        }
+        if (p === '/users/me') {
+            setView('profile');
+            return;
+        }
+
+        // fallback
+        setView('home');
     };
 
     useEffect(() => {
@@ -112,22 +144,35 @@ function App() {
             }
         };
         window.addEventListener('openUserProfile', handleOpenUser);
+        const handleOpenAnnouncement = async (e) => {
+            const id = e.detail;
+            if (!id) return;
+            try {
+                const res = await getAnnouncement(id);
+                setSelectedAnnouncement(res.data);
+                navigateTo('details', { announcement: res.data });
+            } catch (err) {
+                navigateTo('listing');
+            }
+        };
+        window.addEventListener('openAnnouncement', handleOpenAnnouncement);
 
         // popstate -> sync UI
         const onPop = () => {
-            parseHashAndNavigate();
+            parseLocationAndNavigate();
         };
         window.addEventListener('popstate', onPop);
 
         return () => {
             window.removeEventListener('openUserProfile', handleOpenUser);
+            window.removeEventListener('openAnnouncement', handleOpenAnnouncement);
             window.removeEventListener('popstate', onPop);
         };
     }, []);
 
-    // On first load, reflect hash state if present
+    // On first load, reflect current path
     useEffect(() => {
-        parseHashAndNavigate();
+        parseLocationAndNavigate();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

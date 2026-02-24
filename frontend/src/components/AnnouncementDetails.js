@@ -13,7 +13,7 @@ import L from "leaflet";
 import { useToast } from "./ToastContext";
 import 'leaflet/dist/leaflet.css';
 import '../styles/detail.css';
-import { getComments, createComment, deleteComment, updateComment } from '../services/api';
+import { getComments, createComment, deleteComment, updateComment, toggleCommentReaction } from '../services/api';
 import { toggleReaction } from '../services/api';
 
 // FIX leaflet icon
@@ -58,7 +58,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const [newCommentText, setNewCommentText] = useState("");
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingCommentText, setEditingCommentText] = useState("");
-    const [reactionsState, setReactionsState] = useState(localAnnouncement.reactions || { counts: {}, user_reaction: null });
+    const [reactionsState, setReactionsState] = useState(localAnnouncement.reactions || { kinds: [], user_reaction: null });
 
     const [formData, setFormData] = useState({
         name: announcement.pet.name || "",
@@ -239,12 +239,26 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
 
     const handleToggleReaction = async (kind) => {
         try {
-            const res = await toggleReaction(localAnnouncement.id, kind);
-            const data = res.data || {};
-            setReactionsState({ counts: data.counts || {}, user_reaction: data.user_reaction || null });
-            showToast(data.created ? 'Reacted' : 'Reaction removed', 'success');
+            await toggleReaction(localAnnouncement.id, kind);
+            // re-fetch announcement to get fresh reaction kinds + icons from backend serializer
+            const res = await getAnnouncement(localAnnouncement.id);
+            setLocalAnnouncement(res.data);
+            setReactionsState(res.data.reactions || { kinds: [], user_reaction: null });
+            showToast('Reaction updated', 'success');
         } catch (err) {
             showToast('Failed to toggle reaction', 'error');
+        }
+    };
+
+    const handleToggleCommentReaction = async (commentId, kind) => {
+        try {
+            await toggleCommentReaction(commentId, kind);
+            // refresh comments
+            const res = await getComments(localAnnouncement.id);
+            setComments(res.data || []);
+            showToast('Reaction updated', 'success');
+        } catch (err) {
+            showToast('Failed to update reaction', 'error');
         }
     };
 
@@ -616,8 +630,17 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                 <div className="comments-section info-card">
                     <h2>Comments ({localAnnouncement.comments_count || comments.length})</h2>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                        <button className={`save-toggle-btn ${reactionsState.user_reaction === 'like' ? 'saved' : ''}`} onClick={() => handleToggleReaction('like')}>👍 {reactionsState.counts?.like || 0}</button>
-                        <button className={`save-toggle-btn ${reactionsState.user_reaction === 'helpful' ? 'saved' : ''}`} onClick={() => handleToggleReaction('helpful')}>✅ {reactionsState.counts?.helpful || 0}</button>
+                        {(localAnnouncement.reactions?.kinds || reactionsState.kinds || []).map((k) => (
+                            <button
+                                key={k.kind}
+                                className={`reaction-btn ${reactionsState.user_reaction === k.kind ? 'reacted' : ''}`}
+                                onClick={() => handleToggleReaction(k.kind)}
+                                title={k.label}
+                            >
+                                <span style={{ fontSize: 18 }}>{k.icon || '•'}</span>
+                                <span style={{ marginLeft: 6 }}>{k.count || 0}</span>
+                            </button>
+                        ))}
                     </div>
 
                         {commentsLoading ? (
@@ -659,6 +682,21 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                             </div>
                                         ) : (
                                             <p className="comment-text">{c.text}</p>
+                                        )}
+                                        {/* Comment reactions: show present reactions */}
+                                        {c.reactions && c.reactions.counts && Object.keys(c.reactions.counts).length > 0 && (
+                                            <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                                                {Object.entries(c.reactions.counts).map(([k, info]) => (
+                                                    <div key={k} className={`comment-reaction-chip ${c.reactions.user_reaction === k ? 'reacted' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 12, background: '#f2f2f2' }}>
+                                                        <span style={{ fontSize: 14 }}>{info.icon || '•'}</span>
+                                                        <span style={{ fontSize: 13 }}>{info.count}</span>
+                                                    </div>
+                                                ))}
+                                                <div style={{ marginLeft: 8 }}>
+                                                    <button className="btn btn-sm" onClick={() => handleToggleCommentReaction(c.id, 'like')}>👍</button>
+                                                    <button className="btn btn-sm" style={{ marginLeft: 6 }} onClick={() => handleToggleCommentReaction(c.id, 'helpful')}>👍</button>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

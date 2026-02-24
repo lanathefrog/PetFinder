@@ -57,5 +57,8 @@ export const updateComment = (commentId, data) =>
 export const toggleReaction = (announcementId, kind) =>
     API.post(`announcements/${announcementId}/reactions/`, { kind });
 
+export const toggleCommentReaction = (commentId, kind) =>
+    API.post(`comments/${commentId}/reactions/`, { kind });
+
 // Users
 export const getUser = (userId) => API.get(`users/${userId}/`);

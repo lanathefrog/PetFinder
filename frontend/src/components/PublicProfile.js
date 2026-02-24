@@ -59,7 +59,9 @@ const PublicProfile = ({ userId }) => {
                     ) : (
                         <ul>
                             {announcements.map((a) => (
-                                <li key={a.id}>{a.pet?.name} — {a.status}</li>
+                                <li key={a.id} style={{ cursor: 'pointer' }} onClick={() => window.dispatchEvent(new CustomEvent('openAnnouncement', { detail: a.id }))}>
+                                    {a.pet?.name} — {a.status}
+                                </li>
                             ))}
                         </ul>
                     )}
