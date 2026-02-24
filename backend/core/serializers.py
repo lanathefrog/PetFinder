@@ -130,7 +130,25 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
         pet_data = validated_data.pop('pet')
 
-        pet = Pet.objects.create(**pet_data)
+        pet = Pet.objects.create(**{k: v for k, v in pet_data.items() if k != 'photo'})
+
+        # Handle uploaded photo from multipart/form-data
+        try:
+            request = self.context.get('request')
+            if request is not None and hasattr(request, 'FILES'):
+                # frontend may send the file as 'pet.photo' or 'pet_photo' or 'photo'
+                photo = None
+                for key in ['pet.photo', 'pet_photo', 'photo', 'pet.photo[0]']:
+                    if key in request.FILES:
+                        photo = request.FILES[key]
+                        break
+
+                if photo:
+                    pet.photo = photo
+                    pet.save()
+        except Exception:
+            # don't break creation if file handling fails
+            pass
 
         if owner is None and request is not None:
             owner = request.user
@@ -152,9 +170,26 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
         # 🔹 update pet
         if pet_data:
+            # update standard pet fields (but avoid overwriting photo here)
             for attr, value in pet_data.items():
+                if attr == 'photo':
+                    continue
                 setattr(instance.pet, attr, value)
-            instance.pet.save()
+            # Handle uploaded photo on update if present
+            try:
+                request = self.context.get('request')
+                if request is not None and hasattr(request, 'FILES'):
+                    photo = None
+                    for key in ['pet.photo', 'pet_photo', 'photo', 'pet.photo[0]']:
+                        if key in request.FILES:
+                            photo = request.FILES[key]
+                            break
+                    if photo:
+                        instance.pet.photo = photo
+                instance.pet.save()
+            except Exception:
+                # swallow file save errors to avoid breaking the whole update
+                instance.pet.save()
 
         # 🔹 update location with proper latitude and longitude
         if location_data:
