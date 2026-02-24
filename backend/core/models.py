@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth.models import User
 from django.db import models
@@ -263,11 +264,17 @@ class Notification(models.Model):
     TYPE_POST_SAVED = "post_saved"
     TYPE_POST_LIKED = "post_liked"
     TYPE_CONTACTED = "contacted"
+    TYPE_COMMENT_ON_ANNOUNCEMENT = "comment_on_announcement"
+    TYPE_COMMENT_REACTION = "comment_reaction"
+    TYPE_POST_REACTED = "post_reacted"
     TYPE_CHOICES = [
         (TYPE_NEW_MESSAGE, "New message"),
         (TYPE_POST_SAVED, "Post saved"),
         (TYPE_POST_LIKED, "Post liked"),
         (TYPE_CONTACTED, "Contacted"),
+        (TYPE_COMMENT_ON_ANNOUNCEMENT, "Comment on announcement"),
+        (TYPE_COMMENT_REACTION, "Reaction on comment"),
+        (TYPE_POST_REACTED, "Announcement reacted"),
     ]
 
     user = models.ForeignKey(
@@ -358,18 +365,30 @@ class Reaction(models.Model):
         (KIND_HELPFUL, 'Helpful'),
     ]
 
+    # simple icons (frontend may override with images)
+    ICONS = {
+        KIND_LIKE: '❤️',
+        KIND_HELPFUL: '👍',
+    }
+
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='reactions')
-    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name='reactions')
+    # allow reaction to either announcement OR comment
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name='reactions', null=True, blank=True)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='reactions', null=True, blank=True)
     kind = models.CharField(max_length=20, choices=KIND_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'announcement', 'kind'], name='unique_reaction_per_user_announcement_kind')
+            # one reaction per user per comment (any kind) when comment is set
+            models.UniqueConstraint(fields=['user', 'comment'], condition=Q(comment__isnull=False), name='unique_reaction_per_user_comment'),
+            # for announcements keep uniqueness per user+announcement+kind when announcement is set
+            models.UniqueConstraint(fields=['user', 'announcement', 'kind'], condition=Q(announcement__isnull=False), name='unique_reaction_per_user_announcement_kind'),
         ]
 
     def __str__(self):
-        return f"{self.kind} by {self.user.username} on {self.announcement_id}"
+        target = f"comment {self.comment_id}" if self.comment_id else f"announcement {self.announcement_id}"
+        return f"{self.kind} by {self.user.username} on {target}"
 
 
 @receiver(post_save, sender=User)

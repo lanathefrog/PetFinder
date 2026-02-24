@@ -167,6 +167,18 @@ class AnnouncementCommentList(generics.ListCreateAPIView):
             check_and_assign_badges(self.request.user)
         except Exception:
             pass
+        # notify announcement owner about new comment
+        try:
+            announcement = Announcement.objects.filter(id=announcement_id).first()
+            if announcement and announcement.owner_id != self.request.user.id:
+                Notification.objects.create(
+                    user=announcement.owner,
+                    type=Notification.TYPE_COMMENT_ON_ANNOUNCEMENT,
+                    title=f"{self.request.user.username} commented on your announcement",
+                    related_announcement=announcement,
+                )
+        except Exception:
+            pass
 
 
 class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -312,6 +324,53 @@ def toggle_reaction(request, announcement_id):
         user_reaction = ur.kind
 
     return Response({ 'counts': counts, 'user_reaction': user_reaction, 'created': created })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_comment_reaction(request, comment_id):
+    kind = request.data.get('kind')
+    if kind not in dict(Reaction.KIND_CHOICES):
+        return Response({'error': 'Invalid reaction kind'}, status=status.HTTP_400_BAD_REQUEST)
+
+    comment = Comment.objects.filter(id=comment_id).first()
+    if not comment:
+        return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # enforce one reaction per user per comment
+    existing = Reaction.objects.filter(user=request.user, comment=comment).first()
+    created = False
+    if existing:
+        if existing.kind == kind:
+            existing.delete()
+            created = False
+        else:
+            existing.kind = kind
+            existing.save()
+            created = True
+    else:
+        Reaction.objects.create(user=request.user, comment=comment, kind=kind)
+        created = True
+        # notify comment owner
+        if comment.user_id != request.user.id:
+            try:
+                Notification.objects.create(
+                    user=comment.user,
+                    type=Notification.TYPE_COMMENT_REACTION,
+                    title=f"{request.user.username} reacted to your comment",
+                    related_announcement=comment.announcement,
+                )
+            except Exception:
+                pass
+
+    qs = Reaction.objects.filter(comment=comment)
+    counts = {k: qs.filter(kind=k).count() for k, _ in Reaction.KIND_CHOICES}
+    user_reaction = None
+    ur = qs.filter(user=request.user).first()
+    if ur:
+        user_reaction = ur.kind
+
+    return Response({'counts': counts, 'user_reaction': user_reaction, 'created': created})
 
 
 @api_view(["GET"])

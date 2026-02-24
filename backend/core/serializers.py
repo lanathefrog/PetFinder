@@ -211,9 +211,16 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         if qs is None:
             qs = Reaction.objects.filter(announcement=obj)
 
-        counts = {}
-        for kind, _ in Reaction.KIND_CHOICES:
-            counts[kind] = qs.filter(kind=kind).count()
+        # include icon and label for each known kind
+        kinds = []
+        for kind, label in Reaction.KIND_CHOICES:
+            count = qs.filter(kind=kind).count()
+            kinds.append({
+                'kind': kind,
+                'label': label,
+                'icon': Reaction.ICONS.get(kind, ''),
+                'count': count,
+            })
 
         user_reaction = None
         if request and request.user.is_authenticated:
@@ -221,12 +228,13 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             if r:
                 user_reaction = r.kind
 
-        return { 'counts': counts, 'user_reaction': user_reaction }
+        return {'kinds': kinds, 'user_reaction': user_reaction}
 
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_badges = serializers.SerializerMethodField()
+    reactions = serializers.SerializerMethodField()
     parent = serializers.PrimaryKeyRelatedField(queryset=Comment.objects.all(), required=False, allow_null=True)
 
     class Meta:
@@ -235,6 +243,7 @@ class CommentSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_badges",
+            "reactions",
             "announcement",
             "text",
             "parent",
@@ -261,6 +270,25 @@ class CommentSerializer(serializers.ModelSerializer):
             return [{"id": ub.badge.id, "name": ub.badge.name, "icon": ub.badge.icon} for ub in badges]
         except Exception:
             return []
+
+    def get_reactions(self, obj):
+        # only show reactions present for this comment
+        qs = Reaction.objects.filter(comment=obj)
+        counts = {}
+        for kind, label in Reaction.KIND_CHOICES:
+            c = qs.filter(kind=kind).count()
+            if c:
+                counts[kind] = { 'label': label, 'icon': Reaction.ICONS.get(kind, ''), 'count': c }
+
+        # current user reaction on this comment
+        request = self.context.get('request')
+        user_reaction = None
+        if request and request.user.is_authenticated:
+            r = qs.filter(user=request.user).first()
+            if r:
+                user_reaction = r.kind
+
+        return { 'counts': counts, 'user_reaction': user_reaction }
 
 
 class SavedAnnouncementSerializer(serializers.ModelSerializer):

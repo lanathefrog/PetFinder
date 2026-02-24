@@ -12,6 +12,7 @@ urlpatterns = [
         path('announcements/<int:announcement_id>/comments/', views.AnnouncementCommentList.as_view(), name='announcement-comments'),
         path('comments/<int:pk>/', views.CommentDetail.as_view(), name='comment-detail'),
         path('announcements/<int:announcement_id>/reactions/', views.toggle_reaction, name='announcement-reactions'),
+        path('comments/<int:comment_id>/reactions/', views.toggle_comment_reaction, name='comment-reactions'),
     path('register/', register_user, name='register'),
     path('announcements/me/', views.my_announcements, name='my-announcements'),
 path('users/me/', views.current_user, name='current-user'),
