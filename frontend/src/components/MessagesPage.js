@@ -284,7 +284,9 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                             )}
                                         </div>
                                         <p className="conversation-meta">
-                                            {conversation.other_user?.username || "User"}
+                                            <span style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openUserProfile', { detail: conversation.other_user?.id })); showToast(`Opening ${conversation.other_user?.username}'s profile`, 'info'); }}>
+                                                {conversation.other_user?.username || "User"}
+                                            </span>
                                         </p>
                                         <p className="conversation-preview">
                                             {conversation.last_message?.text || "Start the conversation"}
@@ -307,7 +309,7 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                 <div>
                                     <h3>{activeConversation.announcement_title}</h3>
                                     <p className="messages-muted">
-                                        with {activeConversation.other_user?.username || "user"}
+                                        with <span style={{ cursor: 'pointer' }} onClick={() => { window.dispatchEvent(new CustomEvent('openUserProfile', { detail: activeConversation.other_user?.id })); showToast(`Opening ${activeConversation.other_user?.username}'s profile`, 'info'); }}>{activeConversation.other_user?.username || "user"}</span>
                                     </p>
                                     <p className={`presence-indicator ${activeConversation.other_user?.is_online ? "online" : "offline"}`}>
                                         {activeConversation.other_user?.is_online ? "🟢 " : ""}{renderPresenceText(activeConversation.other_user)}

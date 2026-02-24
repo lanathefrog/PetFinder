@@ -7,6 +7,10 @@ from .serializers import (
     NotificationSerializer,
     SavedAnnouncementSerializer,
 )
+from .models import Reaction
+from rest_framework import permissions
+from .models import Comment
+from .serializers import CommentSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -20,6 +24,8 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from rest_framework import status
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
 
 # Helper to unflatten keys (pet.name -> pet: {name})
 def expand_data(data):
@@ -139,6 +145,48 @@ class AnnouncementDetail(generics.RetrieveUpdateDestroyAPIView):
             session_key=request.session.session_key,
         )
 
+
+class AnnouncementCommentList(generics.ListCreateAPIView):
+    serializer_class = CommentSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        announcement_id = self.kwargs.get('announcement_id')
+        return Comment.objects.filter(announcement_id=announcement_id).select_related('user', 'user__profile')
+
+    def perform_create(self, serializer):
+        announcement_id = self.kwargs.get('announcement_id')
+        serializer.save(user=self.request.user, announcement_id=announcement_id)
+        # assign badges for the commenter
+        try:
+            from .utils import check_and_assign_badges
+            check_and_assign_badges(self.request.user)
+        except Exception:
+            pass
+
+
+class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.select_related('user')
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def check_object_permissions(self, request, obj):
+        # allow anyone to view, but restrict updates/deletes to owner
+        if request.method in ('PUT', 'PATCH', 'DELETE') and obj.user != request.user:
+            raise PermissionDenied("You cannot modify this comment.")
+        return super().check_object_permissions(request, obj)
+
+    def perform_update(self, serializer):
+        # only owner can update => enforced in check_object_permissions
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
@@ -207,6 +255,12 @@ def toggle_save_announcement(request, announcement_id):
                 title=f"{request.user.username} saved your announcement",
                 related_announcement=announcement,
             )
+        # badge check for the saver
+        try:
+            from .utils import check_and_assign_badges
+            check_and_assign_badges(request.user)
+        except Exception:
+            pass
         return Response({"saved": True})
 
     SavedAnnouncement.objects.filter(
@@ -214,6 +268,50 @@ def toggle_save_announcement(request, announcement_id):
         announcement=announcement,
     ).delete()
     return Response({"saved": False})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_reaction(request, announcement_id):
+    kind = request.data.get('kind')
+    if kind not in dict(Reaction.KIND_CHOICES):
+        return Response({'error': 'Invalid reaction kind'}, status=status.HTTP_400_BAD_REQUEST)
+
+    announcement = Announcement.objects.filter(id=announcement_id).first()
+    if not announcement:
+        return Response({'error': 'Announcement not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    existing = Reaction.objects.filter(user=request.user, announcement=announcement, kind=kind).first()
+    created = False
+    if existing:
+        existing.delete()
+    else:
+        Reaction.objects.create(user=request.user, announcement=announcement, kind=kind)
+        created = True
+        # notify owner and check badges
+        if announcement.owner_id != request.user.id:
+            Notification.objects.create(
+                user=announcement.owner,
+                type=Notification.TYPE_POST_LIKED,
+                title=f"{request.user.username} reacted to your announcement",
+                related_announcement=announcement,
+            )
+        try:
+            from .utils import check_and_assign_badges
+            check_and_assign_badges(announcement.owner)
+        except Exception:
+            pass
+
+    # return counts + user_reaction
+    from .models import Reaction as ReactionModel
+    qs = ReactionModel.objects.filter(announcement=announcement)
+    counts = {k: qs.filter(kind=k).count() for k, _ in ReactionModel.KIND_CHOICES}
+    user_reaction = None
+    ur = qs.filter(user=request.user).first()
+    if ur:
+        user_reaction = ur.kind
+
+    return Response({ 'counts': counts, 'user_reaction': user_reaction, 'created': created })
 
 
 @api_view(["GET"])
@@ -265,6 +363,16 @@ def current_user(request):
         if hasattr(user, 'profile') and user.profile.profile_image:
             profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
 
+        # include badges
+        badges = []
+        try:
+            badges = [
+                {"id": ub.badge.id, "name": ub.badge.name, "icon": ub.badge.icon, "awarded_at": ub.awarded_at}
+                for ub in user.badges.select_related('badge').all()
+            ]
+        except Exception:
+            badges = []
+
         return Response({
             "id": user.id,
             "username": user.username,
@@ -272,7 +380,8 @@ def current_user(request):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "phone_number": getattr(user.profile, "phone_number", ""),
-            "profile_image_url": profile_image_url
+            "profile_image_url": profile_image_url,
+            "badges": badges,
         })
 
     if request.method == 'PUT':
@@ -399,6 +508,35 @@ def change_password(request):
     user.save()
 
     return Response({"message": "Password updated successfully"})
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    profile_image_url = None
+    if hasattr(user, 'profile') and user.profile.profile_image:
+        profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
+
+    # badges
+    badges = []
+    try:
+        badges = [
+            {"id": ub.badge.id, "name": ub.badge.name, "icon": ub.badge.icon, "awarded_at": ub.awarded_at}
+            for ub in user.badges.select_related('badge').all()
+        ]
+    except Exception:
+        badges = []
+
+    return Response({
+        "id": user.id,
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "profile_image_url": profile_image_url,
+        "date_joined": user.date_joined,
+        "badges": badges,
+    })
 
 from geopy.geocoders import Nominatim
 

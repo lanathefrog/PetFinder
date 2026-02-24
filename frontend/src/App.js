@@ -17,6 +17,7 @@ import AnnouncementList from './components/AnnouncementList';
 import HomePage from './components/HomePage';
 import HowItWorks from './components/HowItWorks';
 import ProfilePage from './components/ProfilePage';
+import PublicProfile from './components/PublicProfile';
 import MessagesPage from './components/MessagesPage';
 
 
@@ -34,6 +35,7 @@ function App() {
     const [announcements, setAnnouncements] = useState([]);
     const [view, setView] = useState('home');
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [activeConversationId, setActiveConversationId] = useState(null);
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
@@ -45,6 +47,23 @@ function App() {
             .then(res => setAnnouncements(res.data))
             .catch(err => console.error("Error loading feed:", err));
     };
+
+    useEffect(() => {
+        const handleOpenUser = (e) => {
+            const userId = e.detail;
+            if (!userId) return;
+            const me = Number(localStorage.getItem('user_id'));
+            if (me && Number(userId) === me) {
+                setView('profile');
+            } else {
+                setSelectedUserId(userId);
+                setView('public_profile');
+            }
+        };
+        window.addEventListener('openUserProfile', handleOpenUser);
+
+        return () => window.removeEventListener('openUserProfile', handleOpenUser);
+    }, []);
 
     useEffect(() => {
         if (token) {
@@ -294,6 +313,11 @@ function App() {
                     <HowItWorks onNavigate={setView} />
                 )}
                 {view === 'profile' && <ProfilePage />}
+                {view === 'public_profile' && selectedUserId && (
+                    <div className="container">
+                        <PublicProfile userId={selectedUserId} />
+                    </div>
+                )}
                 {view === 'messages' && (
                     <MessagesPage
                         initialConversationId={activeConversationId}

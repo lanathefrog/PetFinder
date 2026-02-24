@@ -41,3 +41,21 @@ export const sendChatMessageHttp = (conversationId, text) =>
 
 export const markConversationRead = (conversationId) =>
     API.post(`chat/conversations/${conversationId}/read/`);
+
+// Comments
+export const getComments = (announcementId, params = {}) =>
+    API.get(`announcements/${announcementId}/comments/`, { params });
+
+export const createComment = (announcementId, data) =>
+    API.post(`announcements/${announcementId}/comments/`, data);
+
+export const deleteComment = (commentId) =>
+    API.delete(`comments/${commentId}/`);
+export const updateComment = (commentId, data) =>
+    API.patch(`comments/${commentId}/`, data);
+
+export const toggleReaction = (announcementId, kind) =>
+    API.post(`announcements/${announcementId}/reactions/`, { kind });
+
+// Users
+export const getUser = (userId) => API.get(`users/${userId}/`);

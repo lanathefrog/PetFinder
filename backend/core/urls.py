@@ -8,6 +8,10 @@ from . import chat_views
 urlpatterns = [
     path('announcements/', AnnouncementList.as_view(), name='announcement-list'),
     path('announcements/<int:pk>/', AnnouncementDetail.as_view(), name='announcement-detail'),
+        path('users/<int:user_id>/', views.public_user, name='public-user'),
+        path('announcements/<int:announcement_id>/comments/', views.AnnouncementCommentList.as_view(), name='announcement-comments'),
+        path('comments/<int:pk>/', views.CommentDetail.as_view(), name='comment-detail'),
+        path('announcements/<int:announcement_id>/reactions/', views.toggle_reaction, name='announcement-reactions'),
     path('register/', register_user, name='register'),
     path('announcements/me/', views.my_announcements, name='my-announcements'),
 path('users/me/', views.current_user, name='current-user'),

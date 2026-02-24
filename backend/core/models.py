@@ -301,6 +301,77 @@ class Notification(models.Model):
         return f"{self.user.username} - {self.type}"
 
 
+class Comment(models.Model):
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    text = models.TextField()
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="replies",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Comment #{self.id} by {self.user.username} on {self.announcement_id}"
+
+
+class Badge(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    icon = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class UserBadge(models.Model):
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="badges")
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name="users")
+    awarded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "badge")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.badge.name}"
+
+
+class Reaction(models.Model):
+    KIND_LIKE = 'like'
+    KIND_HELPFUL = 'helpful'
+    KIND_CHOICES = [
+        (KIND_LIKE, 'Like'),
+        (KIND_HELPFUL, 'Helpful'),
+    ]
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='reactions')
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name='reactions')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'announcement', 'kind'], name='unique_reaction_per_user_announcement_kind')
+        ]
+
+    def __str__(self):
+        return f"{self.kind} by {self.user.username} on {self.announcement_id}"
+
+
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:

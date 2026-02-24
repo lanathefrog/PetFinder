@@ -5,7 +5,9 @@ from .models import (
     Notification,
     Pet,
     SavedAnnouncement,
+    Comment,
 )
+from .models import Reaction
 from django.contrib.auth.models import User
 from .utils import get_coordinates
 
@@ -47,12 +49,20 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
     views_count = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    reactions = serializers.SerializerMethodField()
 
-    # 🔥 Додаємо телефон з профілю
-    phone_number = serializers.CharField(
-        source='owner.profile.phone_number',
-        read_only=True
-    )
+    # 🔥 Додаємо телефон з профілю (defensive)
+    phone_number = serializers.SerializerMethodField()
+
+    def get_phone_number(self, obj):
+        owner = getattr(obj, 'owner', None)
+        if not owner:
+            return ""
+        profile = getattr(owner, 'profile', None)
+        if not profile:
+            return ""
+        return getattr(profile, 'phone_number', "")
 
     # 🔥 Додаємо email з User
     email = serializers.CharField(
@@ -77,6 +87,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'is_reunited',
             'views_count',
             'is_saved',
+            'comments_count',
+            'reactions',
         ]
 
     def create(self, validated_data):
@@ -185,6 +197,70 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             user=request.user,
             announcement=obj,
         ).exists()
+
+    def get_comments_count(self, obj):
+        annotated = getattr(obj, "comments_count_annotated", None)
+        if annotated is not None:
+            return annotated
+        return obj.comments.count()
+
+    def get_reactions(self, obj):
+        # returns counts per kind and whether current user reacted
+        request = self.context.get('request')
+        qs = getattr(obj, 'reactions', None)
+        if qs is None:
+            qs = Reaction.objects.filter(announcement=obj)
+
+        counts = {}
+        for kind, _ in Reaction.KIND_CHOICES:
+            counts[kind] = qs.filter(kind=kind).count()
+
+        user_reaction = None
+        if request and request.user.is_authenticated:
+            r = qs.filter(user=request.user).first()
+            if r:
+                user_reaction = r.kind
+
+        return { 'counts': counts, 'user_reaction': user_reaction }
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    user_badges = serializers.SerializerMethodField()
+    parent = serializers.PrimaryKeyRelatedField(queryset=Comment.objects.all(), required=False, allow_null=True)
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "user",
+            "user_badges",
+            "announcement",
+            "text",
+            "parent",
+            "created_at",
+        ]
+        read_only_fields = ["user", "announcement", "created_at"]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        request = self.context.get("request")
+        # include profile image URL if available
+        profile_image = None
+        if hasattr(instance.user, 'profile') and instance.user.profile.profile_image:
+            if request:
+                profile_image = request.build_absolute_uri(instance.user.profile.profile_image.url)
+            else:
+                profile_image = instance.user.profile.profile_image.url
+        rep["user_profile_image"] = profile_image
+        return rep
+
+    def get_user_badges(self, obj):
+        try:
+            badges = obj.user.badges.select_related('badge').all()
+            return [{"id": ub.badge.id, "name": ub.badge.name, "icon": ub.badge.icon} for ub in badges]
+        except Exception:
+            return []
 
 
 class SavedAnnouncementSerializer(serializers.ModelSerializer):

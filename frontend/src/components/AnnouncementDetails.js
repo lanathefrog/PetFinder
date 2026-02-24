@@ -13,6 +13,8 @@ import L from "leaflet";
 import { useToast } from "./ToastContext";
 import 'leaflet/dist/leaflet.css';
 import '../styles/detail.css';
+import { getComments, createComment, deleteComment, updateComment } from '../services/api';
+import { toggleReaction } from '../services/api';
 
 // FIX leaflet icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -50,6 +52,14 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     });
     const [isPickingLocation, setIsPickingLocation] = useState(false);
 
+    // Comments
+    const [comments, setComments] = useState([]);
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [newCommentText, setNewCommentText] = useState("");
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editingCommentText, setEditingCommentText] = useState("");
+    const [reactionsState, setReactionsState] = useState(localAnnouncement.reactions || { counts: {}, user_reaction: null });
+
     const [formData, setFormData] = useState({
         name: announcement.pet.name || "",
         pet_type: announcement.pet.pet_type || "other",
@@ -79,6 +89,23 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             }
         };
         loadFreshDetails();
+    }, [announcement.id]);
+
+    React.useEffect(() => {
+        const loadComments = async () => {
+            setCommentsLoading(true);
+            try {
+                const res = await getComments(announcement.id);
+                setComments(res.data || []);
+            } catch (err) {
+                // ignore
+            } finally {
+                setCommentsLoading(false);
+            }
+        };
+        loadComments();
+        // initialize reactions from announcement
+        setReactionsState(localAnnouncement.reactions || { counts: {}, user_reaction: null });
     }, [announcement.id]);
 
     const handleMapClick = (e) => {
@@ -151,6 +178,73 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             showToast("Failed to update save status", "error");
         } finally {
             setSaveLoading(false);
+        }
+    };
+
+    const handleCreateComment = async () => {
+        const text = newCommentText.trim();
+        if (!text) return;
+        try {
+            const res = await createComment(localAnnouncement.id, { text });
+            setComments((prev) => [...prev, res.data]);
+            setNewCommentText("");
+            // optimistic update of comments_count
+            setLocalAnnouncement((prev) => ({ ...prev, comments_count: (prev.comments_count || 0) + 1 }));
+            showToast("Comment posted", "success");
+        } catch (err) {
+            showToast("Failed to post comment", "error");
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        if (!window.confirm("Delete comment?")) return;
+        try {
+            await deleteComment(commentId);
+            setComments((prev) => prev.filter((c) => c.id !== commentId));
+            setLocalAnnouncement((prev) => ({ ...prev, comments_count: Math.max(0, (prev.comments_count || 1) - 1) }));
+            showToast("Comment deleted", "success");
+        } catch (err) {
+            showToast("Failed to delete comment", "error");
+        }
+    };
+
+    const openUserProfile = (userId) => {
+        showToast("Opening profile...", "info");
+        window.dispatchEvent(new CustomEvent('openUserProfile', { detail: userId }));
+    };
+
+    const handleStartEdit = (comment) => {
+        setEditingCommentId(comment.id);
+        setEditingCommentText(comment.text || "");
+    };
+
+    const handleCancelEdit = () => {
+        setEditingCommentId(null);
+        setEditingCommentText("");
+    };
+
+    const handleSaveEdit = async () => {
+        const text = editingCommentText.trim();
+        if (!text || !editingCommentId) return;
+        try {
+            const res = await updateComment(editingCommentId, { text });
+            setComments((prev) => prev.map((c) => (c.id === editingCommentId ? res.data : c)));
+            setEditingCommentId(null);
+            setEditingCommentText("");
+            showToast("Comment updated", "success");
+        } catch (err) {
+            showToast("Failed to update comment", "error");
+        }
+    };
+
+    const handleToggleReaction = async (kind) => {
+        try {
+            const res = await toggleReaction(localAnnouncement.id, kind);
+            const data = res.data || {};
+            setReactionsState({ counts: data.counts || {}, user_reaction: data.user_reaction || null });
+            showToast(data.created ? 'Reacted' : 'Reaction removed', 'success');
+        } catch (err) {
+            showToast('Failed to toggle reaction', 'error');
         }
     };
 
@@ -518,6 +612,75 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                         )}
                     </div>
                 )}
+
+                <div className="comments-section info-card">
+                    <h2>Comments ({localAnnouncement.comments_count || comments.length})</h2>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                        <button className={`save-toggle-btn ${reactionsState.user_reaction === 'like' ? 'saved' : ''}`} onClick={() => handleToggleReaction('like')}>👍 {reactionsState.counts?.like || 0}</button>
+                        <button className={`save-toggle-btn ${reactionsState.user_reaction === 'helpful' ? 'saved' : ''}`} onClick={() => handleToggleReaction('helpful')}>✅ {reactionsState.counts?.helpful || 0}</button>
+                    </div>
+
+                        {commentsLoading ? (
+                        <p>Loading comments...</p>
+                    ) : comments.length === 0 ? (
+                        <p className="messages-muted">No comments yet</p>
+                    ) : (
+                        <div className="comments-list">
+                            {comments.map((c) => (
+                                <div className="comment-item" key={c.id}>
+                                    <div className="comment-avatar" onClick={() => openUserProfile(c.user?.id)} style={{ cursor: 'pointer' }}>
+                                        {c.user_profile_image ? (
+                                            <img src={c.user_profile_image} alt={c.user?.username} />
+                                        ) : (
+                                            <div className="avatar-placeholder">{(c.user?.username || 'U').charAt(0).toUpperCase()}</div>
+                                        )}
+                                    </div>
+                                    <div className="comment-body">
+                                        <div className="comment-meta">
+                                            <strong className="comment-username" onClick={() => openUserProfile(c.user?.id)} style={{ cursor: 'pointer' }}>{c.user?.username}</strong>
+                                            {c.user_badges && c.user_badges.length > 0 && (
+                                                <span style={{ marginLeft: 8, padding: '2px 6px', background: '#fff', borderRadius: 6, border: '1px solid #eee', fontSize: 12 }}>{c.user_badges[0].name}</span>
+                                            )}
+                                            <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                                            {Number(c.user?.id) === Number(localStorage.getItem('user_id')) && (
+                                                <>
+                                                    <button className="comment-delete" onClick={() => handleDeleteComment(c.id)}>Delete</button>
+                                                    <button className="comment-delete" onClick={() => handleStartEdit(c)}>Edit</button>
+                                                </>
+                                            )}
+                                        </div>
+                                        {editingCommentId === c.id ? (
+                                            <div>
+                                                <input value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} />
+                                                <div style={{ marginTop: 6 }}>
+                                                    <button className="btn btn-secondary" onClick={handleCancelEdit}>Cancel</button>
+                                                    <button className="btn btn-primary" onClick={handleSaveEdit} style={{ marginLeft: 8 }}>Save</button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="comment-text">{c.text}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {token ? (
+                        <div className="comment-input-row">
+                            <input
+                                type="text"
+                                placeholder="Write a comment..."
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleCreateComment(); }}
+                            />
+                            <button onClick={handleCreateComment}>Post</button>
+                        </div>
+                    ) : (
+                        <p className="messages-muted">Log in to post comments</p>
+                    )}
+                </div>
 
             </div>
         </div>
