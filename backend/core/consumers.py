@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.utils import timezone
 
 from .models import ChatMessage, ConversationParticipant, Notification, UserPresence
+from .models import ChatMessageReaction
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -41,36 +42,69 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return
 
-        if payload.get("type") != "message":
-            return
+        # Support both sending new messages and reaction toggles
+        msg_type = payload.get("type")
 
-        text = (payload.get("text") or "").strip()
-        if not text:
-            return
+        if msg_type == "message":
+            text = (payload.get("text") or "").strip()
+            if not text:
+                return
 
-        message_data = await self._create_message(
-            conversation_id=self.conversation_id,
-            sender_id=self.scope["user"].id,
-            text=text,
-        )
-        if not message_data:
-            return
-        await self._create_message_notifications(
-            conversation_id=self.conversation_id,
-            sender_id=self.scope["user"].id,
-            message_id=message_data["id"],
-        )
+            message_data = await self._create_message(
+                conversation_id=self.conversation_id,
+                sender_id=self.scope["user"].id,
+                text=text,
+            )
+            if not message_data:
+                return
+            await self._create_message_notifications(
+                conversation_id=self.conversation_id,
+                sender_id=self.scope["user"].id,
+                message_id=message_data["id"],
+            )
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "chat.message",
-                "message": message_data,
-            }
-        )
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat.message",
+                    "message": message_data,
+                }
+            )
+
+        elif msg_type == "reaction":
+            # payload should contain: message_id and kind
+            message_id = payload.get("message_id")
+            kind = payload.get("kind")
+            if not message_id or not kind:
+                return
+
+            actor_id = self.scope["user"].id
+            # Toggle reaction in DB
+            toggled = await self._toggle_reaction(actor_id, message_id, kind)
+
+            # Build reaction summary for this message
+            counts = await self._get_reaction_counts(message_id)
+            user_kinds = await self._get_user_reacted_kinds(actor_id, message_id)
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat.reaction",
+                    "reaction": {
+                        "message_id": int(message_id),
+                        "counts": counts,
+                        "user_reacted": user_kinds,
+                        "actor_id": actor_id,
+                    },
+                }
+            )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event["message"]))
+
+    async def chat_reaction(self, event):
+        # Relay reaction summary to clients
+        await self.send(text_data=json.dumps(event["reaction"]))
 
     @database_sync_to_async
     def _is_participant(self, user_id, conversation_id):
@@ -78,6 +112,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
             conversation_id=conversation_id,
             user_id=user_id
         ).exists()
+
+    @database_sync_to_async
+    def _toggle_reaction(self, user_id, message_id, kind):
+        try:
+            message = ChatMessage.objects.filter(id=message_id).first()
+            if not message:
+                return False
+            # If user already reacted with same kind -> remove (toggle off)
+            existing_same = ChatMessageReaction.objects.filter(message_id=message_id, user_id=user_id, kind=kind).first()
+            if existing_same:
+                existing_same.delete()
+                return False
+
+            # Remove any other kinds the user has on this message (enforce single reaction per user per message)
+            ChatMessageReaction.objects.filter(message_id=message_id, user_id=user_id).delete()
+            # Create the new reaction
+            ChatMessageReaction.objects.create(message_id=message_id, user_id=user_id, kind=kind)
+            return True
+        except Exception:
+            return False
+
+    @database_sync_to_async
+    def _get_reaction_counts(self, message_id):
+        qs = ChatMessageReaction.objects.filter(message_id=message_id).values('kind')
+        counts = {}
+        for row in qs:
+            k = row['kind']
+            counts[k] = counts.get(k, 0) + 1
+        return counts
+
+    @database_sync_to_async
+    def _get_user_reacted_kinds(self, user_id, message_id):
+        return list(ChatMessageReaction.objects.filter(message_id=message_id, user_id=user_id).values_list('kind', flat=True))
 
     @database_sync_to_async
     def _create_message(self, conversation_id, sender_id, text):

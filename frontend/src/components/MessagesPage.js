@@ -20,6 +20,14 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [messageText, setMessageText] = useState("");
     const [sending, setSending] = useState(false);
+    const [openReactionMenuFor, setOpenReactionMenuFor] = useState(null);
+    const [messageReactions, setMessageReactions] = useState({});
+
+    const ReactionIcon = ({ className = '' }) => (
+        <svg className={className} width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M12 3.1c-.6 0-1.2.2-1.7.6L8 5.9 5.7 6.6c-.9.2-1.5 1-1.5 1.9v4.9c0 .9.6 1.7 1.4 1.9L8 15.6l1.9 2.2c.5.6 1.2.9 1.9.9.7 0 1.4-.3 1.9-.9L16 15.6l1.4-1.3c.8-.2 1.4-1 1.4-1.9V8.5c0-1-.6-1.7-1.5-1.9L16 5.9l-2.3-2.2c-.5-.4-1.1-.6-1.7-.6z" fill="#ff6b4a" />
+        </svg>
+    );
 
     const wsRef = useRef(null);
     const reconnectTimerRef = useRef(null);
@@ -124,63 +132,77 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         socket.onmessage = async (event) => {
             try {
                 const payload = JSON.parse(event.data);
-                if (payload.type !== "message") return;
+                // message events created by server contain 'type': 'message'
+                if (payload.type === "message") {
+                    const normalizedMessage = {
+                        id: payload.id,
+                        conversation: payload.conversation_id,
+                        sender_id: payload.sender_id,
+                        text: payload.text,
+                        created_at: payload.created_at,
+                    };
 
-                const normalizedMessage = {
-                    id: payload.id,
-                    conversation: payload.conversation_id,
-                    sender_id: payload.sender_id,
-                    text: payload.text,
-                    created_at: payload.created_at,
-                };
+                    if (Number(payload.conversation_id) === Number(activeConversationId)) {
+                        setMessages((prev) => {
+                            if (prev.some((item) => item.id === normalizedMessage.id)) {
+                                return prev;
+                            }
+                            return [...prev, normalizedMessage];
+                        });
 
-                if (Number(payload.conversation_id) === Number(activeConversationId)) {
-                    setMessages((prev) => {
-                        if (prev.some((item) => item.id === normalizedMessage.id)) {
-                            return prev;
+                        if (payload.sender_id !== currentUserId) {
+                            await markConversationRead(payload.conversation_id);
                         }
-                        return [...prev, normalizedMessage];
-                    });
-
-                    if (payload.sender_id !== currentUserId) {
-                        await markConversationRead(payload.conversation_id);
+                        updateConversationMeta(payload.conversation_id, { unread_count: 0 });
+                    } else {
+                        setConversations((prev) =>
+                            sortByActivity(
+                                prev.map((item) =>
+                                    item.id === payload.conversation_id
+                                        ? {
+                                            ...item,
+                                            unread_count: (item.unread_count || 0) + 1,
+                                        }
+                                        : item
+                                )
+                            )
+                        );
+                        showToast("New message", "info");
                     }
-                    updateConversationMeta(payload.conversation_id, { unread_count: 0 });
-                } else {
+
                     setConversations((prev) =>
                         sortByActivity(
                             prev.map((item) =>
                                 item.id === payload.conversation_id
                                     ? {
                                         ...item,
-                                        unread_count: (item.unread_count || 0) + 1,
+                                        last_message: {
+                                            id: payload.id,
+                                            text: payload.text,
+                                            created_at: payload.created_at,
+                                            sender_id: payload.sender_id,
+                                        },
+                                        updated_at: payload.created_at,
                                     }
                                     : item
                             )
                         )
                     );
-                    showToast("New message", "info");
                 }
 
-                setConversations((prev) =>
-                    sortByActivity(
-                        prev.map((item) =>
-                            item.id === payload.conversation_id
-                                ? {
-                                    ...item,
-                                    last_message: {
-                                        id: payload.id,
-                                        text: payload.text,
-                                        created_at: payload.created_at,
-                                        sender_id: payload.sender_id,
-                                    },
-                                    updated_at: payload.created_at,
-                                }
-                                : item
-                        )
-                    )
-                );
+                // reaction events sent by server are plain objects with message_id, counts, user_reacted
+                if (payload && payload.message_id && payload.counts) {
+                    const msgId = String(payload.message_id);
+                    setMessageReactions((prev) => ({
+                        ...prev,
+                        [msgId]: {
+                            counts: payload.counts || {},
+                            user_reacted: payload.user_reacted || [],
+                        },
+                    }));
+                }
             } catch (error) {
+                // ignore parsing errors
             }
         };
 
@@ -228,6 +250,46 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         } finally {
             setSending(false);
         }
+    };
+
+    const REACTION_KINDS = [
+        { kind: 'like', icon: '❤️' },
+        { kind: 'helpful', icon: '👍' },
+        { kind: 'sad', icon: '😢' },
+        { kind: 'laugh', icon: '😂' },
+        { kind: 'angry', icon: '😠' },
+        { kind: 'surprised', icon: '😮' },
+        { kind: 'love', icon: '🥰' },
+    ];
+
+    const toggleReaction = (messageId, kind) => {
+        const msgId = String(messageId);
+        // optimistic update
+        setMessageReactions((prev) => {
+            const existing = prev[msgId] || { counts: {}, user_reacted: [] };
+            const prevKinds = existing.user_reacted || [];
+            const prevKind = prevKinds[0] || null;
+            const nextCounts = { ...existing.counts };
+
+            if (prevKind === kind) {
+                // toggle off
+                if (nextCounts[kind]) nextCounts[kind] = Math.max(0, nextCounts[kind] - 1);
+                return { ...prev, [msgId]: { counts: nextCounts, user_reacted: [] } };
+            }
+
+            // switching to a new kind: decrement previous kind, increment new kind
+            if (prevKind) {
+                if (nextCounts[prevKind]) nextCounts[prevKind] = Math.max(0, nextCounts[prevKind] - 1);
+            }
+            nextCounts[kind] = (nextCounts[kind] || 0) + 1;
+            return { ...prev, [msgId]: { counts: nextCounts, user_reacted: [kind] } };
+        });
+
+        // send via websocket if available
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'reaction', message_id: messageId, kind }));
+        }
+        setOpenReactionMenuFor(null);
     };
 
     useEffect(() => {
@@ -338,15 +400,61 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                 ) : (
                                     messages.map((message) => {
                                         const isOwn = Number(message.sender_id) === currentUserId;
+                                        const actions = (
+                                            <div className="message-actions">
+                                                <button
+                                                    className="reaction-btn"
+                                                    onClick={() => setOpenReactionMenuFor(openReactionMenuFor === message.id ? null : message.id)}
+                                                    aria-label="Reactions"
+                                                >
+                                                    {(() => {
+                                                        const info = messageReactions[String(message.id)];
+                                                        const userKind = info?.user_reacted?.[0];
+                                                        if (userKind) {
+                                                            const kindDef = REACTION_KINDS.find(r => r.kind === userKind);
+                                                            return (
+                                                                <>
+                                                                    <span className="emoji-selected">{kindDef?.icon || '❤️'}</span>
+                                                                </>
+                                                            );
+                                                        }
+                                                        const total = info ? Object.values(info.counts || {}).reduce((a,b)=>a+b,0) : 0;
+                                                        return (
+                                                            <>
+                                                                <ReactionIcon className="reaction-icon" />
+                                                                {total > 0 && <span className="reaction-count">{total}</span>}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </button>
+
+                                                {openReactionMenuFor === message.id && (
+                                                    <div className="reaction-menu">
+                                                        {REACTION_KINDS.map((r) => (
+                                                            <button
+                                                                key={r.kind}
+                                                                className={`reaction-item ${messageReactions[String(message.id)]?.user_reacted?.includes(r.kind) ? 'selected' : ''}`}
+                                                                onClick={() => toggleReaction(message.id, r.kind)}
+                                                            >
+                                                                <span className="emoji">{r.icon}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+
                                         return (
                                             <div
                                                 key={message.id}
                                                 className={`message-row ${isOwn ? "own" : "other"}`}
                                             >
+                                                {isOwn && actions}
                                                 <div className="message-bubble">
                                                     <p>{message.text}</p>
                                                     <span>{new Date(message.created_at).toLocaleString()}</span>
                                                 </div>
+                                                {!isOwn && actions}
                                             </div>
                                         );
                                     })

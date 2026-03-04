@@ -193,6 +193,49 @@ class ChatMessage(models.Model):
         return f"Msg #{self.id} in conversation {self.conversation_id}"
 
 
+class ChatMessageReaction(models.Model):
+    KIND_LIKE = 'like'
+    KIND_HELPFUL = 'helpful'
+    KIND_SAD = 'sad'
+    KIND_LAUGH = 'laugh'
+    KIND_ANGRY = 'angry'
+    KIND_SURPRISED = 'surprised'
+    KIND_LOVE = 'love'
+
+    KIND_CHOICES = [
+        (KIND_LIKE, 'Like'),
+        (KIND_HELPFUL, 'Helpful'),
+        (KIND_SAD, 'Sad'),
+        (KIND_LAUGH, 'Laugh'),
+        (KIND_ANGRY, 'Angry'),
+        (KIND_SURPRISED, 'Surprised'),
+        (KIND_LOVE, 'Love'),
+    ]
+
+    ICONS = {
+        KIND_LIKE: '❤️',
+        KIND_HELPFUL: '👍',
+        KIND_SAD: '😢',
+        KIND_LAUGH: '😂',
+        KIND_ANGRY: '😠',
+        KIND_SURPRISED: '😮',
+        KIND_LOVE: '🥰',
+    }
+
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='chat_reactions')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['message', 'user', 'kind'], name='unique_chatmessage_reaction_per_user_kind')
+        ]
+
+    def __str__(self):
+        return f"{self.kind} by {self.user.username} on message {self.message_id}"
+
+
 class PostView(models.Model):
     announcement = models.ForeignKey(
         Announcement,
