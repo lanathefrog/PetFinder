@@ -443,14 +443,15 @@
 .location-picker-wrapper > div {
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .location-picker-controls {
     display: flex;
     gap: 1rem;
 }
-
+.form-input address {
+   margin: 0;
+}
 /* ============ MAP SECTION ============ */
 .details-map {
     margin-top: 2rem;

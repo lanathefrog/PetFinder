@@ -8,7 +8,7 @@ import {
     unsaveAnnouncement,
     updateAnnouncement
 } from '../services/api';
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { useToast } from "./ToastContext";
 import 'leaflet/dist/leaflet.css';
@@ -45,11 +45,30 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         latitude: initialLat,
         longitude: initialLng,
     });
+    const [locationAddress, setLocationAddress] = useState(announcement.location?.address || "");
     const [editingLocation, setEditingLocation] = useState({
         latitude: initialLat,
         longitude: initialLng,
     });
+    const [editingAddress, setEditingAddress] = useState(announcement.location?.address || "");
     const [isPickingLocation, setIsPickingLocation] = useState(false);
+
+    // when entering edit mode or when the announcement updates, sync location states
+    React.useEffect(() => {
+        const lat = localAnnouncement.location?.latitude ?? null;
+        const lng = localAnnouncement.location?.longitude ?? null;
+        setLocation({ latitude: lat, longitude: lng });
+        setEditingLocation({ latitude: lat, longitude: lng });
+        setLocationAddress(localAnnouncement.location?.address || "");
+        setEditingAddress(localAnnouncement.location?.address || "");
+    }, [localAnnouncement]);
+
+    // when user toggles editing mode, prefill editingLocation from current location
+    React.useEffect(() => {
+        if (isEditing) {
+            setEditingLocation(location);
+        }
+    }, [isEditing]);
 
     // Comments
     const [comments, setComments] = useState([]);
@@ -121,10 +140,43 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const handleMapClick = (e) => {
         const { lat, lng } = e.latlng;
         setEditingLocation({ latitude: lat, longitude: lng });
+        // reverse geocode clicked point to show human-readable address
+        (async () => {
+            try {
+                const res = await axios.get('http://127.0.0.1:8001/api/reverse-geocode/', { params: { lat, lon: lng } });
+                setEditingAddress(res.data?.address || "");
+            } catch (err) {
+                setEditingAddress("");
+            }
+        })();
+    };
+
+    const EditLocationPicker = () => {
+        useMapEvents({
+            click(e) {
+                const { lat, lng } = e.latlng;
+                setEditingLocation({ latitude: lat, longitude: lng });
+                (async () => {
+                    try {
+                        const res = await axios.get('http://127.0.0.1:8001/api/reverse-geocode/', { params: { lat, lon: lng } });
+                        setEditingAddress(res.data?.address || "");
+                    } catch (err) {
+                        setEditingAddress("");
+                    }
+                })();
+            }
+        });
+
+        return (editingLocation.latitude && editingLocation.longitude) ? (
+            <Marker position={[editingLocation.latitude, editingLocation.longitude]}>
+                <Popup>Click elsewhere on the map to change location</Popup>
+            </Marker>
+        ) : null;
     };
 
     const handleConfirmLocation = () => {
         setLocation(editingLocation);
+        setLocationAddress(editingAddress || "");
         setIsPickingLocation(false);
         showToast("Location updated!", "success");
     };
@@ -305,6 +357,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         if (location.latitude !== null && location.longitude !== null) {
             payload.append("location.latitude", location.latitude);
             payload.append("location.longitude", location.longitude);
+            if (locationAddress) {
+                payload.append("location.address", locationAddress);
+            }
         }
 
         try {
@@ -336,6 +391,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                     photo: resolvedPhoto,
                 },
             }));
+
+            // keep address state in sync with updated response (if present)
+            setLocationAddress(updated.location?.address || locationAddress);
 
             if (updated.pet?.photo) {
                 setPreview(null);
@@ -622,18 +680,19 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                     center={[editingLocation.latitude || 50.4501, editingLocation.longitude || 30.5234]}
                                     zoom={14}
                                     style={{ height: "400px", width: "100%" }}
-                                    onClick={handleMapClick}
                                 >
                                     <TileLayer
                                         attribution="&copy; OpenStreetMap"
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     />
-                                    {editingLocation.latitude && editingLocation.longitude && (
-                                        <Marker position={[editingLocation.latitude, editingLocation.longitude]}>
-                                            <Popup>New Location</Popup>
-                                        </Marker>
-                                    )}
+                                    <EditLocationPicker />
                                 </MapContainer>
+                                {/* show the resolved address for the chosen point below the map */}
+                                {editingAddress ? (
+                                    <div style={{ marginTop: 8 }}>
+                                        <input readOnly className="form-input address" value={editingAddress} />
+                                    </div>
+                                ) : null}
                                 <div className="location-picker-controls">
                                     <button
                                         className="btn btn-success"

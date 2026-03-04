@@ -3,7 +3,7 @@ import axios from 'axios';
 import { createAnnouncement } from '../services/api';
 import { useToast } from './ToastContext';
 import '../styles/forms.css';
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 
 // FIX leaflet icon
@@ -46,8 +46,11 @@ const ReportLost = ({ onRefresh, onCancel }) => {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const { latitude, longitude } = pos.coords;
-                    setPosition([latitude, longitude]);
-                    reverseGeocode({ lat: latitude, lng: longitude });
+                    // only set if current position is default or not set yet
+                    if (!position || (Array.isArray(position) && position[0] === 50.4501 && position[1] === 30.5234)) {
+                        setPosition([latitude, longitude]);
+                        reverseGeocode({ lat: latitude, lng: longitude });
+                    }
                 },
                 (err) => {
                     // ignore, keep default
@@ -81,6 +84,11 @@ const ReportLost = ({ onRefresh, onCancel }) => {
         } catch (err) {
             console.log("Location search error", err);
         }
+    };
+
+    const handleLocationInput = (value) => {
+        setFormData((prev) => ({ ...prev, location: value }));
+        searchLocation(value);
     };
 
     const reverseGeocode = async ({ lat, lng }) => {
@@ -196,7 +204,29 @@ const ReportLost = ({ onRefresh, onCancel }) => {
             },
         });
 
-        return position && Array.isArray(position) ? <Marker position={position} /> : null;
+        return position && Array.isArray(position) ? (
+            <Marker
+                position={position}
+                draggable={true}
+                eventHandlers={{
+                    dragend: (e) => {
+                        const latlng = e.target.getLatLng();
+                        setPosition([latlng.lat, latlng.lng]);
+                        reverseGeocode({ lat: latlng.lat, lng: latlng.lng });
+                    },
+                }}
+            />
+        ) : null;
+    };
+
+    const RecenterAutomatically = ({ position }) => {
+        const map = useMap();
+        useEffect(() => {
+            if (position && Array.isArray(position)) {
+                map.setView(position, map.getZoom());
+            }
+        }, [position, map]);
+        return null;
     };
 
     return (
@@ -320,6 +350,7 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     />
 
+                                    <RecenterAutomatically position={position} />
                                     <LocationPicker />
                                 </MapContainer>
 
@@ -327,8 +358,21 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                                     type="text"
                                     className="form-input"
                                     value={formData.location}
-                                    readOnly
+                                    onChange={(e) => handleLocationInput(e.target.value)}
+                                    placeholder="Search for a place or pick on the map"
                                 />
+
+                                {suggestions && suggestions.length > 0 && (
+                                    <div className="location-suggestions">
+                                        {suggestions.map((s) => (
+                                            <div key={s.place_id} className="location-suggestion-item" onClick={() => {
+                                                setFormData((prev) => ({ ...prev, location: s.display_name }));
+                                                setPosition([parseFloat(s.lat), parseFloat(s.lon)]);
+                                                setSuggestions([]);
+                                            }}>{s.display_name}</div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                         </div>

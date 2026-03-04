@@ -399,6 +399,27 @@ textarea::placeholder {
     border-top: 2px solid #f0f0f0;
 }
 
+/* Location suggestion dropdown */
+.location-suggestions {
+    border: 1px solid #eee;
+    background: white;
+    border-radius: 8px;
+    max-height: 220px;
+    overflow: auto;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    margin-top: 8px;
+}
+.location-suggestion-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #fafafa;
+    font-size: 0.95rem;
+    color: #333;
+}
+.location-suggestion-item:hover {
+    background: #FFF5F2;
+}
+
 .form-actions button {
     flex: 1;
     padding: 1.1rem 2rem;

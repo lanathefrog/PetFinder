@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { createAnnouncement, getAnnouncements } from '../services/api';
 import { useToast } from './ToastContext';
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import '../styles/forms.css';
 
@@ -23,24 +23,60 @@ const ReportFound = ({ onRefresh, onCancel }) => {
     const [preview, setPreview] = useState(null);
     const [position, setPosition] = useState([50.4501, 30.5234]);
 
+    const [suggestions, setSuggestions] = useState([]);
+
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const { latitude, longitude } = pos.coords;
-                    setPosition([latitude, longitude]);
-                    // try to fill address input if reverse geocode function exists
-                    try {
-                        const ev = new CustomEvent('userGeolocation', { detail: { lat: latitude, lng: longitude } });
-                        window.dispatchEvent(ev);
-                    } catch (e) {}
+                    let shouldSet = false;
+                    setPosition((cur) => {
+                        if (!cur || (Array.isArray(cur) && cur[0] === 50.4501 && cur[1] === 30.5234)) {
+                            shouldSet = true;
+                            return [latitude, longitude];
+                        }
+                        return cur;
+                    });
+                    if (shouldSet) reverseGeocode({ lat: latitude, lng: longitude });
                 },
                 () => {},
                 { enableHighAccuracy: true, timeout: 5000 }
             );
         }
     }, []);
-    const [isPickingLocation, setIsPickingLocation] = useState(false);
+
+    const searchLocation = async (query) => {
+        if (!query) {
+            setSuggestions([]);
+            return;
+        }
+
+        try {
+            const res = await axios.get(
+                `https://nominatim.openstreetmap.org/search`,
+                {
+                    params: {
+                        q: query,
+                        format: "json",
+                        addressdetails: 1,
+                        limit: 5,
+                    },
+                }
+            );
+
+            setSuggestions(res.data);
+        } catch (err) {
+            console.log("Location search error", err);
+        }
+    };
+
+    const handleLocationInput = (value) => {
+        setFormData((prev) => ({ ...prev, location: value }));
+        searchLocation(value);
+    };
+    // show the map immediately like ReportLost
+    const [isPickingLocation, setIsPickingLocation] = useState(true);
     const [contactData, setContactData] = useState({
         email: '',
         phone_number: ''
@@ -86,7 +122,29 @@ const ReportFound = ({ onRefresh, onCancel }) => {
             },
         });
 
-        return position && Array.isArray(position) ? <Marker position={position} /> : null;
+        return position && Array.isArray(position) ? (
+            <Marker
+                position={position}
+                draggable={true}
+                eventHandlers={{
+                    dragend: (e) => {
+                        const latlng = e.target.getLatLng();
+                        setPosition([latlng.lat, latlng.lng]);
+                        reverseGeocode({ lat: latlng.lat, lng: latlng.lng });
+                    },
+                }}
+            />
+        ) : null;
+    };
+
+    const RecenterAutomatically = ({ position }) => {
+        const map = useMap();
+        useEffect(() => {
+            if (position && Array.isArray(position)) {
+                map.setView(position, map.getZoom());
+            }
+        }, [position, map]);
+        return null;
     };
 
     useEffect(() => {
@@ -341,25 +399,50 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                             <div className="form-group">
                                 <label>📍 Location Found</label>
                                 {!isPickingLocation ? (
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary btn-location"
-                                        onClick={() => setIsPickingLocation(true)}
-                                    >
-                                        🗺️ Pick Location on Map
-                                    </button>
+                                    <div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary btn-location"
+                                            onClick={() => setIsPickingLocation(true)}
+                                        >
+                                            🗺️ Pick Location on Map
+                                        </button>
+
+                                        <input
+                                            name="location"
+                                            type="text"
+                                            className="form-input"
+                                            value={formData.location}
+                                            onChange={(e) => handleLocationInput(e.target.value)}
+                                            placeholder="Search for a place or pick on the map"
+                                            style={{ marginTop: '1rem' }}
+                                        />
+
+                                        {suggestions && suggestions.length > 0 && (
+                                            <div className="location-suggestions">
+                                                {suggestions.map((s) => (
+                                                    <div key={s.place_id} className="location-suggestion-item" onClick={() => {
+                                                        setFormData((prev) => ({ ...prev, location: s.display_name }));
+                                                        setPosition([parseFloat(s.lat), parseFloat(s.lon)]);
+                                                        setSuggestions([]);
+                                                    }}>{s.display_name}</div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
                                     <div className="location-picker-wrapper">
                                         <MapContainer
                                             center={position}
-                                            zoom={14}
-                                            style={{ height: "400px", width: "100%", borderRadius: "16px" }}
+                                            zoom={13}
+                                            style={{ height: "500px", width: "100%", borderRadius: "16px" }}
                                         >
                                             <TileLayer
                                                 attribution="&copy; OpenStreetMap"
                                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             />
-                                            <LocationPickerMap />
+                                                <RecenterAutomatically position={position} />
+                                                <LocationPickerMap />
                                         </MapContainer>
                                         <div className="location-picker-controls" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                                             <button
@@ -379,15 +462,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                         </div>
                                     </div>
                                 )}
-                                <input
-                                    name="location"
-                                    type="text"
-                                    className="form-input"
-                                    value={formData.location}
-                                    placeholder="Location will appear here after picking on map"
-                                    readOnly
-                                    style={{ marginTop: '1rem' }}
-                                />
                             </div>
 
                             <div className="form-row">

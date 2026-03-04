@@ -15,6 +15,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+import logging
 import re  # Import regex
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
@@ -638,10 +639,22 @@ def reverse_geocode(request):
     lat = request.GET.get("lat")
     lon = request.GET.get("lon")
 
+    if not lat or not lon:
+        return Response({"address": ""})
+
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+    except (TypeError, ValueError):
+        return Response({"address": ""})
+
     geolocator = Nominatim(user_agent="pet_finder")
 
-    location = geolocator.reverse(f"{lat}, {lon}")
-
-    return Response({
-        "address": location.address if location else ""
-    })
+    try:
+        location = geolocator.reverse((lat_f, lon_f), exactly_one=True, timeout=10)
+        return Response({
+            "address": location.address if location else ""
+        })
+    except Exception as exc:
+        logging.exception("reverse_geocode failed for %s,%s", lat, lon)
+        return Response({"address": ""})
