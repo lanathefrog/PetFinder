@@ -50,6 +50,8 @@ class Location(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     address = models.CharField(max_length=200, blank=True)
+    # search radius in meters representing the "last seen area" around this point
+    search_radius = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.address or f"{self.latitude}, {self.longitude}"

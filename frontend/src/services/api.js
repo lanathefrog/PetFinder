@@ -13,7 +13,7 @@ API.interceptors.request.use((config) => {
     return config;
 });
 
-export const getAnnouncements = () => API.get('announcements/');
+export const getAnnouncements = (params = {}) => API.get('announcements/', { params });
 export const getAnnouncement = (id) => API.get(`announcements/${id}/`);
 export const getMyAnnouncements = () => API.get('announcements/me/');
 export const createAnnouncement = (data) => API.post('announcements/', data);

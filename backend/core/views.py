@@ -66,6 +66,35 @@ class AnnouncementList(generics.ListCreateAPIView):
         if search:
             queryset = queryset.filter(pet__name__icontains=search)
 
+        # Radius-based filtering: optional query params lat,lng,radius (radius in meters)
+        try:
+            lat = self.request.query_params.get('lat') or self.request.query_params.get('latitude')
+            lng = self.request.query_params.get('lng') or self.request.query_params.get('longitude')
+            radius = self.request.query_params.get('radius')
+            if lat and lng and radius:
+                try:
+                    latf = float(lat)
+                    lngf = float(lng)
+                    rf = float(radius)
+                    # evaluate queryset and filter by haversine distance
+                    from .utils import haversine_meters
+                    ids = []
+                    for ann in list(queryset):
+                        if not ann.location:
+                            continue
+                        if ann.location.latitude is None or ann.location.longitude is None:
+                            continue
+                        d = haversine_meters(latf, lngf, ann.location.latitude, ann.location.longitude)
+                        if d is None:
+                            continue
+                        if d <= rf:
+                            ids.append(ann.id)
+                    queryset = queryset.filter(id__in=ids)
+                except ValueError:
+                    pass
+        except Exception:
+            pass
+
         return queryset
 
     queryset = Announcement.objects.all()

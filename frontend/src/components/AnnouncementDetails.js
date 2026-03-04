@@ -8,7 +8,7 @@ import {
     unsaveAnnouncement,
     updateAnnouncement
 } from '../services/api';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle } from "react-leaflet";
 import L from "leaflet";
 import { useToast } from "./ToastContext";
 import 'leaflet/dist/leaflet.css';
@@ -50,6 +50,8 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         latitude: initialLat,
         longitude: initialLng,
     });
+    const [locationSearchRadius, setLocationSearchRadius] = useState(announcement.location?.search_radius ?? null);
+    const [editingSearchRadius, setEditingSearchRadius] = useState(announcement.location?.search_radius ?? null);
     const [editingAddress, setEditingAddress] = useState(announcement.location?.address || "");
     const [isPickingLocation, setIsPickingLocation] = useState(false);
 
@@ -60,6 +62,8 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         setLocation({ latitude: lat, longitude: lng });
         setEditingLocation({ latitude: lat, longitude: lng });
         setLocationAddress(localAnnouncement.location?.address || "");
+        setLocationSearchRadius(localAnnouncement.location?.search_radius ?? null);
+        setEditingSearchRadius(localAnnouncement.location?.search_radius ?? null);
         setEditingAddress(localAnnouncement.location?.address || "");
     }, [localAnnouncement]);
 
@@ -168,15 +172,21 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         });
 
         return (editingLocation.latitude && editingLocation.longitude) ? (
-            <Marker position={[editingLocation.latitude, editingLocation.longitude]}>
-                <Popup>Click elsewhere on the map to change location</Popup>
-            </Marker>
+            <>
+                <Marker position={[editingLocation.latitude, editingLocation.longitude]}>
+                    <Popup>Click elsewhere on the map to change location</Popup>
+                </Marker>
+                {editingSearchRadius ? (
+                    <Circle center={[editingLocation.latitude, editingLocation.longitude]} radius={Number(editingSearchRadius)} pathOptions={{ color: '#ff6b4a', fillOpacity: 0.06 }} />
+                ) : null}
+            </>
         ) : null;
     };
 
     const handleConfirmLocation = () => {
         setLocation(editingLocation);
         setLocationAddress(editingAddress || "");
+        setLocationSearchRadius(editingSearchRadius ?? null);
         setIsPickingLocation(false);
         showToast("Location updated!", "success");
     };
@@ -359,6 +369,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             payload.append("location.longitude", location.longitude);
             if (locationAddress) {
                 payload.append("location.address", locationAddress);
+            }
+            if (locationSearchRadius != null) {
+                payload.append("location.search_radius", locationSearchRadius);
             }
         }
 

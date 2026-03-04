@@ -4,7 +4,7 @@ import { useToast } from './ToastContext';
 import '../styles/base.css';
 import '../styles/listing.css';
 import '../styles/responsive.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -18,6 +18,9 @@ const AnnouncementList = ({ onSelect }) => {
     const { showToast } = useToast();
 
     const [announcements, setAnnouncements] = useState([]);
+    const [searchCenter, setSearchCenter] = useState(null);
+    const [searchRadius, setSearchRadius] = useState(null); // meters
+    const [isPickingCenter, setIsPickingCenter] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
     const [genderFilter, setGenderFilter] = useState('all');
@@ -34,6 +37,17 @@ const AnnouncementList = ({ onSelect }) => {
 
     const itemsPerPage = 6;
 
+    const MapPicker = ({ onPick }) => {
+        useMapEvents({
+            click(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                onPick({ lat, lng });
+            }
+        });
+        return null;
+    };
+
     useEffect(() => {
         loadAnnouncements();
     }, []);
@@ -43,10 +57,10 @@ const AnnouncementList = ({ onSelect }) => {
         return () => clearTimeout(t);
     }, [searchTerm]);
 
-    const loadAnnouncements = async () => {
+    const loadAnnouncements = async (params = {}) => {
         setIsLoading(true);
         try {
-            const res = await getAnnouncements();
+            const res = await getAnnouncements(params);
             setAnnouncements(res.data || []);
         } catch (err) {
             console.error('Error loading announcements:', err);
@@ -55,6 +69,17 @@ const AnnouncementList = ({ onSelect }) => {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        // when search center/radius changes, reload announcements using backend filter
+        const params = {};
+        if (searchCenter && searchRadius) {
+            params.lat = searchCenter.lat;
+            params.lng = searchCenter.lng;
+            params.radius = searchRadius; // meters
+        }
+        loadAnnouncements(params);
+    }, [searchCenter, searchRadius]);
 
     const filtered = useMemo(() => {
         return announcements
@@ -105,15 +130,14 @@ const AnnouncementList = ({ onSelect }) => {
             <div className="find-pet-content">
 
                 <div className="filters-top">
-                <input
-                            type="text"
-                            placeholder="Search by name, breed, color, description or location..."
-                            className="distance-select top-search"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <input
+                        type="text"
+                        placeholder="Search by name, breed, color, description or location..."
+                        className="distance-select top-search"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                     <div className="filters-row">
-                        
 
                         <div className="inline-filters">
                             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="distance-select">
@@ -149,21 +173,59 @@ const AnnouncementList = ({ onSelect }) => {
                                 showToast && showToast('Filters cleared', 'info');
                             }}>Clear</button>
                         </div>
+
+                        {/* radius control moved into filters */}
+                        <div className="filter-radius-row" style={{ marginTop: '0.6rem' }}>
+                            <button className="filter-btn-option" onClick={() => setIsPickingCenter((s) => !s)} style={{ width: 'auto' }}>{isPickingCenter ? 'Cancel pick' : 'Pick center on map'}</button>
+                            <label style={{ margin: 0 }}>Radius:</label>
+                            <input
+                                type="range"
+                                min={0}
+                                max={5000}
+                                step={100}
+                                value={searchRadius || 0}
+                                onChange={(e) => {
+                                    const v = Number(e.target.value || 0);
+                                    setSearchRadius(v === 0 ? null : v);
+                                }}
+                                style={{ flex: 1 }}
+                            />
+                            <div className="radius-value">
+                                {searchRadius ? (searchRadius >= 1000 ? `${(searchRadius/1000).toFixed(1)} km` : `${searchRadius} m`) : 'No radius'}
+                            </div>
+                            {searchCenter && searchRadius && (
+                                <button className="filter-btn-option" onClick={() => { setSearchCenter(null); setSearchRadius(null); }} style={{ width: 'auto' }}>Clear radius</button>
+                            )}
+                        </div>
+
                     </div>
                 </div>
 
-                <div className="map-results-area">
+                    <div className="map-results-area">
 
                     <div className="map-container-large" style={{ padding: 0 }}>
                         <MapContainer center={[51.505, -0.09]} zoom={12} style={{ height: '100%', width: '100%' }}>
                             <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
+                            {/* allow picking a center point when isPickingCenter */}
+                            {isPickingCenter && <MapPicker onPick={(latlng) => { setSearchCenter(latlng); setIsPickingCenter(false); }} />}
+
+                            {/* draw search circle if center+radius selected */}
+                            {searchCenter && searchRadius && (
+                                <Circle center={[searchCenter.lat, searchCenter.lng]} radius={Number(searchRadius)} pathOptions={{ color: '#ff6b4a', fillOpacity: 0.08 }} />
+                            )}
+
                             {filtered.map(pet => (
-                                <Marker key={pet.id} position={[pet.location?.latitude || 51.505, pet.location?.longitude || -0.09]}>
+                                <Marker
+                                    key={pet.id}
+                                    position={[pet.location?.latitude || 51.505, pet.location?.longitude || -0.09]}
+                                    eventHandlers={{ click: () => onSelect?.(pet) }}
+                                >
                                     <Popup>
                                         <strong>{pet.pet.name}</strong><br />
                                         {pet.status}<br />
-                                        {pet.location?.address}
+                                        {pet.location?.address}<br />
+                                        <button onClick={() => onSelect?.(pet)} style={{ marginTop: '6px' }}>View details</button>
                                     </Popup>
                                 </Marker>
                             ))}

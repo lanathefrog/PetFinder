@@ -38,6 +38,7 @@ class LocationSerializer(serializers.ModelSerializer):
     # Make lat/long not required since we default them
     latitude = serializers.FloatField(required=False)
     longitude = serializers.FloatField(required=False)
+    search_radius = serializers.FloatField(required=False, allow_null=True)
 
     class Meta:
         model = Location
@@ -100,13 +101,15 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         if location_data:
             address = location_data.get("address")
             lat = location_data.get("latitude")
+            search_radius_val = location_data.get("search_radius")
             lng = location_data.get("longitude")
 
-            if lat and lng:
+            if lat is not None and lng is not None:
                 location = Location.objects.create(
                     address=address or "",
                     latitude=float(lat),
                     longitude=float(lng),
+                    search_radius=(float(search_radius_val) if search_radius_val is not None else None),
                 )
 
             elif address:
@@ -116,6 +119,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                     address=address,
                     latitude=lat or 0,
                     longitude=lng or 0,
+                    search_radius=(float(search_radius_val) if search_radius_val is not None else None),
                 )
             else:
                 # Create location with default coordinates if no address or lat/lng
@@ -196,18 +200,21 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             lat = location_data.get("latitude")
             lng = location_data.get("longitude")
             address = location_data.get("address", instance.location.address)
+            search_radius_val = location_data.get("search_radius", instance.location.search_radius)
 
             # If we have coordinates, use them directly
             if lat is not None and lng is not None:
                 instance.location.latitude = float(lat)
                 instance.location.longitude = float(lng)
                 instance.location.address = address
+                instance.location.search_radius = (float(search_radius_val) if search_radius_val is not None else None)
             else:
                 # Otherwise try to get coordinates from address
                 lat, lng = get_coordinates(address)
                 instance.location.address = address
                 instance.location.latitude = lat or instance.location.latitude
                 instance.location.longitude = lng or instance.location.longitude
+                instance.location.search_radius = (float(search_radius_val) if search_radius_val is not None else instance.location.search_radius)
 
             instance.location.save()
 
