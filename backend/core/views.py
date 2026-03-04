@@ -145,7 +145,67 @@ class AnnouncementList(generics.ListCreateAPIView):
                         except Exception:
                             pass
 
+                # After creating a 'found' announcement and notifying possible matches,
+                # also alert nearby users who enabled location alerts (optional feature)
+                try:
+                    from .utils import haversine_meters
+                    from .models import Profile
+
+                    if created_ann.location:
+                        lat = created_ann.location.latitude
+                        lng = created_ann.location.longitude
+                        # iterate profiles with alerts enabled
+                        profiles = Profile.objects.filter(alerts_enabled=True).exclude(user_id=created_ann.owner_id)
+                        for prof in profiles:
+                            try:
+                                if prof.alert_latitude is None or prof.alert_longitude is None:
+                                    continue
+                                user_radius = prof.alerts_radius if prof.alerts_radius is not None else 1000.0
+                                d = haversine_meters(lat, lng, prof.alert_latitude, prof.alert_longitude)
+                                if d is not None and d <= float(user_radius):
+                                    Notification.objects.create(
+                                        user=prof.user,
+                                        actor=request.user,
+                                        type=Notification.TYPE_NEARBY_ALERT,
+                                        title=f"Nearby {created_ann.status}: {created_ann.pet.name}",
+                                        related_announcement=created_ann,
+                                    )
+                            except Exception:
+                                # don't let one failure stop others
+                                pass
+                except Exception:
+                    pass
+
                 return Response({'announcement': serializer.data, 'matches': matches_data}, status=status.HTTP_201_CREATED, headers=headers)
+        except Exception:
+            pass
+
+        # Notify nearby users for any new announcement (lost or found) if they opted in
+        try:
+            created_ann = serializer.instance
+            if created_ann and created_ann.location:
+                from .utils import haversine_meters
+                from .models import Profile
+
+                lat = created_ann.location.latitude
+                lng = created_ann.location.longitude
+                profiles = Profile.objects.filter(alerts_enabled=True).exclude(user_id=created_ann.owner_id)
+                for prof in profiles:
+                    try:
+                        if prof.alert_latitude is None or prof.alert_longitude is None:
+                            continue
+                        user_radius = prof.alerts_radius if prof.alerts_radius is not None else 1000.0
+                        d = haversine_meters(lat, lng, prof.alert_latitude, prof.alert_longitude)
+                        if d is not None and d <= float(user_radius):
+                            Notification.objects.create(
+                                user=prof.user,
+                                actor=request.user,
+                                type=Notification.TYPE_NEARBY_ALERT,
+                                title=f"Nearby {created_ann.status}: {created_ann.pet.name}",
+                                related_announcement=created_ann,
+                            )
+                    except Exception:
+                        pass
         except Exception:
             pass
 
@@ -494,6 +554,10 @@ def current_user(request):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "phone_number": getattr(user.profile, "phone_number", ""),
+            "alerts_enabled": getattr(user.profile, "alerts_enabled", False),
+            "alert_latitude": getattr(user.profile, "alert_latitude", None),
+            "alert_longitude": getattr(user.profile, "alert_longitude", None),
+            "alerts_radius": getattr(user.profile, "alerts_radius", None),
             "profile_image_url": profile_image_url,
             "badges": badges,
         })
@@ -564,6 +628,40 @@ def current_user(request):
             user.profile.phone_number = phone
             user.profile.save()
             logger.info(f"✏️ Updated phone_number to: {phone}")
+
+        # Handle nearby alerts settings
+        try:
+            alerts_enabled = request.data.get('alerts_enabled')
+            if alerts_enabled is not None:
+                # Accept strings (from form) and booleans
+                if isinstance(alerts_enabled, str):
+                    alerts_enabled = alerts_enabled.lower() in ('1', 'true', 'yes', 'on')
+                user.profile.alerts_enabled = bool(alerts_enabled)
+
+            alert_lat = request.data.get('alert_latitude')
+            alert_lng = request.data.get('alert_longitude')
+            alerts_radius_val = request.data.get('alerts_radius')
+
+            if alert_lat is not None:
+                try:
+                    user.profile.alert_latitude = float(alert_lat)
+                except Exception:
+                    pass
+            if alert_lng is not None:
+                try:
+                    user.profile.alert_longitude = float(alert_lng)
+                except Exception:
+                    pass
+            if alerts_radius_val is not None:
+                try:
+                    user.profile.alerts_radius = float(alerts_radius_val)
+                except Exception:
+                    pass
+
+            user.profile.save()
+            logger.info(f"✏️ Updated alerts settings for user: {user.username}")
+        except Exception:
+            logger.exception("Failed to update alerts settings")
 
         # Handle profile image
         if 'profile_image' in request.FILES:

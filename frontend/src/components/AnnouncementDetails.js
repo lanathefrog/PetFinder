@@ -38,6 +38,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const currentUserId = parseInt(localStorage.getItem("user_id"), 10);
     const isOwner = currentUserId === localAnnouncement.owner;
 
+    const [userProfile, setUserProfile] = useState(null);
+    const [subscribed, setSubscribed] = useState(false);
+
     const initialLat = announcement.location?.latitude ?? null;
     const initialLng = announcement.location?.longitude ?? null;
 
@@ -122,6 +125,45 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             }
         };
         loadFreshDetails();
+    }, [announcement.id]);
+
+    React.useEffect(() => {
+        // load current user profile to determine subscription status
+        (async () => {
+            try {
+                const res = await axios.get('http://127.0.0.1:8001/api/users/me/', { headers: { Authorization: `Bearer ${token}` } });
+                setUserProfile(res.data);
+                const prof = res.data || {};
+                if (prof.alerts_enabled && prof.alert_latitude && prof.alert_longitude) {
+                    // compute distance between profile alert location and announcement location
+                    if (announcement.location && announcement.location.latitude && announcement.location.longitude) {
+                        const aLat = announcement.location.latitude;
+                        const aLng = announcement.location.longitude;
+                        const pLat = prof.alert_latitude;
+                        const pLng = prof.alert_longitude;
+                        // quick haversine on client-side (approx)
+                        const toRad = (v) => v * Math.PI / 180;
+                        const R = 6371000; // meters
+                        const dLat = toRad(aLat - pLat);
+                        const dLon = toRad(aLng - pLng);
+                        const lat1 = toRad(pLat);
+                        const lat2 = toRad(aLat);
+                        const sinDLat = Math.sin(dLat/2);
+                        const sinDLon = Math.sin(dLon/2);
+                        const aa = sinDLat*sinDLat + Math.cos(lat1)*Math.cos(lat2)*sinDLon*sinDLon;
+                        const c = 2*Math.atan2(Math.sqrt(aa), Math.sqrt(1-aa));
+                        const dist = R * c;
+                        setSubscribed(dist <= (prof.alerts_radius || 1000));
+                    } else {
+                        setSubscribed(false);
+                    }
+                } else {
+                    setSubscribed(false);
+                }
+            } catch (err) {
+                // ignore
+            }
+        })();
     }, [announcement.id]);
 
     React.useEffect(() => {
@@ -250,6 +292,52 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             showToast("Failed to update save status", "error");
         } finally {
             setSaveLoading(false);
+        }
+    };
+
+    const handleSubscribeToArea = async () => {
+        if (!announcement.location || !announcement.location.latitude || !announcement.location.longitude) {
+            showToast('This announcement has no location to subscribe to', 'error');
+            return;
+        }
+
+        try {
+            // Ask user for radius in km (simple prompt for now)
+            const defaultKm = announcement.location.search_radius ? (announcement.location.search_radius / 1000) : 1;
+            const raw = window.prompt('Alert radius in kilometers (1-5)', String(defaultKm));
+            if (raw === null) return; // cancelled
+            let km = parseFloat(raw);
+            if (isNaN(km) || km <= 0) {
+                showToast('Invalid radius', 'error');
+                return;
+            }
+            if (km < 1) km = 1;
+            if (km > 5) km = 5;
+
+            const payload = {
+                alerts_enabled: true,
+                alert_latitude: announcement.location.latitude,
+                alert_longitude: announcement.location.longitude,
+                alerts_radius: Math.round(km * 1000),
+            };
+
+            await axios.put('http://127.0.0.1:8001/api/users/me/', payload, { headers: { Authorization: `Bearer ${token}` } });
+            showToast('Subscribed to area', 'success');
+            setSubscribed(true);
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to subscribe', 'error');
+        }
+    };
+
+    const handleUnsubscribe = async () => {
+        try {
+            await axios.put('http://127.0.0.1:8001/api/users/me/', { alerts_enabled: false }, { headers: { Authorization: `Bearer ${token}` } });
+            showToast('Unsubscribed from alerts', 'success');
+            setSubscribed(false);
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to unsubscribe', 'error');
         }
     };
 
@@ -582,6 +670,21 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                             <button className="action-btn-large" onClick={handleContactOwner}>
                                 Contact owner
                             </button>
+                        )}
+
+                        {/* Subscribe to nearby alerts for this announcement's location */}
+                        {!isOwner && announcement.location && (
+                            <div style={{ marginTop: 12 }}>
+                                {subscribed ? (
+                                    <button className="action-btn-large secondary" onClick={handleUnsubscribe}>
+                                        Unsubscribe from area
+                                    </button>
+                                ) : (
+                                    <button className="action-btn-large" onClick={handleSubscribeToArea}>
+                                        Subscribe to area
+                                    </button>
+                                )}
+                            </div>
                         )}
 
                         {isEditing ? (

@@ -11,6 +11,11 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=20, blank=False)
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    # Nearby alerts settings
+    alerts_enabled = models.BooleanField(default=False)
+    alert_latitude = models.FloatField(null=True, blank=True)
+    alert_longitude = models.FloatField(null=True, blank=True)
+    alerts_radius = models.FloatField(null=True, blank=True, help_text='Preferred radius in meters for nearby alerts')
 
     def __str__(self):
         return self.user.username
@@ -313,6 +318,7 @@ class Notification(models.Model):
     TYPE_COMMENT_REACTION = "comment_reaction"
     TYPE_POST_REACTED = "post_reacted"
     TYPE_POSSIBLE_MATCH = "possible_match"
+    TYPE_NEARBY_ALERT = "nearby_alert"
     TYPE_CHOICES = [
         (TYPE_NEW_MESSAGE, "New message"),
         (TYPE_POST_SAVED, "Post saved"),
@@ -322,6 +328,7 @@ class Notification(models.Model):
         (TYPE_COMMENT_REACTION, "Reaction on comment"),
         (TYPE_POST_REACTED, "Announcement reacted"),
         (TYPE_POSSIBLE_MATCH, "Possible match"),
+        (TYPE_NEARBY_ALERT, "Nearby alert"),
     ]
 
     user = models.ForeignKey(

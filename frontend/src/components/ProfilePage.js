@@ -29,6 +29,13 @@ const ProfilePage = () => {
         phone_number: ""
     });
 
+    const [alerts, setAlerts] = useState({
+        alerts_enabled: false,
+        alert_latitude: null,
+        alert_longitude: null,
+        alerts_radius: 1000,
+    });
+
     const [passwordData, setPasswordData] = useState({
         old_password: "",
         new_password: ""
@@ -67,6 +74,13 @@ const ProfilePage = () => {
                 first_name: res.data.first_name || "",
                 last_name: res.data.last_name || "",
                 phone_number: res.data.phone_number || ""
+            });
+
+            setAlerts({
+                alerts_enabled: res.data.alerts_enabled || false,
+                alert_latitude: res.data.alert_latitude ?? null,
+                alert_longitude: res.data.alert_longitude ?? null,
+                alerts_radius: res.data.alerts_radius ?? 1000,
             });
 
         } catch (err) {
@@ -147,6 +161,12 @@ const ProfilePage = () => {
                 last_name: formData.last_name,
                 phone_number: formData.phone_number
             };
+
+            // include alerts settings
+            updatePayload.alerts_enabled = alerts.alerts_enabled;
+            if (alerts.alert_latitude !== null && alerts.alert_latitude !== undefined && alerts.alert_latitude !== '') updatePayload.alert_latitude = alerts.alert_latitude;
+            if (alerts.alert_longitude !== null && alerts.alert_longitude !== undefined && alerts.alert_longitude !== '') updatePayload.alert_longitude = alerts.alert_longitude;
+            if (alerts.alerts_radius !== null && alerts.alerts_radius !== undefined) updatePayload.alerts_radius = alerts.alerts_radius;
 
             await axios.put(
                 "http://127.0.0.1:8001/api/users/me/",
@@ -405,6 +425,56 @@ const ProfilePage = () => {
                                     placeholder="Enter your phone number"
                                 />
                             </div>
+
+                            <div className="profile-info-item">
+                                <label className="profile-label">Nearby Alerts</label>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={alerts.alerts_enabled}
+                                        onChange={(e) => setAlerts({ ...alerts, alerts_enabled: e.target.checked })}
+                                    />
+                                    <span style={{ color: '#666' }}>Enable location-based alerts</span>
+                                </div>
+                                <p className="profile-hint">Get notified when new announcements appear near your saved location.</p>
+                            </div>
+
+                            {alerts.alerts_enabled && (
+                                <>
+                                    <div className="profile-info-item">
+                                        <label className="profile-label">Alert Latitude</label>
+                                        <input
+                                            className="profile-input"
+                                            value={alerts.alert_latitude ?? ''}
+                                            onChange={(e) => setAlerts({ ...alerts, alert_latitude: e.target.value })}
+                                            placeholder="e.g. 50.4501"
+                                        />
+                                    </div>
+
+                                    <div className="profile-info-item">
+                                        <label className="profile-label">Alert Longitude</label>
+                                        <input
+                                            className="profile-input"
+                                            value={alerts.alert_longitude ?? ''}
+                                            onChange={(e) => setAlerts({ ...alerts, alert_longitude: e.target.value })}
+                                            placeholder="e.g. 30.5234"
+                                        />
+                                    </div>
+
+                                    <div className="profile-info-item">
+                                        <label className="profile-label">Preferred Radius (km)</label>
+                                        <input
+                                            type="range"
+                                            min={1}
+                                            max={5}
+                                            step={0.5}
+                                            value={(alerts.alerts_radius || 1000) / 1000}
+                                            onChange={(e) => setAlerts({ ...alerts, alerts_radius: Number(e.target.value) * 1000 })}
+                                        />
+                                        <div style={{ color: '#666' }}>{((alerts.alerts_radius || 1000) / 1000).toFixed(1)} km</div>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="profile-actions">
                                 <button
