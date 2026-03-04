@@ -265,6 +265,9 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    box-sizing: border-box;
+    line-height: 1.1;
+    min-height: 48px;
 }
 
 .btn-danger{
@@ -273,6 +276,7 @@
     box-shadow: 0 6px 20px rgba(229, 57, 53, 0.25);
     width: 100%;
     margin: 0;
+    padding: 1rem 1.5rem;
 
 }
 
@@ -292,6 +296,7 @@
     color: white;
     box-shadow: 0 6px 20px rgba(255, 107, 74, 0.25);
     width: 100%;
+    padding: 1rem 1.5rem;
 }
 
 .btn-primary:hover {
@@ -311,6 +316,7 @@
     border: 2.5px solid #e0e0e0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     width: 100%;
+    padding: 1rem 1.5rem;
 }
 
 .btn-secondary:hover {

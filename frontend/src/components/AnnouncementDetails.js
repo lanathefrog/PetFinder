@@ -688,10 +688,10 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                         </div>
                                         {editingCommentId === c.id ? (
                                             <div>
-                                                <input value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} />
-                                                <div style={{ marginTop: 6 }}>
-                                                    <button className="btn btn-secondary" onClick={handleCancelEdit}>Cancel</button>
-                                                    <button className="btn btn-primary" onClick={handleSaveEdit} style={{ marginLeft: 8 }}>Save</button>
+                                                <input className="comment-edit-input" value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} />
+                                                <div className="comment-edit-actions">
+                                                    <button className="btn btn-secondary btn-sm" onClick={handleCancelEdit}>Cancel</button>
+                                                    <button className="btn btn-primary btn-sm" onClick={handleSaveEdit}>Save</button>
                                                 </div>
                                             </div>
                                         ) : (
