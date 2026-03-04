@@ -54,8 +54,6 @@ export const deleteComment = (commentId) =>
 export const updateComment = (commentId, data) =>
     API.patch(`comments/${commentId}/`, data);
 
-export const toggleReaction = (announcementId, kind) =>
-    API.post(`announcements/${announcementId}/reactions/`, { kind });
 
 export const toggleCommentReaction = (commentId, kind) =>
     API.post(`comments/${commentId}/reactions/`, { kind });

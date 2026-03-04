@@ -40,6 +40,23 @@ const ReportLost = ({ onRefresh, onCancel }) => {
     const [coords, setCoords] = useState({ lat: null, lon: null });
     const [position, setPosition] = useState([50.4501, 30.5234]);
 
+    useEffect(() => {
+        // Attempt to use browser geolocation to center the map and fill address when creating a new report
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    setPosition([latitude, longitude]);
+                    reverseGeocode({ lat: latitude, lng: longitude });
+                },
+                (err) => {
+                    // ignore, keep default
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+    }, []);
+
 
     const searchLocation = async (query) => {
         if (!query) {
@@ -294,7 +311,7 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                             <div className="form-group">
                                 <label>Last Seen Location</label>
                                 <MapContainer
-                                    center={[51.505, -0.09]}
+                                    center={position}
                                     zoom={13}
                                     style={{ height: "500px", width: "100%" }}
                                 >

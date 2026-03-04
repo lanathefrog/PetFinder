@@ -22,6 +22,24 @@ const ReportFound = ({ onRefresh, onCancel }) => {
     const [lostPets, setLostPets] = useState([]);
     const [preview, setPreview] = useState(null);
     const [position, setPosition] = useState([50.4501, 30.5234]);
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    setPosition([latitude, longitude]);
+                    // try to fill address input if reverse geocode function exists
+                    try {
+                        const ev = new CustomEvent('userGeolocation', { detail: { lat: latitude, lng: longitude } });
+                        window.dispatchEvent(ev);
+                    } catch (e) {}
+                },
+                () => {},
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+    }, []);
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [contactData, setContactData] = useState({
         email: '',

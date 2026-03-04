@@ -369,18 +369,12 @@ def toggle_comment_reaction(request, comment_id):
     comment = Comment.objects.filter(id=comment_id).first()
     if not comment:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    # enforce one reaction per user per comment
-    existing = Reaction.objects.filter(user=request.user, comment=comment).first()
+    # Toggle a reaction of a specific kind for this user+comment
+    existing = Reaction.objects.filter(user=request.user, comment=comment, kind=kind).first()
     created = False
     if existing:
-        if existing.kind == kind:
-            existing.delete()
-            created = False
-        else:
-            existing.kind = kind
-            existing.save()
-            created = True
+        existing.delete()
+        created = False
     else:
         Reaction.objects.create(user=request.user, comment=comment, kind=kind)
         created = True
@@ -399,12 +393,9 @@ def toggle_comment_reaction(request, comment_id):
 
     qs = Reaction.objects.filter(comment=comment)
     counts = {k: qs.filter(kind=k).count() for k, _ in Reaction.KIND_CHOICES}
-    user_reaction = None
-    ur = qs.filter(user=request.user).first()
-    if ur:
-        user_reaction = ur.kind
+    user_reactions = list(qs.filter(user=request.user).values_list('kind', flat=True))
 
-    return Response({'counts': counts, 'user_reaction': user_reaction, 'created': created})
+    return Response({'counts': counts, 'user_reaction': user_reactions, 'created': created})
 
 
 @api_view(["GET"])

@@ -48,7 +48,6 @@ function App() {
             .catch(err => console.error("Error loading feed:", err));
     };
 
-    // Simple in-app navigation that pushes pretty paths and updates state
     const navigateTo = (targetView, opts = {}) => {
         let path = '/';
         if (targetView === 'details') {
@@ -68,7 +67,6 @@ function App() {
 
         window.history.pushState({ view: targetView, opts }, '', path);
 
-        // apply view and params
         setView(targetView);
         if (opts.announcement) setSelectedAnnouncement(opts.announcement);
         if (opts.announcementId) {
@@ -81,7 +79,6 @@ function App() {
 
     const parseLocationAndNavigate = async () => {
         const p = window.location.pathname || '/';
-        // /announcements/123
         const annMatch = p.match(/^\/announcements\/(\d+)/);
         if (annMatch) {
             const id = parseInt(annMatch[1], 10);
@@ -127,8 +124,6 @@ function App() {
             setView('profile');
             return;
         }
-
-        // fallback
         setView('home');
     };
 
@@ -157,7 +152,6 @@ function App() {
         };
         window.addEventListener('openAnnouncement', handleOpenAnnouncement);
 
-        // popstate -> sync UI
         const onPop = () => {
             parseLocationAndNavigate();
         };
@@ -170,16 +164,13 @@ function App() {
         };
     }, []);
 
-    // On first load, reflect current path
     useEffect(() => {
         parseLocationAndNavigate();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         if (token) {
             loadFeed();
-            navigateTo('dashboard');
         }
     }, [token]);
 

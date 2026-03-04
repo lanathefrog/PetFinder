@@ -14,7 +14,6 @@ import { useToast } from "./ToastContext";
 import 'leaflet/dist/leaflet.css';
 import '../styles/detail.css';
 import { getComments, createComment, deleteComment, updateComment, toggleCommentReaction } from '../services/api';
-import { toggleReaction } from '../services/api';
 
 // FIX leaflet icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -59,6 +58,17 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingCommentText, setEditingCommentText] = useState("");
     const [reactionsState, setReactionsState] = useState(localAnnouncement.reactions || { kinds: [], user_reaction: null });
+
+    // Frontend reaction definitions (keeps UI consistent when backend returns raw counts)
+    const REACTION_DEFS = {
+        like: { icon: '❤️', label: 'Like' },
+        helpful: { icon: '👍', label: 'Helpful' },
+        sad: { icon: '😢', label: 'Sad' },
+        laugh: { icon: '😂', label: 'Laugh' },
+        angry: { icon: '😠', label: 'Angry' },
+        surprised: { icon: '😮', label: 'Surprised' },
+        love: { icon: '🥰', label: 'Love' },
+    };
 
     const [formData, setFormData] = useState({
         name: announcement.pet.name || "",
@@ -237,25 +247,41 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         }
     };
 
-    const handleToggleReaction = async (kind) => {
-        try {
-            await toggleReaction(localAnnouncement.id, kind);
-            // re-fetch announcement to get fresh reaction kinds + icons from backend serializer
-            const res = await getAnnouncement(localAnnouncement.id);
-            setLocalAnnouncement(res.data);
-            setReactionsState(res.data.reactions || { kinds: [], user_reaction: null });
-            showToast('Reaction updated', 'success');
-        } catch (err) {
-            showToast('Failed to toggle reaction', 'error');
-        }
-    };
+    // Announcement-level reactions removed — focus on per-comment reactions
 
     const handleToggleCommentReaction = async (commentId, kind) => {
         try {
-            await toggleCommentReaction(commentId, kind);
-            // refresh comments
-            const res = await getComments(localAnnouncement.id);
-            setComments(res.data || []);
+            const res = await toggleCommentReaction(commentId, kind);
+            // backend returns counts (numbers) and user_reaction
+            const data = res.data || {};
+
+            // update only the relevant comment in-place for instant UI feedback
+            setComments((prev) =>
+                prev.map((c) => {
+                    if (c.id !== commentId) return c;
+
+                    // build reactions.counts shape expected by UI: { kind: { label, icon, count } }
+                    const newCounts = {};
+                    const rawCounts = data.counts || {};
+                    Object.keys(REACTION_DEFS).forEach((k) => {
+                        const cnt = rawCounts[k] || 0;
+                        newCounts[k] = {
+                            label: REACTION_DEFS[k].label,
+                            icon: REACTION_DEFS[k].icon,
+                            count: cnt,
+                        };
+                    });
+
+                    return {
+                        ...c,
+                        reactions: {
+                            counts: newCounts,
+                            user_reaction: data.user_reaction || null,
+                        },
+                    };
+                })
+            );
+
             showToast('Reaction updated', 'success');
         } catch (err) {
             showToast('Failed to update reaction', 'error');
@@ -629,19 +655,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
 
                 <div className="comments-section info-card">
                     <h2>Comments ({localAnnouncement.comments_count || comments.length})</h2>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                        {(localAnnouncement.reactions?.kinds || reactionsState.kinds || []).map((k) => (
-                            <button
-                                key={k.kind}
-                                className={`reaction-btn ${reactionsState.user_reaction === k.kind ? 'reacted' : ''}`}
-                                onClick={() => handleToggleReaction(k.kind)}
-                                title={k.label}
-                            >
-                                <span style={{ fontSize: 18 }}>{k.icon || '•'}</span>
-                                <span style={{ marginLeft: 6 }}>{k.count || 0}</span>
-                            </button>
-                        ))}
-                    </div>
+                    {/* Announcement-level reactions removed */}
 
                         {commentsLoading ? (
                         <p>Loading comments...</p>
@@ -684,20 +698,27 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                             <p className="comment-text">{c.text}</p>
                                         )}
                                         {/* Comment reactions: show present reactions */}
-                                        {c.reactions && c.reactions.counts && Object.keys(c.reactions.counts).length > 0 && (
-                                            <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                                                {Object.entries(c.reactions.counts).map(([k, info]) => (
-                                                    <div key={k} className={`comment-reaction-chip ${c.reactions.user_reaction === k ? 'reacted' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 12, background: '#f2f2f2' }}>
-                                                        <span style={{ fontSize: 14 }}>{info.icon || '•'}</span>
-                                                        <span style={{ fontSize: 13 }}>{info.count}</span>
-                                                    </div>
-                                                ))}
-                                                <div style={{ marginLeft: 8 }}>
-                                                    <button className="btn btn-sm" onClick={() => handleToggleCommentReaction(c.id, 'like')}>👍</button>
-                                                    <button className="btn btn-sm" style={{ marginLeft: 6 }} onClick={() => handleToggleCommentReaction(c.id, 'helpful')}>👍</button>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <div className="comment-reaction-actions" style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                            {Object.keys(REACTION_DEFS).map((k) => {
+                                                const count = c.reactions?.counts?.[k]?.count || 0;
+                                                const userReacted = Array.isArray(c.reactions?.user_reaction)
+                                                    ? c.reactions.user_reaction.includes(k)
+                                                    : c.reactions?.user_reaction === k;
+
+                                                return (
+                                                    <button
+                                                        key={k}
+                                                        className={`reaction-btn small ${userReacted ? 'reacted' : ''}`}
+                                                        onClick={() => handleToggleCommentReaction(c.id, k)}
+                                                        title={REACTION_DEFS[k].label}
+                                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                                                    >
+                                                        <span style={{ fontSize: 16 }}>{REACTION_DEFS[k].icon}</span>
+                                                        <span style={{ fontSize: 13 }}>{count}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

@@ -369,15 +369,31 @@ class UserBadge(models.Model):
 class Reaction(models.Model):
     KIND_LIKE = 'like'
     KIND_HELPFUL = 'helpful'
+    KIND_SAD = 'sad'
+    KIND_LAUGH = 'laugh'
+    KIND_ANGRY = 'angry'
+    KIND_SURPRISED = 'surprised'
+    KIND_LOVE = 'love'
+
     KIND_CHOICES = [
         (KIND_LIKE, 'Like'),
         (KIND_HELPFUL, 'Helpful'),
+        (KIND_SAD, 'Sad'),
+        (KIND_LAUGH, 'Laugh'),
+        (KIND_ANGRY, 'Angry'),
+        (KIND_SURPRISED, 'Surprised'),
+        (KIND_LOVE, 'Love'),
     ]
 
     # simple icons (frontend may override with images)
     ICONS = {
         KIND_LIKE: '❤️',
         KIND_HELPFUL: '👍',
+        KIND_SAD: '😢',
+        KIND_LAUGH: '😂',
+        KIND_ANGRY: '😠',
+        KIND_SURPRISED: '😮',
+        KIND_LOVE: '🥰',
     }
 
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='reactions')
@@ -389,8 +405,8 @@ class Reaction(models.Model):
 
     class Meta:
         constraints = [
-            # one reaction per user per comment (any kind) when comment is set
-            models.UniqueConstraint(fields=['user', 'comment'], condition=Q(comment__isnull=False), name='unique_reaction_per_user_comment'),
+            # for comments keep uniqueness per user+comment+kind when comment is set
+            models.UniqueConstraint(fields=['user', 'comment', 'kind'], condition=Q(comment__isnull=False), name='unique_reaction_per_user_comment_kind'),
             # for announcements keep uniqueness per user+announcement+kind when announcement is set
             models.UniqueConstraint(fields=['user', 'announcement', 'kind'], condition=Q(announcement__isnull=False), name='unique_reaction_per_user_announcement_kind'),
         ]

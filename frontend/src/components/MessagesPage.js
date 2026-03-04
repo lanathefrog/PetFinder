@@ -24,6 +24,8 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
     const wsRef = useRef(null);
     const reconnectTimerRef = useRef(null);
     const messagesEndRef = useRef(null);
+    // track previous messages length per conversation to avoid auto-scrolling on initial load
+    const prevMessagesLengthByConvRef = useRef({});
 
     const activeConversation = useMemo(
         () => conversations.find((item) => item.id === activeConversationId) || null,
@@ -179,7 +181,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                     )
                 );
             } catch (error) {
-                // ignore malformed ws payload
             }
         };
 
@@ -236,7 +237,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
             window.clearInterval(timer);
             closeSocket();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -249,12 +249,19 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         if (!activeConversationId) return;
         fetchMessages(activeConversationId);
         connectSocket(activeConversationId);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeConversationId]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        const convId = String(activeConversationId || '');
+        const prev = prevMessagesLengthByConvRef.current[convId] || 0;
+        const next = messages?.length || 0;
+        // Only auto-scroll when messages length increases after initial load for that conversation
+        if (prev > 0 && next > prev) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+        // update stored length for this conversation
+        prevMessagesLengthByConvRef.current[convId] = next;
+    }, [messages, activeConversationId]);
 
     return (
         <div className="messages-page">

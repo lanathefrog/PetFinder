@@ -312,18 +312,15 @@ class CommentSerializer(serializers.ModelSerializer):
         counts = {}
         for kind, label in Reaction.KIND_CHOICES:
             c = qs.filter(kind=kind).count()
-            if c:
-                counts[kind] = { 'label': label, 'icon': Reaction.ICONS.get(kind, ''), 'count': c }
+            counts[kind] = { 'label': label, 'icon': Reaction.ICONS.get(kind, ''), 'count': c }
 
-        # current user reaction on this comment
+        # current user reactions on this comment (may be multiple kinds)
         request = self.context.get('request')
-        user_reaction = None
+        user_reactions = []
         if request and request.user.is_authenticated:
-            r = qs.filter(user=request.user).first()
-            if r:
-                user_reaction = r.kind
+            user_reactions = list(qs.filter(user=request.user).values_list('kind', flat=True))
 
-        return { 'counts': counts, 'user_reaction': user_reaction }
+        return { 'counts': counts, 'user_reaction': user_reactions }
 
 
 class SavedAnnouncementSerializer(serializers.ModelSerializer):
