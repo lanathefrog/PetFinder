@@ -189,6 +189,77 @@
     gap: 0.75rem;
 }
 
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.how-hero {
+    animation: fadeInUp 0.7s ease both;
+}
+
+.how-badge {
+    animation: popIn 0.55s ease both;
+}
+
+.how-steps .step-card {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeInUp 0.62s cubic-bezier(.2,.9,.3,1) both;
+    animation-delay: var(--delay, 0s);
+}
+
+.how-steps .step-card:nth-child(1) { --delay: 0s; }
+.how-steps .step-card:nth-child(2) { --delay: 0.12s; }
+.how-steps .step-card:nth-child(3) { --delay: 0.24s; }
+
+.why-grid .why-item,
+.tips-grid .tip-card {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.6s ease both;
+    animation-delay: 0.18s;
+}
+
+.step-number {
+    transition: transform 180ms ease;
+}
+
+.step-card:hover .step-number {
+    transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .how-hero,
+    .how-badge,
+    .how-steps .step-card,
+    .why-grid .why-item,
+    .tips-grid .tip-card {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+}
+
 @media (max-width: 700px) {
     .how-hero {
         padding-top: 4.8rem;
