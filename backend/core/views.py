@@ -581,7 +581,16 @@ def current_user(request):
             "phone_number": getattr(user.profile, "phone_number", ""),
             "profile_image_url": profile_image_url
         })
-
+    
+    # Allow account deletion via DELETE on the same endpoint
+    if request.method == 'DELETE':
+        try:
+            username = user.username
+            # delete user and cascade related objects where configured
+            user.delete()
+            return Response({"message": f"User {username} deleted"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

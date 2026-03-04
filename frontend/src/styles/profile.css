@@ -267,6 +267,26 @@
     gap: 0.5rem;
 }
 
+.btn-danger{
+    background: linear-gradient(135deg, #E53935 0%, #EF5350 100%);
+    color: white;
+    box-shadow: 0 6px 20px rgba(229, 57, 53, 0.25);
+    width: 100%;
+    margin: 0;
+
+}
+
+.profile-hint.danger {
+    background: #ffe5e0;
+    color: #a00;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #ffb8a6;
+    font-weight: 500;
+    margin-bottom: 32px;
+    margin-top: 8px;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
     color: white;
@@ -282,6 +302,8 @@
 .btn-primary:active {
     transform: translateY(-1px);
 }
+
+
 
 .btn-secondary {
     background: white;

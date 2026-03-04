@@ -105,14 +105,15 @@ const AnnouncementList = ({ onSelect }) => {
             <div className="find-pet-content">
 
                 <div className="filters-top">
-                    <div className="filters-row">
-                        <input
+                <input
                             type="text"
                             placeholder="Search by name, breed, color, description or location..."
                             className="distance-select top-search"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                    <div className="filters-row">
+                        
 
                         <div className="inline-filters">
                             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="distance-select">

@@ -231,6 +231,34 @@ const ProfilePage = () => {
         }
     };
 
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm('This will permanently delete your account and all data. This action cannot be undone and the profile cannot be restored. Are you sure?');
+        if (!confirmed) {
+            showToast("Account deletion cancelled", "info");
+            return;
+        }
+
+        showToast("Deleting account...", "warning");
+
+        try {
+            await axios.delete("http://127.0.0.1:8001/api/users/me/", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            showToast("Account deleted. Goodbye!", "success");
+            // clear auth and reload to reflect logged-out state
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            localStorage.removeItem("user_id");
+            window.location.href = "/";
+        } catch (err) {
+            console.error(err.response?.data || err);
+            showToast("Failed to delete account", "error");
+        }
+    };
+
     if (!user) return (
         <div style={{
             padding: "4rem",
@@ -304,7 +332,7 @@ const ProfilePage = () => {
                     <p className="profile-subtitle">Manage your pet rescue profile</p>
                 </div>
 
-                <div className="profile-card">
+                    <div className="profile-card">
                     <div className="profile-card-header">
                         <h2>🎯 Profile Information</h2>
                         {!editing && (
@@ -452,6 +480,18 @@ const ProfilePage = () => {
 
                         <button className="btn btn-primary" onClick={handleChangePassword}>
                             🔄 Update Password
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="profile-card danger-zone" style={{ borderColor: '#ffdddd' }}>
+                    <div className="profile-card-header">
+                        <h2>⚠️ Danger Zone</h2>
+                    </div>
+                    <p className="profile-hint danger" style={{ color: '#a00' }}>Deleting your account is permanent and cannot be restored. All your data, announcements and profile information will be lost.</p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-danger" onClick={handleDeleteAccount}>
+                            🗑️ Permanently Delete Account
                         </button>
                     </div>
                 </div>
