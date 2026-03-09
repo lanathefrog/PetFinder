@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { createAnnouncement, getAnnouncements } from '../services/api';
+import { createAnnouncement, getAnnouncements, contactAnnouncementOwner } from '../services/api';
 import { useToast } from './ToastContext';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -247,7 +247,7 @@ const ReportFound = ({ onRefresh, onCancel }) => {
             // Navigate to the created announcement after a short delay
             setTimeout(() => {
                 onCancel?.();
-                window.location.href = `/announcement/${response.data.id}`;
+                window.location.href = `/announcements/${response.data.id}`;
             }, 1500);
 
             if (onRefresh) onRefresh();
@@ -555,11 +555,18 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                             <button
                                                 className="btn btn-primary"
                                                 style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem', background: '#FF6B4A', border: 'none' }}
-                                                onClick={() =>
-                                                    alert(
-                                                        `Please contact the owner immediately:\n\n📞 ${pet.phone_number}\n\nThank you for helping!`
-                                                    )
-                                                }
+                                                onClick={async () => {
+                                                        // notify the owner in-app and navigate to announcement details
+                                                        try {
+                                                            await contactAnnouncementOwner(pet.id);
+                                                            showToast('Owner has been notified in-app', 'success');
+                                                        } catch (err) {
+                                                            console.error('Notify owner error', err);
+                                                            showToast('Failed to notify owner', 'error');
+                                                        }
+                                                        // navigate to announcement detail page
+                                                        window.location.href = `/announcements/${pet.id}`;
+                                                    }}
                                             >
                                                 I Found This Pet!
                                             </button>

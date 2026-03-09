@@ -151,6 +151,21 @@ function App() {
             }
         };
         window.addEventListener('openAnnouncement', handleOpenAnnouncement);
+        const handleOpenConversation = (e) => {
+            const convId = e.detail;
+            if (!convId) return;
+            setActiveConversationId(convId);
+            navigateTo('messages');
+        };
+        window.addEventListener('openConversation', handleOpenConversation);
+
+        const handleNavigate = (e) => {
+            const detail = e.detail;
+            if (!detail) return;
+            if (typeof detail === 'string') navigateTo(detail);
+            else if (detail.view) navigateTo(detail.view, detail.opts || {});
+        };
+        window.addEventListener('navigate', handleNavigate);
 
         const onPop = () => {
             parseLocationAndNavigate();
@@ -160,6 +175,8 @@ function App() {
         return () => {
             window.removeEventListener('openUserProfile', handleOpenUser);
             window.removeEventListener('openAnnouncement', handleOpenAnnouncement);
+            window.removeEventListener('openConversation', handleOpenConversation);
+            window.removeEventListener('navigate', handleNavigate);
             window.removeEventListener('popstate', onPop);
         };
     }, []);
@@ -207,6 +224,17 @@ function App() {
         const timer = setInterval(loadUnread, 15000);
         return () => clearInterval(timer);
     }, [token, view]);
+
+    // Listen for unauthorized events emitted by the API client and clear token
+    useEffect(() => {
+        const onUnauthorized = () => {
+            setToken(null);
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_id');
+        };
+        window.addEventListener('unauthorized', onUnauthorized);
+        return () => window.removeEventListener('unauthorized', onUnauthorized);
+    }, []);
 
     const handleLogout = (e) => {
         e.preventDefault();
@@ -282,37 +310,62 @@ function App() {
                                 Messages {unreadMessagesCount > 0 ? `(${unreadMessagesCount})` : ""}
                             </a>
                         </li>
-                        <li className="nav-notifications">
-                            <button
-                                type="button"
-                                className="notification-btn"
-                                onClick={async () => {
-                                    const next = !showNotificationsDropdown;
-                                    setShowNotificationsDropdown(next);
-                                    // when opening the dropdown, mark all notifications read
-                                    if (next) {
-                                        try {
-                                            await handleMarkNotificationsRead();
-                                        } catch (e) {
-                                            // ignore
-                                        }
-                                    }
+                        {/* notifications moved to the right next to Logout */}
+
+                        <li>
+                            <a href="/" onClick={(e)=>{e.preventDefault(); navigateTo('listing')}}>
+                                Find a Pet
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="/"
+                                onClick={(e)=>{
+                                    e.preventDefault();
+                                    navigateTo('how');
                                 }}
                             >
-                                🔔 {unreadNotificationsCount > 0 ? unreadNotificationsCount : ""}
-                            </button>
-                            {showNotificationsDropdown && (
-                                <div className="notifications-dropdown">
-                                    <div className="notifications-dropdown-header">
-                                        <span>Notifications</span>
-                                        <button type="button" onClick={handleMarkNotificationsRead}>
-                                            Mark read
-                                        </button>
-                                    </div>
-                                    {notifications.length === 0 ? (
-                                        <p className="notifications-empty">No notifications</p>
-                                    ) : (
-                                        notifications.slice(0, 8).map((item) => (
+                                How It Works
+                            </a>
+                        </li>
+
+
+                    </ul>
+
+
+                    <a href="/" onClick={handleLogout}>(Logout)</a>
+                    <div className="nav-notifications" style={{ marginLeft: 12 }}>
+                        <button
+                            type="button"
+                            className="notification-btn"
+                            onClick={async () => {
+                                const next = !showNotificationsDropdown;
+                                setShowNotificationsDropdown(next);
+                                // when opening the dropdown, mark all notifications read
+                                if (next) {
+                                    try {
+                                        await handleMarkNotificationsRead();
+                                    } catch (e) {
+                                        // ignore
+                                    }
+                                }
+                            }}
+                        >
+                            🔔 {unreadNotificationsCount > 0 ? unreadNotificationsCount : ""}
+                        </button>
+                        {showNotificationsDropdown && (
+                            <div className="notifications-dropdown notifications-dropdown-animated">
+                                <div className="notifications-dropdown-header">
+                                    <span>Notifications</span>
+                                    <button type="button" onClick={handleMarkNotificationsRead}>
+                                        Mark read
+                                    </button>
+                                </div>
+                                {notifications.length === 0 ? (
+                                    <p className="notifications-empty">No notifications</p>
+                                ) : (
+                                    <div className="notifications-list">
+                                        {notifications.map((item) => (
                                             <div
                                                 key={item.id}
                                                 className={`notification-item ${item.is_read ? "" : "unread"}`}
@@ -344,37 +397,29 @@ function App() {
                                                     setShowNotificationsDropdown(false);
                                                 }}
                                             >
-                                                <strong>{item.title}</strong>
-                                                <span>{new Date(item.created_at).toLocaleString()}</span>
+                                                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                                    <div style={{ width: 40, height: 40, borderRadius: 999, background: '#fff6f2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#bf4a31' }}>
+                                                        {item.actor && item.actor.username ? item.actor.username.charAt(0).toUpperCase() : '🔔'}
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                                                            <strong style={{ fontSize: 14 }}>{item.title}</strong>
+                                                            <small style={{ color: '#8c8c8c' }}>{new Date(item.created_at).toLocaleString()}</small>
+                                                        </div>
+                                                        {item.related_announcement_detail && (
+                                                            <div style={{ color: '#666', fontSize: 13, marginTop: 6 }}>
+                                                                Related: {item.related_announcement_detail.pet_name || 'announcement'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </li>
-
-                        <li>
-                            <a href="/" onClick={(e)=>{e.preventDefault(); navigateTo('listing')}}>
-                                Find a Pet
-                            </a>
-                        </li>
-                        <li>
-                            <a
-                                href="/"
-                                onClick={(e)=>{
-                                    e.preventDefault();
-                                    navigateTo('how');
-                                }}
-                            >
-                                How It Works
-                            </a>
-                        </li>
-
-
-                    </ul>
-
-
-                    <a href="/" onClick={handleLogout}>(Logout)</a>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </nav>
             </header>
 

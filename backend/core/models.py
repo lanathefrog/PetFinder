@@ -114,6 +114,8 @@ class Conversation(models.Model):
     announcement = models.ForeignKey(
         Announcement,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="conversations"
     )
     initiator = models.ForeignKey(

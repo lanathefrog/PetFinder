@@ -13,6 +13,25 @@ API.interceptors.request.use((config) => {
     return config;
 });
 
+// Globally handle 401 Unauthorized responses: clear local tokens and notify the app
+API.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        try {
+            const status = error?.response?.status;
+            if (status === 401) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user_id');
+                // let app react (will set token state to null)
+                window.dispatchEvent(new CustomEvent('unauthorized'));
+            }
+        } catch (e) {
+            // ignore
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const getAnnouncements = (params = {}) => API.get('announcements/', { params });
 export const getAnnouncement = (id) => API.get(`announcements/${id}/`);
 export const getMyAnnouncements = () => API.get('announcements/me/');
@@ -32,6 +51,9 @@ export const getChatConversations = (params = {}) =>
 
 export const startChatConversation = (announcementId) =>
     API.post("chat/start/", { announcement_id: announcementId });
+
+export const startDirectConversation = (userId) =>
+    API.post("chat/start_direct/", { user_id: userId });
 
 export const getConversationMessages = (conversationId, params = {}) =>
     API.get(`chat/conversations/${conversationId}/messages/`, { params });
@@ -60,3 +82,4 @@ export const toggleCommentReaction = (commentId, kind) =>
 
 // Users
 export const getUser = (userId) => API.get(`users/${userId}/`);
+export const contactAnnouncementOwner = (announcementId) => API.post(`announcements/${announcementId}/contact_owner/`);

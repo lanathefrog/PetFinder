@@ -69,6 +69,57 @@ def start_conversation(request):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def start_direct_conversation(request):
+    """Start a conversation directly with a user (not tied to an announcement)."""
+    target_user_id = request.data.get('user_id')
+    if not target_user_id:
+        return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from django.contrib.auth.models import User as DjangoUser
+        target = DjangoUser.objects.get(id=target_user_id)
+    except Exception:
+        return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if target.id == request.user.id:
+        return Response({"detail": "You cannot start a conversation with yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create a conversation without an announcement
+    conversation, created = Conversation.objects.get_or_create(
+        announcement=None,
+        initiator=request.user,
+    )
+
+    ConversationParticipant.objects.bulk_create(
+        [
+            ConversationParticipant(conversation=conversation, user=request.user),
+            ConversationParticipant(conversation=conversation, user=target),
+        ],
+        ignore_conflicts=True,
+    )
+
+    if created:
+        try:
+            Notification.objects.create(
+                user=target,
+                type=Notification.TYPE_CONTACTED,
+                title=f"{request.user.username} started a conversation",
+                actor=request.user,
+            )
+        except Exception:
+            pass
+
+    response_data = ConversationListSerializer(
+        conversation,
+        context={"request": request}
+    ).data
+    response_data["created"] = created
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def conversations_list(request):

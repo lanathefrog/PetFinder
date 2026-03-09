@@ -94,13 +94,24 @@ nav {
     position: absolute;
     right: 0;
     top: calc(100% + 8px);
-    width: 320px;
+    width: 400px;
     background: #fff;
     border: 1px solid #f1e0d8;
     border-radius: 12px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
     padding: 0.6rem;
     z-index: 300;
+}
+
+/* animated pop-in for dropdown */
+.notifications-dropdown-animated {
+    animation: popIn 180ms cubic-bezier(.2,.9,.3,1) both;
+}
+
+@keyframes popIn {
+    0% { opacity: 0; transform: translateY(-6px) scale(.98); }
+    60% { opacity: 1; transform: translateY(2px) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .notifications-dropdown-header {
@@ -123,11 +134,14 @@ nav {
 }
 
 .notification-item {
-    border-radius: 10px;
-    padding: 0.5rem 0.6rem;
+    border-radius: 12px;
+    padding: 0.6rem;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.3rem;
+    background: linear-gradient(180deg, #ffffff, #fffaf8);
+    border: 1px solid rgba(241,224,216,0.6);
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
 .notification-item span {
@@ -136,7 +150,33 @@ nav {
 }
 
 .notification-item.unread {
-    background: #fff4ef;
+    background: linear-gradient(90deg, rgba(255,243,238,1), rgba(255,250,248,1));
+    box-shadow: 0 6px 18px rgba(255,107,74,0.06);
+    border-left: 4px solid #FF6B4A;
+}
+
+.notification-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+/* notifications list container: show at most 5 items, others accessible via scroll */
+.notifications-list {
+    max-height: calc(5 * 72px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 6px; /* space for scrollbar */
+}
+
+/* Simple scrollbar styling */
+.notifications-list::-webkit-scrollbar {
+    width: 8px;
+}
+.notifications-list::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+    border-radius: 6px;
 }
 
 .notifications-empty {

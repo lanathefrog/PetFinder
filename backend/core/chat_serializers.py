@@ -73,10 +73,10 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 
 class ConversationListSerializer(serializers.ModelSerializer):
-    announcement_title = serializers.CharField(source="announcement.pet.name", read_only=True)
-    announcement_id = serializers.IntegerField(source="announcement.id", read_only=True)
-    announcement_status = serializers.CharField(source="announcement.status", read_only=True)
-    announcement_pet = PetSerializer(source="announcement.pet", read_only=True)
+    announcement_title = serializers.SerializerMethodField()
+    announcement_id = serializers.SerializerMethodField()
+    announcement_status = serializers.SerializerMethodField()
+    announcement_pet = serializers.SerializerMethodField()
     other_user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
@@ -100,6 +100,24 @@ class ConversationListSerializer(serializers.ModelSerializer):
     def _get_participant(self, obj):
         request = self.context["request"]
         return obj.participants.filter(user=request.user).first()
+
+    def get_announcement_title(self, obj):
+        if not getattr(obj, 'announcement', None):
+            return None
+        pet = getattr(obj.announcement, 'pet', None)
+        return pet.name if pet else None
+
+    def get_announcement_id(self, obj):
+        return getattr(obj.announcement, 'id', None)
+
+    def get_announcement_status(self, obj):
+        return getattr(obj.announcement, 'status', None)
+
+    def get_announcement_pet(self, obj):
+        ann = getattr(obj, 'announcement', None)
+        if not ann or not getattr(ann, 'pet', None):
+            return None
+        return PetSerializer(ann.pet, context=self.context).data
 
     def get_other_user(self, obj):
         request = self.context["request"]

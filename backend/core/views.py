@@ -562,6 +562,39 @@ def current_user(request):
             "badges": badges,
         })
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def contact_owner(request, announcement_id):
+    """Endpoint to notify an announcement owner that a user reported they found the pet.
+
+    Creates a Notification with the actor set to the current user and the user set
+    to the announcement owner. Frontend can call this when a finder clicks the
+    "I Found This Pet" button so the owner receives an in-app notification
+    containing a linkable actor (finder) profile.
+    """
+    try:
+        ann = Announcement.objects.select_related('owner', 'pet').get(id=announcement_id)
+    except Announcement.DoesNotExist:
+        return Response({'detail': 'Announcement not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Do not let owner notify themselves
+    if request.user.id == ann.owner_id:
+        return Response({'detail': "You cannot contact the owner about your own announcement."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        Notification.objects.create(
+            user=ann.owner,
+            actor=request.user,
+            type=Notification.TYPE_CONTACTED,
+            title=f"{request.user.username} reported they found {ann.pet.name}",
+            related_announcement=ann,
+        )
+    except Exception:
+        return Response({'detail': 'Failed to create notification.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
+
     if request.method == 'PUT':
         import logging
         logger = logging.getLogger(__name__)
@@ -749,6 +782,58 @@ def public_user(request, user_id):
     except Exception:
         badges = []
 
+    # Compute public statistics for this user
+    try:
+        from .models import Announcement, PostView, SavedAnnouncement, ConversationParticipant, ChatMessage
+
+        ann_qs = Announcement.objects.filter(owner=user)
+        announcements_count = ann_qs.count()
+        active_announcements_count = ann_qs.filter(is_active=True).count()
+        reunited_count = ann_qs.filter(is_reunited=True).count()
+        lost_count = ann_qs.filter(status='lost').count()
+        found_count = ann_qs.filter(status='found').count()
+
+        # Profile/announcement views
+        views_count = PostView.objects.filter(announcement__owner=user).count()
+
+        # Conversations (distinct)
+        conversations_count = ConversationParticipant.objects.filter(user=user).values('conversation').distinct().count()
+
+        # Messages sent
+        messages_sent = ChatMessage.objects.filter(sender=user).count()
+
+        # How many times user's announcements have been saved by others
+        saved_count = SavedAnnouncement.objects.filter(announcement__owner=user).count()
+
+        stats = {
+            'announcements_count': announcements_count,
+            'active_announcements_count': active_announcements_count,
+            'reunited_count': reunited_count,
+            'lost_count': lost_count,
+            'found_count': found_count,
+            'views_count': views_count,
+            'conversations_count': conversations_count,
+            'messages_sent': messages_sent,
+            'saved_count': saved_count,
+        }
+    except Exception:
+        stats = {}
+
+    # presence — always include an object so frontend can render the dot
+    presence = {
+        'is_online': False,
+        'last_seen': None,
+    }
+    try:
+        if hasattr(user, 'presence') and user.presence is not None:
+            presence = {
+                'is_online': bool(user.presence.is_online),
+                'last_seen': user.presence.last_seen,
+            }
+    except Exception:
+        # keep defaults
+        pass
+
     return Response({
         "id": user.id,
         "username": user.username,
@@ -757,6 +842,8 @@ def public_user(request, user_id):
         "profile_image_url": profile_image_url,
         "date_joined": user.date_joined,
         "badges": badges,
+        "stats": stats,
+        "presence": presence,
     })
 
 from geopy.geocoders import Nominatim

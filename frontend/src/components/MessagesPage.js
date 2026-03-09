@@ -384,12 +384,14 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                         {activeConversation.other_user?.is_online ? "🟢 " : ""}{renderPresenceText(activeConversation.other_user)}
                                     </p>
                                 </div>
-                                <button
-                                    className="chat-link-btn"
-                                    onClick={() => onOpenAnnouncement?.(activeConversation.announcement_id)}
-                                >
-                                    Open announcement
-                                </button>
+                                {activeConversation && activeConversation.announcement_id ? (
+                                    <button
+                                        className="chat-link-btn"
+                                        onClick={() => onOpenAnnouncement?.(activeConversation.announcement_id)}
+                                    >
+                                        Open announcement
+                                    </button>
+                                ) : null}
                             </div>
 
                             <div className="chat-messages">
