@@ -49,13 +49,10 @@ const ProfilePage = () => {
         loadNotifications();
     }, []);
 
-    // When notifications tab becomes active, mark all notifications as read
     useEffect(() => {
         if (activeTab === "notifications" && notifications.length > 0) {
-            // mark all read in background
             handleMarkAllRead();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
 
     const loadUser = async () => {
@@ -101,7 +98,6 @@ const ProfilePage = () => {
             const res = await getMySavedAnnouncements();
             setSavedItems(res.data || []);
         } catch (err) {
-            // ignore profile secondary tab fetch error
         }
     };
 
@@ -110,7 +106,6 @@ const ProfilePage = () => {
             const res = await getNotifications();
             setNotifications(res.data?.results || []);
         } catch (err) {
-            // ignore profile secondary tab fetch error
         }
     };
 
@@ -126,7 +121,6 @@ const ProfilePage = () => {
 
     const handleUpdateProfile = async () => {
         try {
-            // Validation
             if (!formData.username || !formData.username.trim()) {
                 showToast("Username cannot be empty", "error");
                 return;
@@ -153,7 +147,6 @@ const ProfilePage = () => {
                 phone_number: formData.phone_number
             });
 
-            // Update basic profile data
             const updatePayload = {
                 username: formData.username,
                 email: formData.email,
@@ -162,7 +155,6 @@ const ProfilePage = () => {
                 phone_number: formData.phone_number
             };
 
-            // include alerts settings
             updatePayload.alerts_enabled = alerts.alerts_enabled;
             if (alerts.alert_latitude !== null && alerts.alert_latitude !== undefined && alerts.alert_latitude !== '') updatePayload.alert_latitude = alerts.alert_latitude;
             if (alerts.alert_longitude !== null && alerts.alert_longitude !== undefined && alerts.alert_longitude !== '') updatePayload.alert_longitude = alerts.alert_longitude;
@@ -178,17 +170,12 @@ const ProfilePage = () => {
                 }
             );
 
-            console.log("✅ Basic profile updated");
+            console.log("Basic profile updated");
 
-            // If profile image changed, upload it separately
             if (profileImageFile) {
-                console.log("🖼️ Uploading profile image...");
-                console.log("📦 File:", profileImageFile.name);
 
                 const imagePayload = new FormData();
                 imagePayload.append('profile_image', profileImageFile);
-
-                console.log("📮 Sending FormData with profile_image...");
 
                 const response = await axios.put(
                     "http://127.0.0.1:8001/api/users/me/",
@@ -200,27 +187,18 @@ const ProfilePage = () => {
                         }
                     }
                 );
-
-                console.log("✅ Profile image uploaded successfully!");
-                console.log("📦 Response:", response.data);
-                console.log("🖼️ Profile image URL:", response.data.profile_image_url);
             } else {
-                console.log("ℹ️ No profile image to upload");
+                console.log("ℹNo profile image to upload");
             }
 
-            showToast("Profile updated successfully! 🎉", "success");
+            showToast("Profile updated successfully!", "success");
             setEditing(false);
             setProfileImageFile(null);
             setProfileImagePreview(null);
 
-            // Reload user data to get updated profile_image_url from backend
-            console.log("🔄 Reloading user data...");
             await loadUser();
-            console.log("✅ User data reloaded!");
 
         } catch (err) {
-            console.error("❌ Error updating profile:", err);
-            console.error("📦 Response data:", err.response?.data);
             showToast(err.response?.data?.error || "Failed to update profile", "error");
         }
     };
@@ -268,7 +246,6 @@ const ProfilePage = () => {
             });
 
             showToast("Account deleted. Goodbye!", "success");
-            // clear auth and reload to reflect logged-out state
             localStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
             localStorage.removeItem("user_id");
@@ -610,10 +587,8 @@ const ProfilePage = () => {
                                                 await markNotificationsRead([item.id]);
                                                 setNotifications((prev) => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
                                             } catch (err) {
-                                                // ignore
                                             }
 
-                                            // navigate using custom events App listens for
                                             if (item.related_announcement) {
                                                 window.dispatchEvent(new CustomEvent('openAnnouncement', { detail: item.related_announcement }));
                                             } else if (item.actor && item.actor.id) {

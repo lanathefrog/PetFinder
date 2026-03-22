@@ -23,7 +23,7 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
     }, []);
 
     const handleDelete = async (e, id) => {
-        e.stopPropagation(); // 🔥 щоб не відкривались деталі
+        e.stopPropagation(); 
         if (window.confirm("Are you sure you want to delete this announcement?")) {
             try {
                 await deleteAnnouncement(id);
@@ -40,7 +40,6 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
 
     };
 
-    // Shorten full address to: Street, City, Country (best-effort heuristic)
     const formatShortAddress = (address) => {
         if (!address) return 'Location N/A';
         const parts = address.split(',').map(p => p.trim()).filter(Boolean);
@@ -48,7 +47,6 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
 
         const street = parts[0];
         const country = parts[parts.length - 1];
-        // Try to pick a city-like part: second from the end if available, otherwise the second element
         const city = parts.length >= 2 ? parts[parts.length - 2] : (parts[1] || '');
 
         const elems = [];
@@ -62,7 +60,6 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
     const lostCount = myPets.filter(p => p.status === 'lost').length;
     const foundCount = myPets.filter(p => p.status === 'found').length;
 
-// Фейкові перегляди (щоб виглядало красиво 😌)
     const totalViews = activeCount * 17 + 25;
 
 
@@ -103,7 +100,7 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
                                 key={pet.id}
                                 className="announcement-card-dashboard"
                                 style={{ cursor: 'pointer' }}
-                                onClick={() => onSelect && onSelect(pet)} // 🔥 перехід у деталі
+                                onClick={() => onSelect && onSelect(pet)} 
                             >
                                  <div className="announcement-thumbnail">
     {pet.pet.photo ? (
@@ -138,7 +135,7 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
                                         className="action-btn edit"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onSelect && onSelect(pet); // 🔥 редагування через деталі
+                                            onSelect && onSelect(pet);
                                         }}
                                     >
                                         ✏️ Edit

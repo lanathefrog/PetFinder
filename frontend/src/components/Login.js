@@ -4,14 +4,13 @@ import '../styles/auth-about.css';
 
 const Login = ({ setToken }) => {
     const [isRegistering, setIsRegistering] = useState(false);
-    const [animate, setAnimate] = useState(false); // Controls the fade effect
+    const [animate, setAnimate] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
 
-    // Trigger animation whenever the tab changes
     useEffect(() => {
         setAnimate(true);
         const timer = setTimeout(() => setAnimate(false), 200);
@@ -31,7 +30,6 @@ const Login = ({ setToken }) => {
 
             localStorage.setItem("access_token", token);
 
-            // 🔥 отримуємо поточного юзера
             const me = await axios.get(
                 "http://127.0.0.1:8001/api/users/me/",
                 {
@@ -98,7 +96,7 @@ const Login = ({ setToken }) => {
                     </button>
                 </div>
 
-                {/* Form container with dynamic animation class */}
+                {}
                 <div className={animate ? 'form-fade-out' : 'form-fade-in'}>
                     {!isRegistering ? (
                         <form className="login-form" onSubmit={handleLogin}>
@@ -110,7 +108,7 @@ const Login = ({ setToken }) => {
                                 <label>Password</label>
                                 <input type="password" onChange={(e) => setPassword(e.target.value)} required />
                             </div>
-                            {/* Updated with your requested class name */}
+                            {}
                             <button type="submit" className="sign-in-btn">Sign In</button>
                         </form>
                     ) : (

@@ -60,13 +60,13 @@ const PublicProfile = ({ userId }) => {
                         </div>
                     )}
 
-                    {/* prettier id badge + small message button */}
+                    {}
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
                             <div className="profile-id-badge">#{user.id}</div>
                         </div>
 
-                        {/* show first 4 stats in a single row */}
+                        {}
                         {user.stats && (
                             <div className="profile-stats-row" aria-label="profile statistics">
                                 <div className="stat-item">

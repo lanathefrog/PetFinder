@@ -203,7 +203,6 @@ function App() {
                 );
                 setUnreadMessagesCount(total);
             } catch (e) {
-                // ignore navbar badge fetch errors
             }
 
             try {
@@ -216,7 +215,6 @@ function App() {
                         : items.filter((item) => !item.is_read).length
                 );
             } catch (e) {
-                // ignore notification badge fetch errors
             }
         };
 
@@ -225,7 +223,6 @@ function App() {
         return () => clearInterval(timer);
     }, [token, view]);
 
-    // Listen for unauthorized events emitted by the API client and clear token
     useEffect(() => {
         const onUnauthorized = () => {
             setToken(null);
@@ -250,7 +247,6 @@ function App() {
             setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
             setUnreadNotificationsCount(0);
         } catch (e) {
-            // ignore
         }
     };
 
@@ -341,12 +337,10 @@ function App() {
                             onClick={async () => {
                                 const next = !showNotificationsDropdown;
                                 setShowNotificationsDropdown(next);
-                                // when opening the dropdown, mark all notifications read
                                 if (next) {
                                     try {
                                         await handleMarkNotificationsRead();
                                     } catch (e) {
-                                        // ignore
                                     }
                                 }
                             }}
@@ -372,15 +366,12 @@ function App() {
                                                 style={{ cursor: 'pointer' }}
                                                 onClick={async () => {
                                                     try {
-                                                        // mark this notification read
                                                         await markNotificationsRead([item.id]);
                                                         setNotifications((prev) => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
                                                         setUnreadNotificationsCount((c) => Math.max(0, c - (item.is_read ? 0 : 1)));
                                                     } catch (e) {
-                                                        // ignore error
                                                     }
 
-                                                    // navigate: prefer announcement -> actor/profile
                                                     if (item.related_announcement) {
                                                         try {
                                                             const res = await getAnnouncement(item.related_announcement);

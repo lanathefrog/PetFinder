@@ -29,5 +29,4 @@ try:
         }
     )
 except Exception:
-    # Fallback mode: core HTTP app still works even if Channels isn't installed.
     application = django_asgi_app

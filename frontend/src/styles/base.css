@@ -1,6 +1,3 @@
-/* static/core/css/base.css - Reset, Base Styles, Header, Footer */
-
-/* Reset and Base Styles */
 * {
     margin: 0;
     padding: 0;
@@ -15,7 +12,6 @@ body {
     background-color: #ffffff;
 }
 
-/* Header and Navigation */
 header {
     background: #ffffff;
     padding: 1rem 0;
@@ -103,7 +99,6 @@ nav {
     z-index: 300;
 }
 
-/* animated pop-in for dropdown */
 .notifications-dropdown-animated {
     animation: popIn 180ms cubic-bezier(.2,.9,.3,1) both;
 }
@@ -160,17 +155,14 @@ nav {
     box-shadow: 0 12px 30px rgba(0,0,0,0.08);
 }
 
-/* notifications list container: show at most 5 items, others accessible via scroll */
 .notifications-list {
     max-height: calc(5 * 72px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-right: 6px; /* space for scrollbar */
+    padding-right: 6px; 
 }
-
-/* Simple scrollbar styling */
 .notifications-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -216,7 +208,6 @@ nav {
     border: 2px solid #e0e0e0;
 }
 
-/* Footer */
 footer {
     background: #1a1a1a;
     color: white;
@@ -377,13 +368,10 @@ footer {
     overflow: hidden;
     backdrop-filter: blur(12px);
 }
-
-/* Closing animation */
 .toast.closing {
     animation: slideUpFade 0.4s ease forwards;
 }
 
-/* Types */
 .toast.success {
     background: linear-gradient(135deg, #4CAF50, #66bb6a);
 }
@@ -417,7 +405,6 @@ footer {
     transform: scale(1.2);
 }
 
-/* Progress bar */
 .toast-progress {
     position: absolute;
     bottom: 0;
@@ -428,7 +415,6 @@ footer {
     animation: progress 4s linear forwards;
 }
 
-/* Animations */
 @keyframes slideDown {
     from {
         opacity: 0;

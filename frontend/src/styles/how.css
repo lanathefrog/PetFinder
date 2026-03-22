@@ -189,7 +189,6 @@
     gap: 0.75rem;
 }
 
-/* Animations */
 @keyframes fadeInUp {
     from {
         opacity: 0;

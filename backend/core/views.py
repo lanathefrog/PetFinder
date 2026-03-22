@@ -28,7 +28,6 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 
-# Helper to unflatten keys (pet.name -> pet: {name})
 def expand_data(data):
     result = {}
     for key, value in data.items():
@@ -66,7 +65,6 @@ class AnnouncementList(generics.ListCreateAPIView):
         if search:
             queryset = queryset.filter(pet__name__icontains=search)
 
-        # Radius-based filtering: optional query params lat,lng,radius (radius in meters)
         try:
             lat = self.request.query_params.get('lat') or self.request.query_params.get('latitude')
             lng = self.request.query_params.get('lng') or self.request.query_params.get('longitude')
@@ -76,7 +74,6 @@ class AnnouncementList(generics.ListCreateAPIView):
                     latf = float(lat)
                     lngf = float(lng)
                     rf = float(radius)
-                    # evaluate queryset and filter by haversine distance
                     from .utils import haversine_meters
                     ids = []
                     for ann in list(queryset):
@@ -107,20 +104,12 @@ class AnnouncementList(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        # 1. Transform the flat FormData into nested JSON
-        # e.g. 'pet.name' -> {'pet': {'name': ...}}
         nested_data = expand_data(request.data)
-
-        # 2. Pass this new structure to the serializer
         serializer = self.get_serializer(data=nested_data)
         serializer.is_valid(raise_exception=True)
-
-        # 3. Save with the owner
         self.perform_create(serializer)
 
         headers = self.get_success_headers(serializer.data)
-
-        # If a 'found' announcement was created, attempt to find possible matches
         try:
             created_ann = serializer.instance
             if getattr(created_ann, 'status', None) == 'found':
@@ -131,7 +120,6 @@ class AnnouncementList(generics.ListCreateAPIView):
                 match_announcements = [m[0] for m in matches]
                 matches_data = AnnSerializer(match_announcements, many=True, context={'request': request}).data
 
-                # notify owners of candidate lost announcements
                 for candidate in match_announcements:
                     if candidate.owner_id != request.user.id:
                         try:
@@ -145,8 +133,6 @@ class AnnouncementList(generics.ListCreateAPIView):
                         except Exception:
                             pass
 
-                # After creating a 'found' announcement and notifying possible matches,
-                # also alert nearby users who enabled location alerts (optional feature)
                 try:
                     from .utils import haversine_meters
                     from .models import Profile
@@ -154,7 +140,6 @@ class AnnouncementList(generics.ListCreateAPIView):
                     if created_ann.location:
                         lat = created_ann.location.latitude
                         lng = created_ann.location.longitude
-                        # iterate profiles with alerts enabled
                         profiles = Profile.objects.filter(alerts_enabled=True).exclude(user_id=created_ann.owner_id)
                         for prof in profiles:
                             try:
@@ -171,7 +156,6 @@ class AnnouncementList(generics.ListCreateAPIView):
                                         related_announcement=created_ann,
                                     )
                             except Exception:
-                                # don't let one failure stop others
                                 pass
                 except Exception:
                     pass
@@ -180,7 +164,6 @@ class AnnouncementList(generics.ListCreateAPIView):
         except Exception:
             pass
 
-        # Notify nearby users for any new announcement (lost or found) if they opted in
         try:
             created_ann = serializer.instance
             if created_ann and created_ann.location:
@@ -281,13 +264,11 @@ class AnnouncementCommentList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         announcement_id = self.kwargs.get('announcement_id')
         serializer.save(user=self.request.user, announcement_id=announcement_id)
-        # assign badges for the commenter
         try:
             from .utils import check_and_assign_badges
             check_and_assign_badges(self.request.user)
         except Exception:
             pass
-        # notify announcement owner about new comment
         try:
             announcement = Announcement.objects.filter(id=announcement_id).first()
             if announcement and announcement.owner_id != self.request.user.id:
@@ -308,13 +289,11 @@ class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def check_object_permissions(self, request, obj):
-        # allow anyone to view, but restrict updates/deletes to owner
         if request.method in ('PUT', 'PATCH', 'DELETE') and obj.user != request.user:
             raise PermissionDenied("You cannot modify this comment.")
         return super().check_object_permissions(request, obj)
 
     def perform_update(self, serializer):
-        # only owner can update => enforced in check_object_permissions
         serializer.save()
 
     def perform_destroy(self, instance):
@@ -326,7 +305,6 @@ def register_user(request):
     data = request.data
 
     try:
-        # 🔹 перевірка обов'язкового поля
         if not data.get('phone_number'):
             return Response(
                 {'error': 'Phone number is required'},
@@ -340,7 +318,6 @@ def register_user(request):
             last_name=data.get('last_name', '')
         )
 
-        # 🔥 ДОДАЄМО ТЕЛЕФОН У PROFILE
         user.profile.phone_number = data['phone_number']
         user.profile.save()
 
@@ -389,7 +366,6 @@ def toggle_save_announcement(request, announcement_id):
                     title=f"{request.user.username} saved your announcement",
                     related_announcement=announcement,
                 )
-        # badge check for the saver
         try:
             from .utils import check_and_assign_badges
             check_and_assign_badges(request.user)
@@ -422,7 +398,6 @@ def toggle_reaction(request, announcement_id):
     else:
         Reaction.objects.create(user=request.user, announcement=announcement, kind=kind)
         created = True
-        # notify owner and check badges
         if announcement.owner_id != request.user.id:
             Notification.objects.create(
                 user=announcement.owner,
@@ -436,8 +411,6 @@ def toggle_reaction(request, announcement_id):
             check_and_assign_badges(announcement.owner)
         except Exception:
             pass
-
-    # return counts + user_reaction
     from .models import Reaction as ReactionModel
     qs = ReactionModel.objects.filter(announcement=announcement)
     counts = {k: qs.filter(kind=k).count() for k, _ in ReactionModel.KIND_CHOICES}
@@ -459,7 +432,6 @@ def toggle_comment_reaction(request, comment_id):
     comment = Comment.objects.filter(id=comment_id).first()
     if not comment:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
-    # Toggle a reaction of a specific kind for this user+comment
     existing = Reaction.objects.filter(user=request.user, comment=comment, kind=kind).first()
     created = False
     if existing:
@@ -468,7 +440,6 @@ def toggle_comment_reaction(request, comment_id):
     else:
         Reaction.objects.create(user=request.user, comment=comment, kind=kind)
         created = True
-        # notify comment owner
         if comment.user_id != request.user.id:
             try:
                 Notification.objects.create(
@@ -532,12 +503,10 @@ def current_user(request):
     user = request.user
 
     if request.method == 'GET':
-        # Build profile image URL if it exists
         profile_image_url = None
         if hasattr(user, 'profile') and user.profile.profile_image:
             profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
 
-        # include badges
         badges = []
         try:
             badges = [
@@ -578,7 +547,6 @@ def contact_owner(request, announcement_id):
     except Announcement.DoesNotExist:
         return Response({'detail': 'Announcement not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Do not let owner notify themselves
     if request.user.id == ann.owner_id:
         return Response({'detail': "You cannot contact the owner about your own announcement."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -599,74 +567,53 @@ def contact_owner(request, announcement_id):
         import logging
         logger = logging.getLogger(__name__)
 
-        logger.info(f"📝 PUT request to current_user from user: {user.username}")
-        logger.info(f"📦 Request data keys: {request.data.keys()}")
-        logger.info(f"📦 Request FILES keys: {request.FILES.keys()}")
-        logger.info(f"📦 Full data: {dict(request.data)}")
-
-        # Update username (but don't allow deletion)
         new_username = request.data.get('username', user.username)
         if new_username and new_username.strip():
             user.username = new_username
-            logger.info(f"✏️ Updated username to: {new_username}")
+            logger.info(f"Updated username to: {new_username}")
         else:
-            logger.warning(f"⚠️ Username cannot be empty! Got: '{new_username}'")
+            logger.warning(f"Username cannot be empty! Got: '{new_username}'")
             return Response(
                 {"error": "Username cannot be empty"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update email (but don't allow deletion)
         new_email = request.data.get('email', user.email)
         if new_email and new_email.strip():
             user.email = new_email
-            logger.info(f"✏️ Updated email to: {new_email}")
         else:
-            logger.warning(f"⚠️ Email cannot be empty! Got: '{new_email}'")
             return Response(
                 {"error": "Email cannot be empty"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update first name
         first_name = request.data.get('first_name', user.first_name)
         if first_name and first_name.strip():
             user.first_name = first_name
-            logger.info(f"✏️ Updated first_name to: {first_name}")
         else:
-            logger.warning(f"⚠️ First name cannot be empty! Got: '{first_name}'")
             return Response(
                 {"error": "First name cannot be empty"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update last name
         last_name = request.data.get('last_name', user.last_name)
         if last_name and last_name.strip():
             user.last_name = last_name
-            logger.info(f"✏️ Updated last_name to: {last_name}")
         else:
-            logger.warning(f"⚠️ Last name cannot be empty! Got: '{last_name}'")
             return Response(
                 {"error": "Last name cannot be empty"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         user.save()
-        logger.info(f"✅ User saved successfully")
 
-        # Handle phone number
         phone = request.data.get('phone_number')
         if phone:
             user.profile.phone_number = phone
             user.profile.save()
-            logger.info(f"✏️ Updated phone_number to: {phone}")
-
-        # Handle nearby alerts settings
         try:
             alerts_enabled = request.data.get('alerts_enabled')
             if alerts_enabled is not None:
-                # Accept strings (from form) and booleans
                 if isinstance(alerts_enabled, str):
                     alerts_enabled = alerts_enabled.lower() in ('1', 'true', 'yes', 'on')
                 user.profile.alerts_enabled = bool(alerts_enabled)
@@ -692,24 +639,24 @@ def contact_owner(request, announcement_id):
                     pass
 
             user.profile.save()
-            logger.info(f"✏️ Updated alerts settings for user: {user.username}")
+            logger.info(f"Updated alerts settings for user: {user.username}")
         except Exception:
             logger.exception("Failed to update alerts settings")
 
         # Handle profile image
         if 'profile_image' in request.FILES:
-            logger.info(f"🖼️ Profile image found in FILES!")
+            logger.info(f"Profile image found in FILES!")
             profile_image = request.FILES['profile_image']
-            logger.info(f"🖼️ File name: {profile_image.name}")
-            logger.info(f"🖼️ File size: {profile_image.size} bytes")
-            logger.info(f"🖼️ File content type: {profile_image.content_type}")
+            logger.info(f"File name: {profile_image.name}")
+            logger.info(f"File size: {profile_image.size} bytes")
+            logger.info(f"File content type: {profile_image.content_type}")
 
             try:
                 user.profile.profile_image = profile_image
                 user.profile.save()
-                logger.info(f"✅ Profile image saved successfully!")
+                logger.info(f"Profile image saved successfully!")
             except Exception as e:
-                logger.error(f"❌ Error saving profile image: {str(e)}")
+                logger.error(f"Error saving profile image: {str(e)}")
                 return Response(
                     {"error": f"Failed to upload profile image: {str(e)}"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -717,7 +664,6 @@ def contact_owner(request, announcement_id):
         else:
             logger.info(f"ℹ️ No profile_image in FILES")
 
-        # Build profile image URL if it exists
         profile_image_url = None
         if user.profile.profile_image:
             profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
@@ -734,11 +680,9 @@ def contact_owner(request, announcement_id):
             "profile_image_url": profile_image_url
         })
     
-    # Allow account deletion via DELETE on the same endpoint
     if request.method == 'DELETE':
         try:
             username = user.username
-            # delete user and cascade related objects where configured
             user.delete()
             return Response({"message": f"User {username} deleted"}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -772,7 +716,6 @@ def public_user(request, user_id):
     if hasattr(user, 'profile') and user.profile.profile_image:
         profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
 
-    # badges
     badges = []
     try:
         badges = [
@@ -782,7 +725,6 @@ def public_user(request, user_id):
     except Exception:
         badges = []
 
-    # Compute public statistics for this user
     try:
         from .models import Announcement, PostView, SavedAnnouncement, ConversationParticipant, ChatMessage
 
@@ -793,16 +735,11 @@ def public_user(request, user_id):
         lost_count = ann_qs.filter(status='lost').count()
         found_count = ann_qs.filter(status='found').count()
 
-        # Profile/announcement views
         views_count = PostView.objects.filter(announcement__owner=user).count()
 
-        # Conversations (distinct)
         conversations_count = ConversationParticipant.objects.filter(user=user).values('conversation').distinct().count()
 
-        # Messages sent
         messages_sent = ChatMessage.objects.filter(sender=user).count()
-
-        # How many times user's announcements have been saved by others
         saved_count = SavedAnnouncement.objects.filter(announcement__owner=user).count()
 
         stats = {
@@ -819,7 +756,6 @@ def public_user(request, user_id):
     except Exception:
         stats = {}
 
-    # presence — always include an object so frontend can render the dot
     presence = {
         'is_online': False,
         'last_seen': None,
@@ -831,7 +767,6 @@ def public_user(request, user_id):
                 'last_seen': user.presence.last_seen,
             }
     except Exception:
-        # keep defaults
         pass
 
     return Response({

@@ -86,7 +86,6 @@ def start_direct_conversation(request):
     if target.id == request.user.id:
         return Response({"detail": "You cannot start a conversation with yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Create a conversation without an announcement
     conversation, created = Conversation.objects.get_or_create(
         announcement=None,
         initiator=request.user,
@@ -172,7 +171,6 @@ def conversation_messages(request, conversation_id):
     if before_id:
         queryset = queryset.filter(id__lt=before_id)
 
-    # Load newest chunk and return ascending in UI
     messages = list(queryset.order_by("-id")[:limit])
     messages.reverse()
 

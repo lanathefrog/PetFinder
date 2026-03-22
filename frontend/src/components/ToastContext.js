@@ -5,7 +5,7 @@ export const useToast = () => useContext(ToastContext);
 
 export const ToastProvider = ({ children }) => {
     const audio = new Audio("./pop.mp3");
-    audio.volume = 0.4; //
+    audio.volume = 0.4; 
 
     const [toasts, setToasts] = useState([]);
 
@@ -37,7 +37,7 @@ export const ToastProvider = ({ children }) => {
 
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
-        }, 400); // час анімації
+        }, 400); 
     };
 
 

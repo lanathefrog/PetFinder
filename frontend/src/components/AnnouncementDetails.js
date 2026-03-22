@@ -15,7 +15,6 @@ import 'leaflet/dist/leaflet.css';
 import '../styles/detail.css';
 import { getComments, createComment, deleteComment, updateComment, toggleCommentReaction } from '../services/api';
 
-// FIX leaflet icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -58,7 +57,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const [editingAddress, setEditingAddress] = useState(announcement.location?.address || "");
     const [isPickingLocation, setIsPickingLocation] = useState(false);
 
-    // when entering edit mode or when the announcement updates, sync location states
     React.useEffect(() => {
         const lat = localAnnouncement.location?.latitude ?? null;
         const lng = localAnnouncement.location?.longitude ?? null;
@@ -70,14 +68,11 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         setEditingAddress(localAnnouncement.location?.address || "");
     }, [localAnnouncement]);
 
-    // when user toggles editing mode, prefill editingLocation from current location
     React.useEffect(() => {
         if (isEditing) {
             setEditingLocation(location);
         }
     }, [isEditing]);
-
-    // Comments
     const [comments, setComments] = useState([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
     const [newCommentText, setNewCommentText] = useState("");
@@ -85,7 +80,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const [editingCommentText, setEditingCommentText] = useState("");
     const [reactionsState, setReactionsState] = useState(localAnnouncement.reactions || { kinds: [], user_reaction: null });
 
-    // Frontend reaction definitions (keeps UI consistent when backend returns raw counts)
     const REACTION_DEFS = {
         like: { icon: '❤️', label: 'Like' },
         helpful: { icon: '👍', label: 'Helpful' },
@@ -121,29 +115,25 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                 const res = await getAnnouncement(announcement.id);
                 setLocalAnnouncement(res.data);
             } catch (err) {
-                // fallback to provided props
             }
         };
         loadFreshDetails();
     }, [announcement.id]);
 
     React.useEffect(() => {
-        // load current user profile to determine subscription status
         (async () => {
             try {
                 const res = await axios.get('http://127.0.0.1:8001/api/users/me/', { headers: { Authorization: `Bearer ${token}` } });
                 setUserProfile(res.data);
                 const prof = res.data || {};
                 if (prof.alerts_enabled && prof.alert_latitude && prof.alert_longitude) {
-                    // compute distance between profile alert location and announcement location
                     if (announcement.location && announcement.location.latitude && announcement.location.longitude) {
                         const aLat = announcement.location.latitude;
                         const aLng = announcement.location.longitude;
                         const pLat = prof.alert_latitude;
                         const pLng = prof.alert_longitude;
-                        // quick haversine on client-side (approx)
                         const toRad = (v) => v * Math.PI / 180;
-                        const R = 6371000; // meters
+                        const R = 6371000; // Earth radius in meters
                         const dLat = toRad(aLat - pLat);
                         const dLon = toRad(aLng - pLng);
                         const lat1 = toRad(pLat);
@@ -161,7 +151,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                     setSubscribed(false);
                 }
             } catch (err) {
-                // ignore
             }
         })();
     }, [announcement.id]);
@@ -173,20 +162,17 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                 const res = await getComments(announcement.id);
                 setComments(res.data || []);
             } catch (err) {
-                // ignore
             } finally {
                 setCommentsLoading(false);
             }
         };
         loadComments();
-        // initialize reactions from announcement
         setReactionsState(localAnnouncement.reactions || { counts: {}, user_reaction: null });
     }, [announcement.id]);
 
     const handleMapClick = (e) => {
         const { lat, lng } = e.latlng;
         setEditingLocation({ latitude: lat, longitude: lng });
-        // reverse geocode clicked point to show human-readable address
         (async () => {
             try {
                 const res = await axios.get('http://127.0.0.1:8001/api/reverse-geocode/', { params: { lat, lon: lng } });
@@ -302,10 +288,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         }
 
         try {
-            // Ask user for radius in km (simple prompt for now)
             const defaultKm = announcement.location.search_radius ? (announcement.location.search_radius / 1000) : 1;
             const raw = window.prompt('Alert radius in kilometers (1-5)', String(defaultKm));
-            if (raw === null) return; // cancelled
+            if (raw === null) return;
             let km = parseFloat(raw);
             if (isNaN(km) || km <= 0) {
                 showToast('Invalid radius', 'error');
@@ -348,7 +333,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             const res = await createComment(localAnnouncement.id, { text });
             setComments((prev) => [...prev, res.data]);
             setNewCommentText("");
-            // optimistic update of comments_count
             setLocalAnnouncement((prev) => ({ ...prev, comments_count: (prev.comments_count || 0) + 1 }));
             showToast("Comment posted", "success");
         } catch (err) {
@@ -397,20 +381,16 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         }
     };
 
-    // Announcement-level reactions removed — focus on per-comment reactions
 
     const handleToggleCommentReaction = async (commentId, kind) => {
         try {
             const res = await toggleCommentReaction(commentId, kind);
-            // backend returns counts (numbers) and user_reaction
             const data = res.data || {};
 
-            // update only the relevant comment in-place for instant UI feedback
             setComments((prev) =>
                 prev.map((c) => {
                     if (c.id !== commentId) return c;
 
-                    // build reactions.counts shape expected by UI: { kind: { label, icon, count } }
                     const newCounts = {};
                     const rawCounts = data.counts || {};
                     Object.keys(REACTION_DEFS).forEach((k) => {
@@ -493,7 +473,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                 },
             }));
 
-            // keep address state in sync with updated response (if present)
             setLocationAddress(updated.location?.address || locationAddress);
 
             if (updated.pet?.photo) {
@@ -671,8 +650,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                 Contact owner
                             </button>
                         )}
-
-                        {/* Subscribe to nearby alerts for this announcement's location */}
                         {!isOwner && announcement.location && (
                             <div style={{ marginTop: 12 }}>
                                 {subscribed ? (
@@ -803,7 +780,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                     />
                                     <EditLocationPicker />
                                 </MapContainer>
-                                {/* show the resolved address for the chosen point below the map */}
+                                {}
                                 {editingAddress ? (
                                     <div style={{ marginTop: 8 }}>
                                         <input readOnly className="form-input address" value={editingAddress} />
@@ -830,7 +807,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
 
                 <div className="comments-section info-card">
                     <h2>Comments ({localAnnouncement.comments_count || comments.length})</h2>
-                    {/* Announcement-level reactions removed */}
+                    {}
 
                         {commentsLoading ? (
                         <p>Loading comments...</p>
@@ -872,7 +849,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                         ) : (
                                             <p className="comment-text">{c.text}</p>
                                         )}
-                                        {/* Comment reactions: show present reactions */}
+                                        {}
                                         <div className="comment-reaction-actions" style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                                             {Object.keys(REACTION_DEFS).map((k) => {
                                                 const count = c.reactions?.counts?.[k]?.count || 0;

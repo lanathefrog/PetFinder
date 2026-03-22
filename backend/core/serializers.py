@@ -35,7 +35,6 @@ class PetSerializer(serializers.ModelSerializer):
         return obj.photo.url
 
 class LocationSerializer(serializers.ModelSerializer):
-    # Make lat/long not required since we default them
     latitude = serializers.FloatField(required=False)
     longitude = serializers.FloatField(required=False)
     search_radius = serializers.FloatField(required=False, allow_null=True)
@@ -53,7 +52,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField()
     reactions = serializers.SerializerMethodField()
 
-    # 🔥 Додаємо телефон з профілю (defensive)
     phone_number = serializers.SerializerMethodField()
 
     def get_phone_number(self, obj):
@@ -65,7 +63,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             return ""
         return getattr(profile, 'phone_number', "")
 
-    # 🔥 Додаємо email з User
     email = serializers.CharField(
         source='owner.email',
         read_only=True
@@ -122,25 +119,21 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                     search_radius=(float(search_radius_val) if search_radius_val is not None else None),
                 )
             else:
-                # Create location with default coordinates if no address or lat/lng
                 location = Location.objects.create(
                     address="",
                     latitude=0.0,
                     longitude=0.0,
                 )
 
-        # Owner may be passed via serializer.save(owner=...) from the view
         owner = validated_data.pop('owner', None)
 
         pet_data = validated_data.pop('pet')
 
         pet = Pet.objects.create(**{k: v for k, v in pet_data.items() if k != 'photo'})
 
-        # Handle uploaded photo from multipart/form-data
         try:
             request = self.context.get('request')
             if request is not None and hasattr(request, 'FILES'):
-                # frontend may send the file as 'pet.photo' or 'pet_photo' or 'photo'
                 photo = None
                 for key in ['pet.photo', 'pet_photo', 'photo', 'pet.photo[0]']:
                     if key in request.FILES:
@@ -151,7 +144,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                     pet.photo = photo
                     pet.save()
         except Exception:
-            # don't break creation if file handling fails
             pass
 
         if owner is None and request is not None:
@@ -172,14 +164,11 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         pet_data = validated_data.pop('pet', None)
         location_data = validated_data.pop('location', None)
 
-        # 🔹 update pet
         if pet_data:
-            # update standard pet fields (but avoid overwriting photo here)
             for attr, value in pet_data.items():
                 if attr == 'photo':
                     continue
                 setattr(instance.pet, attr, value)
-            # Handle uploaded photo on update if present
             try:
                 request = self.context.get('request')
                 if request is not None and hasattr(request, 'FILES'):
@@ -192,24 +181,20 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                         instance.pet.photo = photo
                 instance.pet.save()
             except Exception:
-                # swallow file save errors to avoid breaking the whole update
                 instance.pet.save()
 
-        # 🔹 update location with proper latitude and longitude
         if location_data:
             lat = location_data.get("latitude")
             lng = location_data.get("longitude")
             address = location_data.get("address", instance.location.address)
             search_radius_val = location_data.get("search_radius", instance.location.search_radius)
 
-            # If we have coordinates, use them directly
             if lat is not None and lng is not None:
                 instance.location.latitude = float(lat)
                 instance.location.longitude = float(lng)
                 instance.location.address = address
                 instance.location.search_radius = (float(search_radius_val) if search_radius_val is not None else None)
             else:
-                # Otherwise try to get coordinates from address
                 lat, lng = get_coordinates(address)
                 instance.location.address = address
                 instance.location.latitude = lat or instance.location.latitude
@@ -218,7 +203,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
             instance.location.save()
 
-        # 🔹 update announcement fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
@@ -247,13 +231,11 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         return obj.comments.count()
 
     def get_reactions(self, obj):
-        # returns counts per kind and whether current user reacted
         request = self.context.get('request')
         qs = getattr(obj, 'reactions', None)
         if qs is None:
             qs = Reaction.objects.filter(announcement=obj)
 
-        # include icon and label for each known kind
         kinds = []
         for kind, label in Reaction.KIND_CHOICES:
             count = qs.filter(kind=kind).count()
@@ -296,7 +278,6 @@ class CommentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         request = self.context.get("request")
-        # include profile image URL if available
         profile_image = None
         if hasattr(instance.user, 'profile') and instance.user.profile.profile_image:
             if request:
@@ -314,14 +295,12 @@ class CommentSerializer(serializers.ModelSerializer):
             return []
 
     def get_reactions(self, obj):
-        # only show reactions present for this comment
         qs = Reaction.objects.filter(comment=obj)
         counts = {}
         for kind, label in Reaction.KIND_CHOICES:
             c = qs.filter(kind=kind).count()
             counts[kind] = { 'label': label, 'icon': Reaction.ICONS.get(kind, ''), 'count': c }
 
-        # current user reactions on this comment (may be multiple kinds)
         request = self.context.get('request')
         user_reactions = []
         if request and request.user.is_authenticated:

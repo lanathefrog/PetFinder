@@ -1,7 +1,6 @@
 import React from 'react';
 
 const Footer = () => {
-    // This helper function stops the page from reloading when clicking placeholder links
     const handleMockClick = (e) => {
         e.preventDefault();
     };
@@ -13,7 +12,7 @@ const Footer = () => {
                     <h2>🧡 PetFinder</h2>
                     <p>We are dedicated to reuniting pets with their families through community effort and technology.</p>
                     <div className="social-links">
-                        {/* Replaced href="#" with href="/" and added the click handler */}
+                        {}
                         <a href="/" className="social-link" onClick={handleMockClick}>f</a>
                         <a href="/" className="social-link" onClick={handleMockClick}>t</a>
                         <a href="/" className="social-link" onClick={handleMockClick}>in</a>
@@ -52,7 +51,7 @@ const Footer = () => {
             </div>
 
             <div className="footer-bottom">
-                <p>&copy; 2026 PetFinder. All rights reserved. Made with ❤️ for pets and their families.</p>
+                <p>&copy; 2026 PetFinder. All rights reserved. Made with love for pets and their families.</p>
             </div>
         </footer>
     );

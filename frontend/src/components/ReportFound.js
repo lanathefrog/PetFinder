@@ -6,7 +6,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-lea
 import L from "leaflet";
 import '../styles/forms.css';
 
-// FIX leaflet icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -75,7 +74,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         setFormData((prev) => ({ ...prev, location: value }));
         searchLocation(value);
     };
-    // show the map immediately like ReportLost
     const [isPickingLocation, setIsPickingLocation] = useState(true);
     const [contactData, setContactData] = useState({
         email: '',
@@ -88,7 +86,7 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         size: 'medium',
         color: '',
         location: '',
-        date_found: new Date().toISOString().split('T')[0], // Default to today
+        date_found: new Date().toISOString().split('T')[0], 
         description: '',
         contact_name: '',
         image: null
@@ -200,7 +198,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!formData.pet_type) {
             showToast('Please select the pet type', 'error');
             return;
@@ -242,9 +239,8 @@ const ReportFound = ({ onRefresh, onCancel }) => {
 
         try {
             const response = await createAnnouncement(dataPayload);
-            showToast('🎉 Thank you! The found pet report has been posted!', 'success');
+            showToast('Thank you! The found pet report has been posted!', 'success');
 
-            // Navigate to the created announcement after a short delay
             setTimeout(() => {
                 onCancel?.();
                 window.location.href = `/announcements/${response.data.id}`;
@@ -556,7 +552,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                                 className="btn btn-primary"
                                                 style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem', background: '#FF6B4A', border: 'none' }}
                                                 onClick={async () => {
-                                                        // notify the owner in-app and navigate to announcement details
                                                         try {
                                                             await contactAnnouncementOwner(pet.id);
                                                             showToast('Owner has been notified in-app', 'success');
@@ -564,7 +559,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                                             console.error('Notify owner error', err);
                                                             showToast('Failed to notify owner', 'error');
                                                         }
-                                                        // navigate to announcement detail page
                                                         window.location.href = `/announcements/${pet.id}`;
                                                     }}
                                             >

@@ -19,7 +19,7 @@ const AnnouncementList = ({ onSelect }) => {
 
     const [announcements, setAnnouncements] = useState([]);
     const [searchCenter, setSearchCenter] = useState(null);
-    const [searchRadius, setSearchRadius] = useState(null); // meters
+    const [searchRadius, setSearchRadius] = useState(null); 
     const [isPickingCenter, setIsPickingCenter] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
@@ -71,12 +71,11 @@ const AnnouncementList = ({ onSelect }) => {
     };
 
     useEffect(() => {
-        // when search center/radius changes, reload announcements using backend filter
         const params = {};
         if (searchCenter && searchRadius) {
             params.lat = searchCenter.lat;
             params.lng = searchCenter.lng;
-            params.radius = searchRadius; // meters
+            params.radius = searchRadius; 
         }
         loadAnnouncements(params);
     }, [searchCenter, searchRadius]);
@@ -174,7 +173,7 @@ const AnnouncementList = ({ onSelect }) => {
                             }}>Clear</button>
                         </div>
 
-                        {/* radius control moved into filters */}
+                        {}
                         <div className="filter-radius-row" style={{ marginTop: '0.6rem' }}>
                             <button className="filter-btn-option" onClick={() => setIsPickingCenter((s) => !s)} style={{ width: 'auto' }}>{isPickingCenter ? 'Cancel pick' : 'Pick center on map'}</button>
                             <label style={{ margin: 0 }}>Radius:</label>
@@ -207,10 +206,10 @@ const AnnouncementList = ({ onSelect }) => {
                         <MapContainer center={[51.505, -0.09]} zoom={12} style={{ height: '100%', width: '100%' }}>
                             <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-                            {/* allow picking a center point when isPickingCenter */}
+                            {}
                             {isPickingCenter && <MapPicker onPick={(latlng) => { setSearchCenter(latlng); setIsPickingCenter(false); }} />}
 
-                            {/* draw search circle if center+radius selected */}
+                            {}
                             {searchCenter && searchRadius && (
                                 <Circle center={[searchCenter.lat, searchCenter.lng]} radius={Number(searchRadius)} pathOptions={{ color: '#ff6b4a', fillOpacity: 0.08 }} />
                             )}

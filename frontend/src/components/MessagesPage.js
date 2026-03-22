@@ -32,7 +32,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
     const wsRef = useRef(null);
     const reconnectTimerRef = useRef(null);
     const messagesEndRef = useRef(null);
-    // track previous messages length per conversation to avoid auto-scrolling on initial load
     const prevMessagesLengthByConvRef = useRef({});
 
     const activeConversation = useMemo(
@@ -132,7 +131,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         socket.onmessage = async (event) => {
             try {
                 const payload = JSON.parse(event.data);
-                // message events created by server contain 'type': 'message'
                 if (payload.type === "message") {
                     const normalizedMessage = {
                         id: payload.id,
@@ -190,7 +188,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                     );
                 }
 
-                // reaction events sent by server are plain objects with message_id, counts, user_reacted
                 if (payload && payload.message_id && payload.counts) {
                     const msgId = String(payload.message_id);
                     setMessageReactions((prev) => ({
@@ -202,7 +199,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                     }));
                 }
             } catch (error) {
-                // ignore parsing errors
             }
         };
 
@@ -264,7 +260,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
 
     const toggleReaction = (messageId, kind) => {
         const msgId = String(messageId);
-        // optimistic update
         setMessageReactions((prev) => {
             const existing = prev[msgId] || { counts: {}, user_reacted: [] };
             const prevKinds = existing.user_reacted || [];
@@ -272,12 +267,10 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
             const nextCounts = { ...existing.counts };
 
             if (prevKind === kind) {
-                // toggle off
                 if (nextCounts[kind]) nextCounts[kind] = Math.max(0, nextCounts[kind] - 1);
                 return { ...prev, [msgId]: { counts: nextCounts, user_reacted: [] } };
             }
 
-            // switching to a new kind: decrement previous kind, increment new kind
             if (prevKind) {
                 if (nextCounts[prevKind]) nextCounts[prevKind] = Math.max(0, nextCounts[prevKind] - 1);
             }
@@ -285,7 +278,6 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
             return { ...prev, [msgId]: { counts: nextCounts, user_reacted: [kind] } };
         });
 
-        // send via websocket if available
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: 'reaction', message_id: messageId, kind }));
         }
@@ -317,11 +309,9 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         const convId = String(activeConversationId || '');
         const prev = prevMessagesLengthByConvRef.current[convId] || 0;
         const next = messages?.length || 0;
-        // Only auto-scroll when messages length increases after initial load for that conversation
         if (prev > 0 && next > prev) {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }
-        // update stored length for this conversation
         prevMessagesLengthByConvRef.current[convId] = next;
     }, [messages, activeConversationId]);
 

@@ -14,19 +14,18 @@ const ReportPetForm = ({ onRefresh }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // This object structure must match your AnnouncementSerializer fields
         const payload = {
-            pet: { // This must be called 'pet' to match the serializer
+            pet: { 
                 name: formData.name,
                 pet_type: formData.pet_type,
                 gender: formData.gender,
-                breed: "", // Add empty strings if fields are required in models
+                breed: "", 
                 color: ""
             },
             status: formData.status,
             contact_phone: formData.contact_phone,
             description: formData.description,
-            owner: 1 // Ensure a user with ID 1 exists in your database
+            owner: 1 
         };
 
         try {
@@ -34,7 +33,6 @@ const ReportPetForm = ({ onRefresh }) => {
             alert("Pet Reported Successfully!");
             onRefresh();
         } catch (err) {
-            // Detailed error logging to see exactly which field failed
             console.error("Validation Errors:", err.response?.data);
         }
     };

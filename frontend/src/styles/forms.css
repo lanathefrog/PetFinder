@@ -399,7 +399,6 @@ textarea::placeholder {
     border-top: 2px solid #f0f0f0;
 }
 
-/* Location suggestion dropdown */
 .location-suggestions {
     border: 1px solid #eee;
     background: white;
@@ -777,7 +776,6 @@ textarea::placeholder {
     transform: translateY(-2px);
 }
 
-/* Pet Type Selection */
 .pet-type-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

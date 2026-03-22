@@ -1,4 +1,3 @@
-/* static/core/css/dashboard.css - Dashboard page styles */
 
 .dashboard-page {
     background: #ffffff;
@@ -380,7 +379,7 @@
 }
 .announcement-thumbnail {
   width: 100%;
-  height: 180px;            /* 🔥 фіксована висота */
+  height: 180px;           
   border-radius: 16px;
   overflow: hidden;
   background: #f3f3f3;
@@ -392,7 +391,7 @@
 .announcement-thumbnail img {
   width: 100%;
   height: 100%;
-  object-fit: cover;        /* головна магія ✨ */
+  object-fit: cover;   
   display: block;
 }
 

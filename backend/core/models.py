@@ -439,7 +439,6 @@ class Reaction(models.Model):
         (KIND_LOVE, 'Love'),
     ]
 
-    # simple icons (frontend may override with images)
     ICONS = {
         KIND_LIKE: '❤️',
         KIND_HELPFUL: '👍',
@@ -451,7 +450,6 @@ class Reaction(models.Model):
     }
 
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='reactions')
-    # allow reaction to either announcement OR comment
     announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, related_name='reactions', null=True, blank=True)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='reactions', null=True, blank=True)
     kind = models.CharField(max_length=20, choices=KIND_CHOICES)
@@ -459,9 +457,7 @@ class Reaction(models.Model):
 
     class Meta:
         constraints = [
-            # for comments keep uniqueness per user+comment+kind when comment is set
             models.UniqueConstraint(fields=['user', 'comment', 'kind'], condition=Q(comment__isnull=False), name='unique_reaction_per_user_comment_kind'),
-            # for announcements keep uniqueness per user+announcement+kind when announcement is set
             models.UniqueConstraint(fields=['user', 'announcement', 'kind'], condition=Q(announcement__isnull=False), name='unique_reaction_per_user_announcement_kind'),
         ]
 

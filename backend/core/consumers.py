@@ -42,7 +42,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return
 
-        # Support both sending new messages and reaction toggles
         msg_type = payload.get("type")
 
         if msg_type == "message":
@@ -72,17 +71,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
         elif msg_type == "reaction":
-            # payload should contain: message_id and kind
             message_id = payload.get("message_id")
             kind = payload.get("kind")
             if not message_id or not kind:
                 return
 
             actor_id = self.scope["user"].id
-            # Toggle reaction in DB
             toggled = await self._toggle_reaction(actor_id, message_id, kind)
 
-            # Build reaction summary for this message
             counts = await self._get_reaction_counts(message_id)
             user_kinds = await self._get_user_reacted_kinds(actor_id, message_id)
 
@@ -103,7 +99,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event["message"]))
 
     async def chat_reaction(self, event):
-        # Relay reaction summary to clients
         await self.send(text_data=json.dumps(event["reaction"]))
 
     @database_sync_to_async
@@ -119,15 +114,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message = ChatMessage.objects.filter(id=message_id).first()
             if not message:
                 return False
-            # If user already reacted with same kind -> remove (toggle off)
             existing_same = ChatMessageReaction.objects.filter(message_id=message_id, user_id=user_id, kind=kind).first()
             if existing_same:
                 existing_same.delete()
                 return False
 
-            # Remove any other kinds the user has on this message (enforce single reaction per user per message)
             ChatMessageReaction.objects.filter(message_id=message_id, user_id=user_id).delete()
-            # Create the new reaction
             ChatMessageReaction.objects.create(message_id=message_id, user_id=user_id, kind=kind)
             return True
         except Exception:
@@ -160,7 +152,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text=text,
         )
 
-        # Sender has read up to now
         ConversationParticipant.objects.filter(
             conversation_id=conversation_id,
             user_id=sender_id

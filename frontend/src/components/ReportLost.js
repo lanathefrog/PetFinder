@@ -6,7 +6,6 @@ import '../styles/forms.css';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 
-// FIX leaflet icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -41,19 +40,16 @@ const ReportLost = ({ onRefresh, onCancel }) => {
     const [position, setPosition] = useState([50.4501, 30.5234]);
 
     useEffect(() => {
-        // Attempt to use browser geolocation to center the map and fill address when creating a new report
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const { latitude, longitude } = pos.coords;
-                    // only set if current position is default or not set yet
                     if (!position || (Array.isArray(position) && position[0] === 50.4501 && position[1] === 30.5234)) {
                         setPosition([latitude, longitude]);
                         reverseGeocode({ lat: latitude, lng: longitude });
                     }
                 },
                 (err) => {
-                    // ignore, keep default
                 },
                 { enableHighAccuracy: true, timeout: 5000 }
             );
@@ -147,7 +143,6 @@ const ReportLost = ({ onRefresh, onCancel }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!formData.name.trim()) {
             showToast('Please enter your pet\'s name', 'error');
             return;
@@ -183,7 +178,7 @@ const ReportLost = ({ onRefresh, onCancel }) => {
 
         try {
             await createAnnouncement(dataPayload);
-            showToast('🎉 Your lost pet report has been submitted! Help is on the way!', 'success');
+            showToast('Your lost pet report has been submitted! Help is on the way!', 'success');
 
             if (onRefresh) onRefresh();
             setTimeout(() => onCancel?.(), 1500);

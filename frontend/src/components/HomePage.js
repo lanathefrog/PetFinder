@@ -13,7 +13,6 @@ const HomePage = ({ onNavigate }) => {
         const load = async () => {
             try {
                 const res = await getAnnouncements();
-                // show latest 4
                 setRecent(res.data.slice(0, 4));
             } catch (err) {
                 console.error('Failed to load recent posts', err);
@@ -26,7 +25,7 @@ const HomePage = ({ onNavigate }) => {
     return (
         <div className="home-page">
 
-            {/* HERO */}
+            {}
             <section className="hero-section">
                 <div className="hero-container">
 
@@ -81,7 +80,7 @@ const HomePage = ({ onNavigate }) => {
                 </div>
             </section>
 
-            {/* MAP PREVIEW */}
+            {}
             <section className="map-preview-section">
                 <h2>Lost & Found Pets Near You</h2>
                 <p>Explore recent reports on our interactive map</p>
@@ -99,7 +98,7 @@ const HomePage = ({ onNavigate }) => {
                 </div>
             </section>
 
-            {/* HOW IT WORKS */}
+            {}
             <section className="how-section">
                 <h2>How It Works</h2>
 
@@ -124,7 +123,7 @@ const HomePage = ({ onNavigate }) => {
                 </div>
             </section>
 
-            {/* RECENT POSTS */}
+            {}
             <section className="recent-section">
                 <div className="recent-header">
                     <h2>Recent Posts</h2>
@@ -165,7 +164,7 @@ const HomePage = ({ onNavigate }) => {
                 </div>
             </section>
 
-            {/* BIG CTA */}
+            {}
             <section className="cta-section">
                 <h2>Every Pet Deserves to Come Home</h2>
                 <p>

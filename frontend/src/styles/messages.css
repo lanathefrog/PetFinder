@@ -131,8 +131,6 @@
 .presence-indicator.offline {
     color: #74808d;
 }
-
-/* add small presence dot */
 .presence-indicator::before {
     content: '';
     display: inline-block;
@@ -180,7 +178,6 @@
     background: #f2f2f2;
 }
 
-/* Position reaction actions for other user's messages to the left */
 .message-row.other {
     justify-content: flex-start;
 }
@@ -191,7 +188,6 @@
     align-self: flex-end;
 }
 
-/* Position reaction actions for own messages to the left */
 .message-row.own {
     justify-content: flex-end;
 }
@@ -225,7 +221,6 @@
     gap: 0.7rem;
 }
 
-/* Reactions UI */
 .message-actions {
     display: flex;
     align-items: center;
