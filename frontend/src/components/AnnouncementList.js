@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { getAnnouncements } from '../services/api';
 import { useToast } from './ToastContext';
 import '../styles/base.css';
@@ -35,7 +35,7 @@ const AnnouncementList = ({ onSelect }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
-    const itemsPerPage = 6;
+    const itemsPerPage = 9;
 
     const MapPicker = ({ onPick }) => {
         useMapEvents({
@@ -49,15 +49,11 @@ const AnnouncementList = ({ onSelect }) => {
     };
 
     useEffect(() => {
-        loadAnnouncements();
-    }, []);
-
-    useEffect(() => {
         const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
         return () => clearTimeout(t);
     }, [searchTerm]);
 
-    const loadAnnouncements = async (params = {}) => {
+    const loadAnnouncements = useCallback(async (params = {}) => {
         setIsLoading(true);
         try {
             const res = await getAnnouncements(params);
@@ -68,7 +64,11 @@ const AnnouncementList = ({ onSelect }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [showToast]);
+
+    useEffect(() => {
+        loadAnnouncements();
+    }, [loadAnnouncements]);
 
     useEffect(() => {
         const params = {};
@@ -78,7 +78,7 @@ const AnnouncementList = ({ onSelect }) => {
             params.radius = searchRadius; 
         }
         loadAnnouncements(params);
-    }, [searchCenter, searchRadius]);
+    }, [searchCenter, searchRadius, loadAnnouncements]);
 
     const filtered = useMemo(() => {
         return announcements
@@ -114,9 +114,58 @@ const AnnouncementList = ({ onSelect }) => {
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
 
-    useEffect(() => setCurrentPage(1), [statusFilter, typeFilter, genderFilter, breedFilter, colorFilter, sizeFilter, debouncedSearch]);
+    useEffect(() => setCurrentPage(1), [statusFilter, typeFilter, genderFilter, breedFilter, colorFilter, sizeFilter, debouncedSearch, dateFrom, dateTo, sortBy]);
 
     const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const pagesToShow = useMemo(() => {
+        const maxButtons = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        const end = Math.min(totalPages, start + maxButtons - 1);
+        start = Math.max(1, end - maxButtons + 1);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    }, [currentPage, totalPages]);
+
+    const mapCenter = useMemo(() => {
+        if (searchCenter?.lat && searchCenter?.lng) {
+            return [searchCenter.lat, searchCenter.lng];
+        }
+
+        const firstWithCoords = filtered.find((pet) => pet.location?.latitude && pet.location?.longitude);
+        if (firstWithCoords) {
+            return [firstWithCoords.location.latitude, firstWithCoords.location.longitude];
+        }
+
+        const fallbackFromAll = announcements.find((pet) => pet.location?.latitude && pet.location?.longitude);
+        if (fallbackFromAll) {
+            return [fallbackFromAll.location.latitude, fallbackFromAll.location.longitude];
+        }
+
+        return [50.45, 30.52];
+    }, [searchCenter, filtered, announcements]);
+
+    const mapZoom = useMemo(() => {
+        if (searchCenter?.lat && searchCenter?.lng) {
+            return 12;
+        }
+        return filtered.some((pet) => pet.location?.latitude && pet.location?.longitude) ? 11 : 6;
+    }, [searchCenter, filtered]);
+
+    const clearFilters = () => {
+        setStatusFilter('all');
+        setTypeFilter('all');
+        setGenderFilter('all');
+        setBreedFilter('');
+        setColorFilter('');
+        setSizeFilter('all');
+        setSearchTerm('');
+        setDateFrom('');
+        setDateTo('');
+        setSearchCenter(null);
+        setSearchRadius(null);
+        setSortBy('newest');
+        showToast && showToast('Filters cleared', 'info');
+    };
 
     return (
         <div className="find-pet-page">
@@ -167,16 +216,29 @@ const AnnouncementList = ({ onSelect }) => {
                                 <option value="large">Large</option>
                             </select>
 
-                            <button className="filter-btn-option" onClick={() => {
-                                setStatusFilter('all'); setTypeFilter('all'); setGenderFilter('all'); setBreedFilter(''); setColorFilter(''); setSizeFilter('all'); setSearchTerm(''); setDateFrom(''); setDateTo('');
-                                showToast && showToast('Filters cleared', 'info');
-                            }}>Clear</button>
+                            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="distance-select">
+                                <option value="newest">Newest first</option>
+                                <option value="oldest">Oldest first</option>
+                            </select>
+
+                            <div className="date-range-inline">
+                                <span className="date-range-text">Date range</span>
+                                <label className="date-mini">
+                                    <span>From</span>
+                                    <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="date-input" aria-label="Date from" />
+                                </label>
+                                <label className="date-mini">
+                                    <span>To</span>
+                                    <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="date-input" aria-label="Date to" />
+                                </label>
+                            </div>
+
+                            <button className="filter-btn-option filter-clear" onClick={clearFilters}>Clear Filters</button>
                         </div>
 
-                        {}
-                        <div className="filter-radius-row" style={{ marginTop: '0.6rem' }}>
-                            <button className="filter-btn-option" onClick={() => setIsPickingCenter((s) => !s)} style={{ width: 'auto' }}>{isPickingCenter ? 'Cancel pick' : 'Pick center on map'}</button>
-                            <label style={{ margin: 0 }}>Radius:</label>
+                        <div className="filter-radius-row">
+                            <button className="filter-btn-option radius-btn" onClick={() => setIsPickingCenter((s) => !s)}>{isPickingCenter ? 'Cancel pick' : 'Pick center on map'}</button>
+                            <label>Radius</label>
                             <input
                                 type="range"
                                 min={0}
@@ -187,29 +249,26 @@ const AnnouncementList = ({ onSelect }) => {
                                     const v = Number(e.target.value || 0);
                                     setSearchRadius(v === 0 ? null : v);
                                 }}
-                                style={{ flex: 1 }}
                             />
                             <div className="radius-value">
                                 {searchRadius ? (searchRadius >= 1000 ? `${(searchRadius/1000).toFixed(1)} km` : `${searchRadius} m`) : 'No radius'}
                             </div>
                             {searchCenter && searchRadius && (
-                                <button className="filter-btn-option" onClick={() => { setSearchCenter(null); setSearchRadius(null); }} style={{ width: 'auto' }}>Clear radius</button>
+                                <button className="filter-btn-option radius-btn" onClick={() => { setSearchCenter(null); setSearchRadius(null); }}>Clear radius</button>
                             )}
                         </div>
 
                     </div>
                 </div>
 
-                    <div className="map-results-area">
+                <div className="map-results-area">
 
-                    <div className="map-container-large" style={{ padding: 0 }}>
-                        <MapContainer center={[51.505, -0.09]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                    <div className="map-container-large">
+                        <MapContainer key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`} center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }}>
                             <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-                            {}
                             {isPickingCenter && <MapPicker onPick={(latlng) => { setSearchCenter(latlng); setIsPickingCenter(false); }} />}
 
-                            {}
                             {searchCenter && searchRadius && (
                                 <Circle center={[searchCenter.lat, searchCenter.lng]} radius={Number(searchRadius)} pathOptions={{ color: '#ff6b4a', fillOpacity: 0.08 }} />
                             )}
@@ -232,14 +291,17 @@ const AnnouncementList = ({ onSelect }) => {
                         </MapContainer>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <div style={{ fontSize: '0.95rem', color: '#666' }}>{filtered.length} results</div>
-                        {isLoading ? <div style={{ fontSize: '0.9rem', color: '#666' }}>Loading...</div> : null}
+                    <div className="results-topbar">
+                        <div className="results-meta">{filtered.length} results</div>
+                        <div className="results-meta">
+                            Page {currentPage} / {totalPages}
+                        </div>
+                        {isLoading ? <div className="results-meta">Loading...</div> : null}
                     </div>
 
-                    <div className="results-list">
+                    <div className="results-grid">
                         {paginated.map((pet, index) => (
-                            <div key={pet.id} className="result-card" onClick={() => onSelect(pet)} style={{ cursor: 'pointer', animation: `smoothFade 0.4s ease forwards`, animationDelay: `${index * 0.08}s` }}>
+                            <div key={pet.id} className="result-card" onClick={() => onSelect(pet)} style={{ animationDelay: `${index * 0.08}s` }}>
                                 <div className="result-thumbnail">
                                     {pet.pet.photo ? (<img src={pet.pet.photo} alt={pet.pet.name} />) : (pet.pet.pet_type === 'cat' ? '🐈' : '🐕')}
                                 </div>
@@ -248,7 +310,7 @@ const AnnouncementList = ({ onSelect }) => {
                                     <div className="result-header">
                                         <h3>{pet.pet.name}</h3>
 
-                                        <span style={{ background: pet.status === 'lost' ? '#FF6B4A' : '#4CAF50', color: 'white', padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase' }}>{pet.status}</span>
+                                        <span className={`status-pill ${pet.status}`}>{pet.status}</span>
                                     </div>
 
                                     <div className="result-details">
@@ -264,16 +326,40 @@ const AnnouncementList = ({ onSelect }) => {
                         ))}
 
                         {filtered.length === 0 && !isLoading && (
-                            <p style={{ textAlign: 'center', padding: '2rem' }}>No pets match your filters.</p>
+                            <p className="empty-state">No pets match your filters.</p>
                         )}
 
                     </div>
 
                     {totalPages > 1 && (
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem' }}>
-                            {Array.from({ length: totalPages }, (_, i) => (
-                                <button key={i} className="filter-btn-option" style={{ background: currentPage === i + 1 ? '#FF6B4A' : 'white', color: currentPage === i + 1 ? 'white' : '#666' }} onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
-                            ))}
+                        <div className="pagination-wrap">
+                            <button
+                                className="pagination-btn nav"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            >
+                                Previous
+                            </button>
+
+                            <div className="pagination-pages">
+                                {pagesToShow.map((page) => (
+                                    <button
+                                        key={page}
+                                        className={`pagination-btn page ${currentPage === page ? 'active' : ''}`}
+                                        onClick={() => setCurrentPage(page)}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                className="pagination-btn nav"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </button>
                         </div>
                     )}
 

@@ -3,6 +3,7 @@ import {
     getAnnouncement,
     getAnnouncements,
     getChatConversations,
+    getCurrentUser,
     getNotifications,
     markNotificationsRead
 } from './services/api';
@@ -41,6 +42,7 @@ function App() {
     const [notifications, setNotifications] = useState([]);
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
     const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
 
     const loadFeed = () => {
         getAnnouncements()
@@ -192,6 +194,24 @@ function App() {
     }, [token]);
 
     useEffect(() => {
+        if (!token) {
+            setCurrentUser(null);
+            return;
+        }
+
+        const loadCurrentUser = async () => {
+            try {
+                const res = await getCurrentUser();
+                setCurrentUser(res.data || null);
+            } catch (e) {
+                setCurrentUser(null);
+            }
+        };
+
+        loadCurrentUser();
+    }, [token]);
+
+    useEffect(() => {
         if (!token) return;
 
         const loadUnread = async () => {
@@ -226,6 +246,7 @@ function App() {
     useEffect(() => {
         const onUnauthorized = () => {
             setToken(null);
+            setCurrentUser(null);
             localStorage.removeItem('access_token');
             localStorage.removeItem('user_id');
         };
@@ -237,6 +258,7 @@ function App() {
         e.preventDefault();
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_id');
+        setCurrentUser(null);
         setToken(null);
         setView('feed');
     };
@@ -253,6 +275,10 @@ function App() {
     if (!token) {
         return <Login setToken={setToken} />;
     }
+
+    const profileName = currentUser?.username || 'Profile';
+    const profileAvatar = currentUser?.profile_image_url || currentUser?.profile_image || null;
+    const avatarFallback = (profileName || 'U').charAt(0).toUpperCase();
 
     return (
         <div className="app-wrapper">
@@ -327,10 +353,8 @@ function App() {
 
 
                     </ul>
-
-
-                    <a href="/" onClick={handleLogout}>(Logout)</a>
-                    <div className="nav-notifications" style={{ marginLeft: 12 }}>
+                    <div className="nav-right-controls">
+                        <div className="nav-notifications">
                         <button
                             type="button"
                             className="notification-btn"
@@ -410,6 +434,23 @@ function App() {
                                 )}
                             </div>
                         )}
+                        </div>
+
+                        <button
+                            type="button"
+                            className="nav-user-chip"
+                            onClick={() => navigateTo('profile')}
+                            title="Open profile"
+                        >
+                            <span className="nav-user-avatar" aria-hidden>
+                                {profileAvatar ? <img src={profileAvatar} alt={profileName} /> : avatarFallback}
+                            </span>
+                            <span className="nav-user-name">{profileName}</span>
+                        </button>
+
+                        <button type="button" className="nav-logout-btn" onClick={handleLogout}>
+                            Logout
+                        </button>
                     </div>
                 </nav>
             </header>

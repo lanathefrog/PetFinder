@@ -122,6 +122,19 @@
         font-size: 0.9rem;
     }
 
+    .nav-right-controls {
+        gap: 0.4rem;
+        margin-left: 0.5rem;
+    }
+
+    .nav-user-chip {
+        max-width: 145px;
+    }
+
+    .nav-user-name {
+        max-width: 72px;
+    }
+
     .hero h1 {
         font-size: 2rem;
     }
@@ -147,6 +160,17 @@
     nav {
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .nav-right-controls {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+        flex-wrap: wrap;
+    }
+
+    .nav-user-chip {
+        max-width: 100%;
     }
 
     .footer-content {

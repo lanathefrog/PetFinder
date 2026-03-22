@@ -4,103 +4,125 @@ import "../styles/responsive.css";
 import "../styles/how.css";
 
 const HowItWorks = ({ onNavigate }) => {
+    const steps = [
+        {
+            id: "01",
+            title: "Create a Detailed Report",
+            text: "Add clear photos, pet traits, and where the pet was last seen so people can recognize them fast.",
+            meta: "Photos, color, size, special marks"
+        },
+        {
+            id: "02",
+            title: "Show It on the Live Map",
+            text: "Your case appears in listings and on the map, helping nearby users respond while info is fresh.",
+            meta: "Location pins and smart filters"
+        },
+        {
+            id: "03",
+            title: "Coordinate in Messages",
+            text: "Keep communication in one secure place to verify details and safely arrange reunions.",
+            meta: "Built-in chat and profile context"
+        }
+    ];
+
+    const strengths = [
+        "Live neighborhood map",
+        "Fast posting in minutes",
+        "Mobile-ready interface",
+        "Focused pet-specific filters"
+    ];
+
+    const tips = [
+        {
+            title: "Use recent photos",
+            text: "Front and side angles help people identify pets quickly in real conditions."
+        },
+        {
+            title: "Pin exact location",
+            text: "Street names and landmarks improve response quality from nearby users."
+        },
+        {
+            title: "Reply quickly",
+            text: "Most successful matches happen when owners respond fast to incoming tips."
+        }
+    ];
+
     return (
         <div className="how-page">
             <section className="how-hero">
-                <span className="how-badge">Simple process, real results</span>
-                <h1>How PetFinder works</h1>
-                <p>
-                    Report, share, and connect in minutes. Every post helps your
-                    neighborhood spot and return pets faster.
-                </p>
-                <div className="how-hero-actions">
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => onNavigate("report_lost")}
-                    >
-                        Report Lost Pet
-                    </button>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => onNavigate("report_found")}
-                    >
-                        Report Found Pet
-                    </button>
+                <div className="how-hero-copy">
+                    <span className="how-badge">Simple flow, fast action</span>
+                    <h1>How PetFinder Actually Helps Reunite Pets</h1>
+                    <p>
+                        From first report to final meetup, every step is designed for speed,
+                        clarity, and local collaboration.
+                    </p>
+                    <div className="how-hero-actions">
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => onNavigate("report_lost")}
+                        >
+                            Report Lost Pet
+                        </button>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => onNavigate("report_found")}
+                        >
+                            Report Found Pet
+                        </button>
+                    </div>
+                </div>
+                <div className="how-hero-panel">
+                    <div className="hero-panel-row">
+                        <span>Search Radius</span>
+                        <strong>1-5 km</strong>
+                    </div>
+                    <div className="hero-panel-row">
+                        <span>Fast Matching</span>
+                        <strong>Map + Filters</strong>
+                    </div>
+                    <div className="hero-panel-row">
+                        <span>Communication</span>
+                        <strong>Built-in Chat</strong>
+                    </div>
                 </div>
             </section>
 
             <section className="how-steps">
-                <div className="step-card">
-                    <div className="step-number">1</div>
-                    <h2>Post an Announcement</h2>
-                    <p>
-                        Create a clear report with photos, pet details, and the
-                        last seen location. The more specific your post is, the
-                        easier it is for others to identify your pet.
-                    </p>
-                    <span className="step-note">
-                        Include: color, size, collar, and time last seen
-                    </span>
-                </div>
-
-                <div className="step-card">
-                    <div className="step-number">2</div>
-                    <h2>Community Visibility</h2>
-                    <p>
-                        Your post appears in the map and listing feed so nearby
-                        users can react quickly. Active visibility in the first
-                        hours often improves outcomes.
-                    </p>
-                    <span className="step-note">
-                        Nearby users can filter by location and pet type
-                    </span>
-                </div>
-
-                <div className="step-card">
-                    <div className="step-number">3</div>
-                    <h2>Connect and Reunite</h2>
-                    <p>
-                        Use direct messages to coordinate safely, verify details,
-                        and arrange pickup. You can keep communication in one place
-                        until the pet is home.
-                    </p>
-                    <span className="step-note">
-                        Confirm unique marks before final handoff
-                    </span>
-                </div>
+                {steps.map((step, index) => (
+                    <article key={step.id} className="step-card" style={{ animationDelay: `${index * 0.12}s` }}>
+                        <div className="step-number">{step.id}</div>
+                        <h2>{step.title}</h2>
+                        <p>{step.text}</p>
+                        <span className="step-note">{step.meta}</span>
+                    </article>
+                ))}
             </section>
 
             <section className="why-section">
-                <h2>Why people choose PetFinder</h2>
+                <h2>Why communities choose PetFinder</h2>
                 <div className="why-grid">
-                    <div className="why-item">Interactive map visibility</div>
-                    <div className="why-item">Secure user accounts</div>
-                    <div className="why-item">Fast, mobile-friendly posting</div>
-                    <div className="why-item">Local community collaboration</div>
+                    {strengths.map((item) => (
+                        <div key={item} className="why-item">{item}</div>
+                    ))}
                 </div>
             </section>
 
             <section className="how-tips">
-                <h2>Quick tips for better results</h2>
+                <h2>Field-tested tips for better results</h2>
                 <div className="tips-grid">
-                    <div className="tip-card">
-                        <h3>Use recent photos</h3>
-                        <p>Clear photos from different angles improve recognition.</p>
-                    </div>
-                    <div className="tip-card">
-                        <h3>Be precise with location</h3>
-                        <p>Street names, landmarks, and time windows help searchers.</p>
-                    </div>
-                    <div className="tip-card">
-                        <h3>Reply quickly</h3>
-                        <p>Fast responses to messages increase successful reunions.</p>
-                    </div>
+                    {tips.map((tip) => (
+                        <div key={tip.title} className="tip-card">
+                            <h3>{tip.title}</h3>
+                            <p>{tip.text}</p>
+                        </div>
+                    ))}
                 </div>
             </section>
 
             <section className="how-cta">
-                <h2>Ready to help?</h2>
-                <p>Start a report now or browse recent cases in your area.</p>
+                <h2>Ready to make the next reunion happen?</h2>
+                <p>Post a case now or browse active reports in your area.</p>
                 <div className="how-cta-actions">
                     <button
                         className="btn btn-secondary"
