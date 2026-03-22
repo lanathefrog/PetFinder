@@ -1005,3 +1005,28 @@ textarea::placeholder {
 {
     display: inline;
 }
+
+.form-input-readonly,
+input.form-input-readonly[readonly],
+textarea.form-input-readonly[readonly] {
+    background: linear-gradient(135deg, #f6f7f9 0%, #f2f4f7 100%);
+    border-color: #dde3eb;
+    color: #667085;
+    cursor: not-allowed;
+    font-weight: 700;
+}
+
+.form-input-readonly:focus,
+input.form-input-readonly[readonly]:focus,
+textarea.form-input-readonly[readonly]:focus {
+    border-color: #dde3eb;
+    box-shadow: none;
+    transform: none;
+    background: linear-gradient(135deg, #f6f7f9 0%, #f2f4f7 100%);
+}
+
+.locked-field-note {
+    color: #8892a0;
+    font-size: 0.8rem;
+    margin-top: 0.45rem;
+}

@@ -553,7 +553,16 @@ const ProfilePage = () => {
                         ) : (
                             <div className="profile-list">
                                 {savedItems.map((item) => (
-                                    <div key={item.id} className="profile-list-item">
+                                    <div
+                                        key={item.id}
+                                        className="profile-list-item profile-list-item-clickable"
+                                        style={{ cursor: item.announcement?.id ? 'pointer' : 'default' }}
+                                        onClick={() => {
+                                            if (item.announcement?.id) {
+                                                window.dispatchEvent(new CustomEvent('openAnnouncement', { detail: item.announcement.id }));
+                                            }
+                                        }}
+                                    >
                                         <strong>{item.announcement?.pet?.name || "Announcement"}</strong>
                                         <span>
                                             {item.announcement?.status || "status"} • {new Date(item.created_at).toLocaleString()}

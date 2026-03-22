@@ -22,6 +22,7 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
     const [sending, setSending] = useState(false);
     const [openReactionMenuFor, setOpenReactionMenuFor] = useState(null);
     const [messageReactions, setMessageReactions] = useState({});
+    const [conversationQuery, setConversationQuery] = useState("");
 
     const ReactionIcon = ({ className = '' }) => (
         <svg className={className} width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -31,13 +32,24 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
 
     const wsRef = useRef(null);
     const reconnectTimerRef = useRef(null);
-    const messagesEndRef = useRef(null);
+    const chatMessagesRef = useRef(null);
     const prevMessagesLengthByConvRef = useRef({});
 
     const activeConversation = useMemo(
         () => conversations.find((item) => item.id === activeConversationId) || null,
         [conversations, activeConversationId]
     );
+
+    const filteredConversations = useMemo(() => {
+        const q = conversationQuery.trim().toLowerCase();
+        if (!q) return conversations;
+        return conversations.filter((conversation) => {
+            const title = (conversation.announcement_title || "").toLowerCase();
+            const other = (conversation.other_user?.username || "").toLowerCase();
+            const preview = (conversation.last_message?.text || "").toLowerCase();
+            return title.includes(q) || other.includes(q) || preview.includes(q);
+        });
+    }, [conversations, conversationQuery]);
 
     const sortByActivity = (items) => {
         return [...items].sort((a, b) => {
@@ -72,6 +84,31 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         return "Offline";
     };
 
+    const formatShortTime = (value) => {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return "";
+        const now = new Date();
+        const sameDay = d.toDateString() === now.toDateString();
+        if (sameDay) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    };
+
+    const formatMessageTime = (value) => {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return "";
+        return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    const getConversationUserName = (conversation) => conversation?.other_user?.username || "User";
+
+    const getConversationPetLabel = (conversation) => {
+        const raw = (conversation?.announcement_title || "").trim();
+        if (raw) return raw;
+        return "No linked pet yet";
+    };
+
     const fetchConversations = async () => {
         setLoadingConversations(true);
         try {
@@ -99,6 +136,12 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         try {
             const res = await getConversationMessages(conversationId, { limit: 50 });
             setMessages(res.data?.results || []);
+            requestAnimationFrame(() => {
+                const container = chatMessagesRef.current;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
             await markConversationRead(conversationId);
             updateConversationMeta(conversationId, { unread_count: 0 });
         } catch (err) {
@@ -310,7 +353,13 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
         const prev = prevMessagesLengthByConvRef.current[convId] || 0;
         const next = messages?.length || 0;
         if (prev > 0 && next > prev) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            const container = chatMessagesRef.current;
+            if (container) {
+                const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+                if (distanceFromBottom < 120) {
+                    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+                }
+            }
         }
         prevMessagesLengthByConvRef.current[convId] = next;
     }, [messages, activeConversationId]);
@@ -320,31 +369,47 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
             <div className="messages-layout">
                 <aside className="conversations-panel">
                     <div className="messages-panel-header">
-                        <h2>Messages</h2>
+                        <div className="messages-panel-title-row">
+                            <h2>Messages</h2>
+                            <span className="panel-count-pill">{conversations.length}</span>
+                        </div>
+                        <input
+                            className="conversation-search"
+                            type="text"
+                            placeholder="Search chats..."
+                            value={conversationQuery}
+                            onChange={(e) => setConversationQuery(e.target.value)}
+                        />
                     </div>
 
                     {loadingConversations ? (
                         <p className="messages-muted">Loading conversations...</p>
-                    ) : conversations.length === 0 ? (
+                    ) : filteredConversations.length === 0 ? (
                         <p className="messages-muted">No conversations yet</p>
                     ) : (
                         <div className="conversations-list">
-                            {conversations.map((conversation) => (
+                            {filteredConversations.map((conversation) => (
                                 <button
                                     key={conversation.id}
                                     className={`conversation-item ${conversation.id === activeConversationId ? "active" : ""}`}
                                     onClick={() => setActiveConversationId(conversation.id)}
                                 >
+                                    <div className="conversation-avatar">
+                                        {(conversation.other_user?.username || "U").charAt(0).toUpperCase()}
+                                    </div>
                                     <div className="conversation-main">
                                         <div className="conversation-title-row">
-                                            <h3>{conversation.announcement_title}</h3>
-                                            {conversation.unread_count > 0 && (
-                                                <span className="unread-pill">{conversation.unread_count}</span>
-                                            )}
+                                            <h3>{getConversationUserName(conversation)}</h3>
+                                            <div className="conversation-right-meta">
+                                                <span className="conversation-time">{formatShortTime(conversation.last_message?.created_at || conversation.updated_at)}</span>
+                                                {conversation.unread_count > 0 && (
+                                                    <span className="unread-pill">{conversation.unread_count}</span>
+                                                )}
+                                            </div>
                                         </div>
                                         <p className="conversation-meta">
-                                            <span style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openUserProfile', { detail: conversation.other_user?.id })); showToast(`Opening ${conversation.other_user?.username}'s profile`, 'info'); }}>
-                                                {conversation.other_user?.username || "User"}
+                                            <span className="conversation-pet-label">
+                                                Pet: {getConversationPetLabel(conversation)}
                                             </span>
                                         </p>
                                         <p className="conversation-preview">
@@ -366,9 +431,9 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                         <>
                             <div className="chat-header">
                                 <div>
-                                    <h3>{activeConversation.announcement_title}</h3>
+                                    <h3>{getConversationUserName(activeConversation)}</h3>
                                     <p className="messages-muted">
-                                        with <span style={{ cursor: 'pointer' }} onClick={() => { window.dispatchEvent(new CustomEvent('openUserProfile', { detail: activeConversation.other_user?.id })); showToast(`Opening ${activeConversation.other_user?.username}'s profile`, 'info'); }}>{activeConversation.other_user?.username || "user"}</span>
+                                        <span className="conversation-pet-label">Pet: {getConversationPetLabel(activeConversation)}</span>
                                     </p>
                                     <p className={`presence-indicator ${activeConversation.other_user?.is_online ? "online" : "offline"}`}>
                                         {activeConversation.other_user?.is_online ? "🟢 " : ""}{renderPresenceText(activeConversation.other_user)}
@@ -384,7 +449,7 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                 ) : null}
                             </div>
 
-                            <div className="chat-messages">
+                            <div className="chat-messages" ref={chatMessagesRef}>
                                 {loadingMessages ? (
                                     <p className="messages-muted">Loading messages...</p>
                                 ) : messages.length === 0 ? (
@@ -444,14 +509,13 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                                 {isOwn && actions}
                                                 <div className="message-bubble">
                                                     <p>{message.text}</p>
-                                                    <span>{new Date(message.created_at).toLocaleString()}</span>
+                                                    <span>{formatMessageTime(message.created_at)}</span>
                                                 </div>
                                                 {!isOwn && actions}
                                             </div>
                                         );
                                     })
                                 )}
-                                <div ref={messagesEndRef} />
                             </div>
 
                             <div className="chat-input-row">
@@ -471,7 +535,7 @@ const MessagesPage = ({ initialConversationId = null, onOpenAnnouncement }) => {
                                     onClick={sendMessage}
                                     disabled={sending}
                                 >
-                                    Send
+                                    {sending ? "Sending..." : "Send"}
                                 </button>
                             </div>
                         </>

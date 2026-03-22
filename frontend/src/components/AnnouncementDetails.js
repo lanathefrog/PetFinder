@@ -37,7 +37,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const currentUserId = parseInt(localStorage.getItem("user_id"), 10);
     const isOwner = currentUserId === localAnnouncement.owner;
 
-    const [userProfile, setUserProfile] = useState(null);
     const [subscribed, setSubscribed] = useState(false);
 
     const initialLat = announcement.location?.latitude ?? null;
@@ -78,8 +77,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const [newCommentText, setNewCommentText] = useState("");
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingCommentText, setEditingCommentText] = useState("");
-    const [reactionsState, setReactionsState] = useState(localAnnouncement.reactions || { kinds: [], user_reaction: null });
-
     const REACTION_DEFS = {
         like: { icon: '❤️', label: 'Like' },
         helpful: { icon: '👍', label: 'Helpful' },
@@ -124,7 +121,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         (async () => {
             try {
                 const res = await axios.get('http://127.0.0.1:8001/api/users/me/', { headers: { Authorization: `Bearer ${token}` } });
-                setUserProfile(res.data);
                 const prof = res.data || {};
                 if (prof.alerts_enabled && prof.alert_latitude && prof.alert_longitude) {
                     if (announcement.location && announcement.location.latitude && announcement.location.longitude) {
@@ -167,21 +163,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             }
         };
         loadComments();
-        setReactionsState(localAnnouncement.reactions || { counts: {}, user_reaction: null });
     }, [announcement.id]);
-
-    const handleMapClick = (e) => {
-        const { lat, lng } = e.latlng;
-        setEditingLocation({ latitude: lat, longitude: lng });
-        (async () => {
-            try {
-                const res = await axios.get('http://127.0.0.1:8001/api/reverse-geocode/', { params: { lat, lon: lng } });
-                setEditingAddress(res.data?.address || "");
-            } catch (err) {
-                setEditingAddress("");
-            }
-        })();
-    };
 
     const EditLocationPicker = () => {
         useMapEvents({
@@ -488,13 +470,20 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         }
     };
 
+    const petTypeLabel = (type) => {
+        if (type === "cat") return "Cat";
+        if (type === "dog") return "Dog";
+        if (type === "bird") return "Bird";
+        return "Pet";
+    };
+
     return (
         <div className="detail-page">
             <div className="detail-container">
 
                 <div className="detail-header-top">
                     <button className="btn-draft" onClick={onBack}>
-                        Back
+                        ← Back
                     </button>
 
                     {isOwner && !isEditing && (
@@ -514,10 +503,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                             />
                         ) : (
                             <div className="pet-image-placeholder">
-                                {localAnnouncement.pet.pet_type === "cat" && "Cat"}
-                                {localAnnouncement.pet.pet_type === "dog" && "Dog"}
-                                {localAnnouncement.pet.pet_type === "bird" && "Bird"}
-                                {localAnnouncement.pet.pet_type === "other" && "Pet"}
+                                {petTypeLabel(localAnnouncement.pet.pet_type)}
                             </div>
                         )}
 
@@ -546,7 +532,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                         <h1>{localAnnouncement.pet.name}</h1>
                     )}
 
-                    <p className="pet-status-text">{localAnnouncement.status} pet</p>
+                    <p className={`pet-status-text ${localAnnouncement.status?.toLowerCase() || ""}`}>
+                        {localAnnouncement.status} pet
+                    </p>
                     <div className="pet-social-row">
                         <span className="pet-views">👁 {localAnnouncement.views_count || 0} views</span>
                         {!isOwner && (
@@ -651,7 +639,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                             </button>
                         )}
                         {!isOwner && announcement.location && (
-                            <div style={{ marginTop: 12 }}>
+                            <div className="subscribe-block">
                                 {subscribed ? (
                                     <button className="action-btn-large secondary" onClick={handleUnsubscribe}>
                                         Unsubscribe from area
@@ -695,7 +683,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                         )}
 
                         {isOwner && !isEditing && (
-                            <div style={{ marginTop: '1rem' }}>
+                            <div className="owner-actions-stack">
                                 <button
                                     className="action-btn-large secondary"
                                     onClick={() => setIsEditing(true)}
@@ -772,7 +760,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                 <MapContainer
                                     center={[editingLocation.latitude || 50.4501, editingLocation.longitude || 30.5234]}
                                     zoom={14}
-                                    style={{ height: "400px", width: "100%" }}
+                                    className="location-edit-map"
                                 >
                                     <TileLayer
                                         attribution="&copy; OpenStreetMap"
@@ -780,9 +768,8 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                     />
                                     <EditLocationPicker />
                                 </MapContainer>
-                                {}
                                 {editingAddress ? (
-                                    <div style={{ marginTop: 8 }}>
+                                    <div className="location-address-row">
                                         <input readOnly className="form-input address" value={editingAddress} />
                                     </div>
                                 ) : null}
@@ -807,9 +794,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
 
                 <div className="comments-section info-card">
                     <h2>Comments ({localAnnouncement.comments_count || comments.length})</h2>
-                    {}
-
-                        {commentsLoading ? (
+                    {commentsLoading ? (
                         <p>Loading comments...</p>
                     ) : comments.length === 0 ? (
                         <p className="messages-muted">No comments yet</p>
@@ -817,7 +802,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                         <div className="comments-list">
                             {comments.map((c) => (
                                 <div className="comment-item" key={c.id}>
-                                    <div className="comment-avatar" onClick={() => openUserProfile(c.user?.id)} style={{ cursor: 'pointer' }}>
+                                    <div className="comment-avatar clickable" onClick={() => openUserProfile(c.user?.id)}>
                                         {c.user_profile_image ? (
                                             <img src={c.user_profile_image} alt={c.user?.username} />
                                         ) : (
@@ -826,31 +811,36 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                     </div>
                                     <div className="comment-body">
                                         <div className="comment-meta">
-                                            <strong className="comment-username" onClick={() => openUserProfile(c.user?.id)} style={{ cursor: 'pointer' }}>{c.user?.username}</strong>
+                                            <strong className="comment-username clickable" onClick={() => openUserProfile(c.user?.id)}>{c.user?.username}</strong>
                                             {c.user_badges && c.user_badges.length > 0 && (
-                                                <span style={{ marginLeft: 8, padding: '2px 6px', background: '#fff', borderRadius: 6, border: '1px solid #eee', fontSize: 12 }}>{c.user_badges[0].name}</span>
+                                                <span className="comment-badge">{c.user_badges[0].name}</span>
                                             )}
                                             <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
                                             {Number(c.user?.id) === Number(localStorage.getItem('user_id')) && (
-                                                <>
-                                                    <button className="comment-delete" onClick={() => handleDeleteComment(c.id)}>Delete</button>
-                                                    <button className="comment-delete" onClick={() => handleStartEdit(c)}>Edit</button>
-                                                </>
+                                                <div className="comment-owner-actions">
+                                                    <button className="comment-action-btn edit" onClick={() => handleStartEdit(c)}>Edit</button>
+                                                    <button className="comment-action-btn delete" onClick={() => handleDeleteComment(c.id)}>Delete</button>
+                                                </div>
                                             )}
                                         </div>
                                         {editingCommentId === c.id ? (
-                                            <div>
-                                                <input className="comment-edit-input" value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} />
+                                            <div className="comment-edit-box">
+                                                <textarea
+                                                    className="comment-edit-input"
+                                                    value={editingCommentText}
+                                                    onChange={(e) => setEditingCommentText(e.target.value)}
+                                                    rows={3}
+                                                    placeholder="Update your comment..."
+                                                />
                                                 <div className="comment-edit-actions">
-                                                    <button className="btn btn-secondary btn-sm" onClick={handleCancelEdit}>Cancel</button>
-                                                    <button className="btn btn-primary btn-sm" onClick={handleSaveEdit}>Save</button>
+                                                    <button className="comment-edit-btn cancel" onClick={handleCancelEdit}>Cancel</button>
+                                                    <button className="comment-edit-btn save" onClick={handleSaveEdit}>Save</button>
                                                 </div>
                                             </div>
                                         ) : (
                                             <p className="comment-text">{c.text}</p>
                                         )}
-                                        {}
-                                        <div className="comment-reaction-actions" style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                        <div className="comment-reaction-actions">
                                             {Object.keys(REACTION_DEFS).map((k) => {
                                                 const count = c.reactions?.counts?.[k]?.count || 0;
                                                 const userReacted = Array.isArray(c.reactions?.user_reaction)
@@ -863,10 +853,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                                         className={`reaction-btn small ${userReacted ? 'reacted' : ''}`}
                                                         onClick={() => handleToggleCommentReaction(c.id, k)}
                                                         title={REACTION_DEFS[k].label}
-                                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                                                     >
-                                                        <span style={{ fontSize: 16 }}>{REACTION_DEFS[k].icon}</span>
-                                                        <span style={{ fontSize: 13 }}>{count}</span>
+                                                        <span className="reaction-icon">{REACTION_DEFS[k].icon}</span>
+                                                        <span className="reaction-count">{count}</span>
                                                     </button>
                                                 );
                                             })}

@@ -397,21 +397,23 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                                 <label>Email</label>
                                 <input
                                     type="email"
-                                    className="form-input"
+                                    className="form-input form-input-readonly"
                                     value={contactData.email}
                                     placeholder={isLoadingContact ? "Loading..." : "your@email.com"}
                                     readOnly
                                 />
+                                <p className="helper-text locked-field-note">Update this in Profile to change it.</p>
                             </div>
                             <div className="form-group">
                                 <label>Phone Number</label>
                                 <input
                                     type="tel"
-                                    className="form-input"
+                                    className="form-input form-input-readonly"
                                     value={contactData.phone_number}
                                     placeholder={isLoadingContact ? "Loading..." : "+1 (555) 000-0000"}
                                     readOnly
                                 />
+                                <p className="helper-text locked-field-note">Update this in Profile to change it.</p>
                             </div>
                         </div>
 

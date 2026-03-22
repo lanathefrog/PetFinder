@@ -56,12 +56,12 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
 
         return elems.join(', ');
     };
+
+    const petIcon = (type) => (type === 'cat' ? '🐈' : type === 'dog' ? '🐕' : '🐾');
+
     const activeCount = myPets.length;
     const lostCount = myPets.filter(p => p.status === 'lost').length;
     const foundCount = myPets.filter(p => p.status === 'found').length;
-
-    const totalViews = activeCount * 17 + 25;
-
 
     return (
         <div className="dashboard-page">
@@ -99,21 +99,24 @@ const UserDashboard = ({ onNavigate, onSelect }) => {
                             <div
                                 key={pet.id}
                                 className="announcement-card-dashboard"
-                                style={{ cursor: 'pointer' }}
                                 onClick={() => onSelect && onSelect(pet)} 
                             >
-                                 <div className="announcement-thumbnail">
-    {pet.pet.photo ? (
-      <img src={pet.pet.photo} alt={pet.pet.name} />
-    ) : (
-      pet.pet.pet_type === 'cat' ? '🐈' : '🐕'
-    )}
-  </div>
+                                <div className="announcement-thumbnail">
+                                    {pet.pet.photo ? (
+                                        <img src={pet.pet.photo} alt={pet.pet.name} />
+                                    ) : (
+                                        <span className="announcement-thumbnail-fallback">{petIcon(pet.pet.pet_type)}</span>
+                                    )}
+                                    <span className={`status-overlay-dashboard ${pet.status.toLowerCase()}`}>
+                                        {pet.status}
+                                    </span>
+                                    {pet.is_reunited && (
+                                        <span className="reunited-overlay-dashboard">✅ Reunited</span>
+                                    )}
+                                </div>
+
                                     <div className="announcement-info-dashboard">
-                                        <span className={`status-badge ${pet.status.toLowerCase()}`}>
-                                            {pet.status}
-                                        </span>
-                                        <h3>{pet.pet.name}</h3>
+                                        <h3>{pet.pet.name || (pet.pet.pet_type === 'cat' ? 'Unknown Cat' : 'Unknown Dog')}</h3>
                                         <p className="breed">
                                             {pet.pet.breed || 'Unknown Breed'}
                                         </p>

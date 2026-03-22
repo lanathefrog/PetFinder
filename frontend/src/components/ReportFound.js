@@ -76,10 +76,12 @@ const ReportFound = ({ onRefresh, onCancel }) => {
     };
     const [isPickingLocation, setIsPickingLocation] = useState(true);
     const [contactData, setContactData] = useState({
+        username: '',
         email: '',
         phone_number: ''
     });
     const [formData, setFormData] = useState({
+        name: '',
         pet_type: 'dog',
         breed: '',
         gender: 'unknown',
@@ -88,7 +90,6 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         location: '',
         date_found: new Date().toISOString().split('T')[0], 
         description: '',
-        contact_name: '',
         image: null
     });
     const token = localStorage.getItem('access_token');
@@ -165,6 +166,7 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                     }
                 });
                 setContactData({
+                    username: res.data.username || '',
                     email: res.data.email || '',
                     phone_number: res.data.phone_number || ''
                 });
@@ -210,15 +212,10 @@ const ReportFound = ({ onRefresh, onCancel }) => {
             showToast('Please select the date you found the pet', 'error');
             return;
         }
-        if (!formData.contact_name.trim()) {
-            showToast('Please enter your name', 'error');
-            return;
-        }
-
         setIsSubmitting(true);
 
         const dataPayload = new FormData();
-        dataPayload.append('pet.name', 'Unknown');
+        dataPayload.append('pet.name', formData.name.trim() || 'Unknown');
         dataPayload.append('pet.pet_type', formData.pet_type);
         dataPayload.append('pet.breed', formData.breed || 'Unknown');
         dataPayload.append('pet.gender', formData.gender || 'unknown');
@@ -234,7 +231,7 @@ const ReportFound = ({ onRefresh, onCancel }) => {
             dataPayload.append("location.longitude", position[1]);
         }
 
-        const fullDescription = `Found on: ${formData.date_found}\nFinder: ${formData.contact_name}\nEmail: ${contactData.email}\nPhone: ${contactData.phone_number}\n\n${formData.description || ''}`;
+        const fullDescription = `Found on: ${formData.date_found}\nFinder: ${contactData.username || 'Unknown user'}\nEmail: ${contactData.email}\nPhone: ${contactData.phone_number}\n\n${formData.description || ''}`;
         dataPayload.append('description', fullDescription);
 
         try {
@@ -331,6 +328,19 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Pet Name (optional)</label>
+                                <input
+                                    name="name"
+                                    type="text"
+                                    className="form-input"
+                                    value={formData.name}
+                                    placeholder="If known, enter the pet's name"
+                                    onChange={handleChange}
+                                />
+                                <p className="helper-text">Leave empty if you do not know the name.</p>
                             </div>
 
                             <div className="form-row">
@@ -473,8 +483,15 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Your Name</label>
-                                    <input name="contact_name" type="text" className="form-input" required onChange={handleChange} />
+                                    <label>Finder Nickname</label>
+                                    <input
+                                        type="text"
+                                        className="form-input form-input-readonly"
+                                        value={contactData.username}
+                                        placeholder={isLoadingContact ? 'Loading...' : 'Nickname from your profile'}
+                                        readOnly
+                                    />
+                                    <p className="helper-text locked-field-note">Taken automatically from your profile.</p>
                                 </div>
                             </div>
 
@@ -483,21 +500,23 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                     <label>Email</label>
                                     <input
                                         type="email"
-                                        className="form-input"
+                                        className="form-input form-input-readonly"
                                         value={contactData.email}
                                         placeholder={isLoadingContact ? "Loading..." : "your@email.com"}
                                         readOnly
                                     />
+                                    <p className="helper-text locked-field-note">Update this in Profile to change it.</p>
                                 </div>
                                 <div className="form-group">
                                     <label>Phone Number</label>
                                     <input
                                         type="tel"
-                                        className="form-input"
+                                        className="form-input form-input-readonly"
                                         value={contactData.phone_number}
                                         placeholder={isLoadingContact ? "Loading..." : "+1 (555) 000-0000"}
                                         readOnly
                                     />
+                                    <p className="helper-text locked-field-note">Update this in Profile to change it.</p>
                                 </div>
                             </div>
 

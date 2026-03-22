@@ -432,7 +432,6 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     width: 100%;
     padding: 1rem 1.5rem;
-    margin-left: 15px;
 }
 
 .btn-secondary:hover {
@@ -674,4 +673,14 @@
 .profile-list-item.unread {
     border-color: #ffb8a6;
     background: #fff7f4;
+}
+
+.profile-list-item-clickable {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.profile-list-item-clickable:hover {
+    transform: translateY(-2px);
+    border-color: #ffc9b8;
+    box-shadow: 0 8px 20px rgba(255, 107, 74, 0.12);
 }
