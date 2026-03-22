@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { createAnnouncement } from '../services/api';
 import { useToast } from './ToastContext';
+import { useNavigate } from 'react-router-dom';
 import '../styles/forms.css';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -15,9 +16,11 @@ L.Icon.Default.mergeOptions({
 
 const ReportLost = ({ onRefresh, onCancel }) => {
     const { showToast } = useToast();
+    const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingContact, setIsLoadingContact] = useState(true);
     const [preview, setPreview] = useState(null);
+    const [additionalPreviews, setAdditionalPreviews] = useState([]);
     const [contactData, setContactData] = useState({
         email: '',
         phone_number: ''
@@ -32,7 +35,8 @@ const ReportLost = ({ onRefresh, onCancel }) => {
         location: '',
         date_lost: '',
         description: '',
-        image: null
+        image: null,
+        additionalImages: []
     });
     const token = localStorage.getItem('access_token');
     const [suggestions, setSuggestions] = useState([]);
@@ -140,6 +144,12 @@ const ReportLost = ({ onRefresh, onCancel }) => {
         }
     };
 
+    const handleAdditionalImagesChange = (e) => {
+        const files = Array.from(e.target.files || []);
+        setFormData((prev) => ({ ...prev, additionalImages: files }));
+        setAdditionalPreviews(files.map((file) => URL.createObjectURL(file)));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -167,6 +177,11 @@ const ReportLost = ({ onRefresh, onCancel }) => {
         if (formData.image) {
             dataPayload.append('pet.photo', formData.image);
         }
+        if (Array.isArray(formData.additionalImages) && formData.additionalImages.length > 0) {
+            formData.additionalImages.forEach((file) => {
+                dataPayload.append('photos', file);
+            });
+        }
 
         dataPayload.append('status', 'lost');
         dataPayload.append('description', formData.description || '');
@@ -177,11 +192,20 @@ const ReportLost = ({ onRefresh, onCancel }) => {
         }
 
         try {
-            await createAnnouncement(dataPayload);
-            showToast('Your lost pet report has been submitted! Help is on the way!', 'success');
+            const response = await createAnnouncement(dataPayload);
+            const announcementId = response.data?.id;
+            showToast('Your lost pet report has been submitted! Opening announcement...', 'success');
 
             if (onRefresh) onRefresh();
-            setTimeout(() => onCancel?.(), 1500);
+            
+            // Navigate to the announcement after a short delay
+            setTimeout(() => {
+                if (announcementId) {
+                    navigate(`/announcement/${announcementId}`);
+                } else {
+                    onCancel?.();
+                }
+            }, 800);
         } catch (err) {
             console.error('Submission error:', err);
             showToast('Failed to submit report. Please try again.', 'error');
@@ -297,7 +321,7 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                         </div>
 
                         <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                            <label>Upload Photo</label>
+                            <label>Main Photo</label>
                             <div
                                 className="upload-area"
                                 style={{
@@ -315,17 +339,43 @@ const ReportLost = ({ onRefresh, onCancel }) => {
                                     {preview ? (
                                         <div style={{ position: 'relative' }}>
                                             <img src={preview} alt="Preview" style={{ maxHeight: '200px', borderRadius: '8px', maxWidth: '100%' }} />
-                                            <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#666' }}>Click to change photo</p>
+                                            <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#666' }}>Click to change main photo</p>
                                         </div>
                                     ) : (
                                         <>
                                             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📷</div>
-                                            <p style={{ fontWeight: '600', color: '#333' }}>Click to upload a photo</p>
+                                            <p style={{ fontWeight: '600', color: '#333' }}>Click to upload main photo</p>
                                             <p style={{ fontSize: '0.85rem', color: '#999' }}>JPG or PNG, max 5MB</p>
                                         </>
                                     )}
                                 </label>
                             </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Additional Photos</label>
+                            <label htmlFor="additional-photos" className="file-input-label">
+                                Add Extra Photos
+                                {formData.additionalImages.length > 0 && (
+                                    <span className="file-count">{formData.additionalImages.length}</span>
+                                )}
+                            </label>
+                            <input
+                                id="additional-photos"
+                                type="file"
+                                className="form-input"
+                                multiple
+                                accept="image/*"
+                                onChange={handleAdditionalImagesChange}
+                            />
+                            <p className="helper-text">First photo is main. Add extra photos to show more details.</p>
+                            {additionalPreviews.length > 0 && (
+                                <div className="extra-photos-preview-grid">
+                                    {additionalPreviews.map((src, idx) => (
+                                        <img key={`${src}-${idx}`} src={src} alt={`Additional ${idx + 1}`} className="extra-photo-preview" />
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid #eee' }} />

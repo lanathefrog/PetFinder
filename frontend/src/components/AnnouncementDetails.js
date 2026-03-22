@@ -29,10 +29,12 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const [saveLoading, setSaveLoading] = useState(false);
 
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [phone, setPhone] = useState(announcement.phone_number || "");
     const [email, setEmail] = useState(announcement.email || "");
     const [preview, setPreview] = useState(null);
     const [newPhoto, setNewPhoto] = useState(null);
+    const [activePhoto, setActivePhoto] = useState(announcement.pet.photo || null);
 
     const currentUserId = parseInt(localStorage.getItem("user_id"), 10);
     const isOwner = currentUserId === localAnnouncement.owner;
@@ -102,9 +104,30 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
         location.longitude !== null &&
         location.longitude !== undefined;
 
+    const primaryPhoto = preview || localAnnouncement.pet.photo || null;
+    const galleryPhotos = React.useMemo(() => {
+        const additionalPhotoUrls = Array.isArray(localAnnouncement.photos)
+            ? localAnnouncement.photos.map((p) => p?.file).filter(Boolean)
+            : [];
+        return [
+            ...(primaryPhoto ? [primaryPhoto] : []),
+            ...additionalPhotoUrls,
+        ];
+    }, [primaryPhoto, localAnnouncement.photos]);
+
     React.useEffect(() => {
         setLocalAnnouncement(announcement);
     }, [announcement]);
+
+    React.useEffect(() => {
+        if (galleryPhotos.length === 0) {
+            setActivePhoto(null);
+            return;
+        }
+        if (!activePhoto || !galleryPhotos.includes(activePhoto)) {
+            setActivePhoto(galleryPhotos[0]);
+        }
+    }, [galleryPhotos, activePhoto]);
 
     React.useEffect(() => {
         const loadFreshDetails = async () => {
@@ -217,6 +240,20 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     const handlePhotoRemove = () => {
         setPreview(null);
         setNewPhoto(null);
+    };
+
+    const handleStartEditing = () => {
+        setFormData({
+            name: localAnnouncement.pet?.name || "",
+            pet_type: localAnnouncement.pet?.pet_type || "other",
+            breed: localAnnouncement.pet?.breed || "",
+            color: localAnnouncement.pet?.color || "",
+            gender: localAnnouncement.pet?.gender || "unknown",
+            description: localAnnouncement.description || "",
+        });
+        setPhone(localAnnouncement.phone_number || "");
+        setEmail(localAnnouncement.email || "");
+        setIsEditing(true);
     };
 
     const handleDelete = async () => {
@@ -401,6 +438,9 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
     };
 
     const handleSave = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
+
         const payload = new FormData();
 
         payload.append("pet.name", formData.name);
@@ -465,8 +505,14 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
 
             showToast("Announcement updated successfully.", "success");
         } catch (err) {
-            console.log(err.response?.data);
-            showToast("Update failed", "error");
+            const serverData = err?.response?.data;
+            const serverMessage = typeof serverData === "string"
+                ? serverData
+                : serverData?.detail || JSON.stringify(serverData || {});
+            console.log(serverData);
+            showToast(`Update failed: ${serverMessage}`, "error");
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -482,25 +528,22 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
             <div className="detail-container">
 
                 <div className="detail-header-top">
-                    <button className="btn-draft" onClick={onBack}>
+                    <button type="button" className="btn-draft" onClick={onBack}>
                         ← Back
                     </button>
 
                     {isOwner && !isEditing && (
                         <div className="detail-actions-top">
-                            <button className="btn-draft" onClick={() => setIsEditing(true)}>Edit</button>
-                            <button className="btn-draft" onClick={handleDelete}>Delete</button>
+                            <button type="button" className="btn-draft" onClick={handleStartEditing}>Edit</button>
+                            <button type="button" className="btn-draft" onClick={handleDelete}>Delete</button>
                         </div>
                     )}
                 </div>
 
                 <section className="pet-header">
                     <div className="pet-image-large photo-edit-wrapper">
-                        {preview || localAnnouncement.pet.photo ? (
-                            <img
-                                src={preview || localAnnouncement.pet.photo}
-                                alt="pet"
-                            />
+                        {activePhoto ? (
+                            <img src={activePhoto} alt="pet" />
                         ) : (
                             <div className="pet-image-placeholder">
                                 {petTypeLabel(localAnnouncement.pet.pet_type)}
@@ -510,14 +553,30 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                         {isEditing && (
                             <div className="photo-overlay">
                                 <label className="photo-btn">
-                                    Change
+                                    Change Main
                                     <input type="file" hidden onChange={handlePhotoChange} accept="image/*" />
                                 </label>
 
-                                <button onClick={handlePhotoRemove}>Remove</button>
+                                <button type="button" onClick={handlePhotoRemove}>Remove</button>
                             </div>
                         )}
                     </div>
+
+                    {galleryPhotos.length > 1 && (
+                        <div className="pet-gallery-strip">
+                            {galleryPhotos.map((photoUrl, idx) => (
+                                <button
+                                    key={`${photoUrl}-${idx}`}
+                                    type="button"
+                                    className={`pet-gallery-thumb ${activePhoto === photoUrl ? 'active' : ''}`}
+                                    onClick={() => setActivePhoto(photoUrl)}
+                                    aria-label={`View photo ${idx + 1}`}
+                                >
+                                    <img src={photoUrl} alt={`pet ${idx + 1}`} />
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {isEditing ? (
                         <input
@@ -670,9 +729,6 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                     placeholder="Phone number"
                                 />
 
-                                <button className="btn btn-primary" onClick={handleSave}>
-                                    Save
-                                </button>
                             </>
                         ) : (
                             phone && (
@@ -682,23 +738,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                             )
                         )}
 
-                        {isOwner && !isEditing && (
-                            <div className="owner-actions-stack">
-                                <button
-                                    className="action-btn-large secondary"
-                                    onClick={() => setIsEditing(true)}
-                                >
-                                    Edit
-                                </button>
 
-                                <button
-                                    className="action-btn-large secondary"
-                                    onClick={handleDelete}
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        )}
                     </div>
 
                     {(localAnnouncement.description || isEditing) && (
@@ -719,8 +759,8 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                 </div>
 
                 {isEditing && (
-                    <button className="btn btn-primary" onClick={handleSave}>
-                        Save Changes
+                    <button type="button" className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                 )}
 
@@ -747,6 +787,7 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                         <h3>Edit Location</h3>
                         {!isPickingLocation ? (
                             <button
+                                        type="button"
                                 className="btn btn-primary btn-location"
                                 onClick={() => {
                                     setIsPickingLocation(true);
@@ -775,12 +816,14 @@ const AnnouncementDetails = ({ announcement, onBack, onDeleted, onOpenChat }) =>
                                 ) : null}
                                 <div className="location-picker-controls">
                                     <button
+                                        type="button"
                                         className="btn btn-success"
                                         onClick={handleConfirmLocation}
                                     >
                                         Confirm
                                     </button>
                                     <button
+                                        type="button"
                                         className="btn btn-secondary"
                                         onClick={handleCancelLocationPick}
                                     >

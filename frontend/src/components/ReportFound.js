@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { createAnnouncement, getAnnouncements, contactAnnouncementOwner } from '../services/api';
 import { useToast } from './ToastContext';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import '../styles/forms.css';
@@ -15,11 +16,13 @@ L.Icon.Default.mergeOptions({
 
 const ReportFound = ({ onRefresh, onCancel }) => {
     const { showToast } = useToast();
+    const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingContact, setIsLoadingContact] = useState(true);
     const [activeTab, setActiveTab] = useState('new');
     const [lostPets, setLostPets] = useState([]);
     const [preview, setPreview] = useState(null);
+    const [additionalPreviews, setAdditionalPreviews] = useState([]);
     const [position, setPosition] = useState([50.4501, 30.5234]);
 
     const [suggestions, setSuggestions] = useState([]);
@@ -90,7 +93,8 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         location: '',
         date_found: new Date().toISOString().split('T')[0], 
         description: '',
-        image: null
+        image: null,
+        additionalImages: []
     });
     const token = localStorage.getItem('access_token');
 
@@ -197,6 +201,12 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         }
     };
 
+    const handleAdditionalImagesChange = (e) => {
+        const files = Array.from(e.target.files || []);
+        setFormData((prev) => ({ ...prev, additionalImages: files }));
+        setAdditionalPreviews(files.map((file) => URL.createObjectURL(file)));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -223,6 +233,11 @@ const ReportFound = ({ onRefresh, onCancel }) => {
         if (formData.image) {
             dataPayload.append('pet.photo', formData.image);
         }
+        if (Array.isArray(formData.additionalImages) && formData.additionalImages.length > 0) {
+            formData.additionalImages.forEach((file) => {
+                dataPayload.append('photos', file);
+            });
+        }
 
         dataPayload.append('status', 'found');
         dataPayload.append('location.address', formData.location);
@@ -236,14 +251,19 @@ const ReportFound = ({ onRefresh, onCancel }) => {
 
         try {
             const response = await createAnnouncement(dataPayload);
-            showToast('Thank you! The found pet report has been posted!', 'success');
-
-            setTimeout(() => {
-                onCancel?.();
-                window.location.href = `/announcements/${response.data.id}`;
-            }, 1500);
+            const announcementId = response.data?.id;
+            showToast('Thank you! The found pet report has been posted! Opening announcement...', 'success');
 
             if (onRefresh) onRefresh();
+            
+            // Navigate to the announcement after a short delay
+            setTimeout(() => {
+                if (announcementId) {
+                    navigate(`/announcement/${announcementId}`);
+                } else {
+                    onCancel?.();
+                }
+            }, 800);
         } catch (err) {
             console.error('Submission error:', err);
             showToast('Failed to submit report. Please try again.', 'error');
@@ -374,7 +394,7 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                             </div>
 
                             <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                                <label>Upload Photo</label>
+                                <label>Main Photo</label>
                                 <div
                                     className="upload-area"
                                     style={{
@@ -393,11 +413,37 @@ const ReportFound = ({ onRefresh, onCancel }) => {
                                         ) : (
                                             <>
                                                 <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📷</div>
-                                                <p>Click to upload photo</p>
+                                                <p>Click to upload main photo</p>
                                             </>
                                         )}
                                     </label>
                                 </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Additional Photos</label>
+                                <label htmlFor="additional-photos-found" className="file-input-label">
+                                    Add Extra Photos
+                                    {formData.additionalImages.length > 0 && (
+                                        <span className="file-count">{formData.additionalImages.length}</span>
+                                    )}
+                                </label>
+                                <input
+                                    id="additional-photos-found"
+                                    type="file"
+                                    className="form-input"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={handleAdditionalImagesChange}
+                                />
+                                <p className="helper-text">Attach extra photos (optional) to improve matching.</p>
+                                {additionalPreviews.length > 0 && (
+                                    <div className="extra-photos-preview-grid">
+                                        {additionalPreviews.map((src, idx) => (
+                                            <img key={`${src}-${idx}`} src={src} alt={`Additional ${idx + 1}`} className="extra-photo-preview" />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <h3 className="form-section-title" style={{ margin: '2rem 0 1rem', color: '#333' }}>2. Location & Contact</h3>

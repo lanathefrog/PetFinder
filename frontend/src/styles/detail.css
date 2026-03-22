@@ -68,6 +68,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    grid-column: 1 / 2;
+    grid-row: 1 / 4;
 }
 
 .pet-image-large img {
@@ -131,7 +133,46 @@
     color: #fff;
 }
 
+.pet-gallery-strip {
+    grid-column: 1 / 2;
+    grid-row: 4 / 5;
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+}
+
+.pet-gallery-thumb {
+    flex: 0 0 auto;
+    width: 66px;
+    height: 66px;
+    border-radius: 11px;
+    border: 2px solid #e8d8d1;
+    background: #fff;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.pet-gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pet-gallery-thumb:hover {
+    border-color: #f2b6a3;
+}
+
+.pet-gallery-thumb.active {
+    border-color: #ff7a5b;
+    box-shadow: 0 0 0 2px rgba(255, 122, 91, 0.18);
+}
+
 .pet-header h1 {
+    grid-column: 2 / 3;
     margin: 0;
     font-size: clamp(1.6rem, 3.2vw, 2.4rem);
     line-height: 1.1;
@@ -139,6 +180,7 @@
 }
 
 .pet-name-input {
+    grid-column: 2 / 3;
     width: 100%;
     font-size: clamp(1.3rem, 2.8vw, 2rem);
     font-weight: 800;
@@ -147,6 +189,7 @@
 }
 
 .pet-status-text {
+    grid-column: 2 / 3;
     margin: 0.55rem 0 0;
     display: inline-flex;
     align-items: center;
@@ -166,6 +209,7 @@
 }
 
 .pet-social-row {
+    grid-column: 2 / 3;
     margin-top: 0.75rem;
     display: flex;
     gap: 0.55rem;
@@ -267,9 +311,9 @@
 }
 
 .action-card {
-    background: linear-gradient(145deg, #ff6f4f, #ff8e71);
+    background: linear-gradient(145deg, #ffa185, #ffb3a3);
     border-radius: 18px;
-    box-shadow: 0 16px 30px rgba(255, 107, 74, 0.28);
+    box-shadow: 0 8px 16px rgba(255, 107, 74, 0.12);
     padding: 1.15rem;
     color: #fff;
 }
@@ -290,6 +334,13 @@
     text-decoration: none;
     margin-bottom: 0.65rem;
     transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.95);
+    color: #FF6B4A;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.action-btn-large::before {
+    display: none;
 }
 
 .action-btn-large:hover {
@@ -755,7 +806,18 @@ textarea {
     }
 
     .pet-image-large {
+        grid-column: auto;
+        grid-row: auto;
         aspect-ratio: 16 / 11;
+    }
+
+    .pet-gallery-strip,
+    .pet-header h1,
+    .pet-name-input,
+    .pet-status-text,
+    .pet-social-row {
+        grid-column: auto;
+        grid-row: auto;
     }
 
     .location-edit-map {

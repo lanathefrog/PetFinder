@@ -48,6 +48,8 @@ class AnnouncementList(generics.ListCreateAPIView):
             "location",
             "owner",
             "owner__profile",
+        ).prefetch_related(
+            "photos",
         ).annotate(
             views_count_annotated=Count("post_views", distinct=True)
         )
@@ -205,6 +207,8 @@ class AnnouncementDetail(generics.RetrieveUpdateDestroyAPIView):
         "location",
         "owner",
         "owner__profile",
+    ).prefetch_related(
+        "photos",
     ).annotate(
         views_count_annotated=Count("post_views", distinct=True)
     )
@@ -220,6 +224,20 @@ class AnnouncementDetail(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         self._track_view(request, instance)
         serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Multipart form keys like "pet.name" need expansion into nested objects
+        # so serializer receives {"pet": {...}, "location": {...}} on updates too.
+        nested_data = expand_data(request.data)
+
+        serializer = self.get_serializer(instance, data=nested_data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
         return Response(serializer.data)
 
     def perform_update(self, serializer):
@@ -499,7 +517,6 @@ def notifications_read(request):
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def current_user(request):
-
     user = request.user
 
     if request.method == 'GET':
@@ -530,6 +547,102 @@ def current_user(request):
             "profile_image_url": profile_image_url,
             "badges": badges,
         })
+
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if 'username' in request.data:
+        new_username = request.data.get('username')
+        if new_username and str(new_username).strip():
+            user.username = new_username
+        else:
+            return Response({"error": "Username cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if 'email' in request.data:
+        new_email = request.data.get('email')
+        if new_email and str(new_email).strip():
+            user.email = new_email
+        else:
+            return Response({"error": "Email cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if 'first_name' in request.data:
+        first_name = request.data.get('first_name')
+        if first_name and str(first_name).strip():
+            user.first_name = first_name
+        else:
+            return Response({"error": "First name cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if 'last_name' in request.data:
+        last_name = request.data.get('last_name')
+        if last_name and str(last_name).strip():
+            user.last_name = last_name
+        else:
+            return Response({"error": "Last name cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.save()
+
+    phone = request.data.get('phone_number')
+    if phone:
+        user.profile.phone_number = phone
+
+    try:
+        alerts_enabled = request.data.get('alerts_enabled')
+        if alerts_enabled is not None:
+            if isinstance(alerts_enabled, str):
+                alerts_enabled = alerts_enabled.lower() in ('1', 'true', 'yes', 'on')
+            user.profile.alerts_enabled = bool(alerts_enabled)
+
+        alert_lat = request.data.get('alert_latitude')
+        alert_lng = request.data.get('alert_longitude')
+        alerts_radius_val = request.data.get('alerts_radius')
+
+        if alert_lat is not None:
+            try:
+                user.profile.alert_latitude = float(alert_lat)
+            except Exception:
+                pass
+        if alert_lng is not None:
+            try:
+                user.profile.alert_longitude = float(alert_lng)
+            except Exception:
+                pass
+        if alerts_radius_val is not None:
+            try:
+                user.profile.alerts_radius = float(alerts_radius_val)
+            except Exception:
+                pass
+    except Exception:
+        logger.exception("Failed to update alerts settings")
+
+    if 'profile_image' in request.FILES:
+        try:
+            user.profile.profile_image = request.FILES['profile_image']
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to upload profile image: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    user.profile.save()
+
+    profile_image_url = None
+    if user.profile.profile_image:
+        profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
+
+    return Response({
+        "message": "Profile updated successfully",
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "phone_number": getattr(user.profile, "phone_number", ""),
+        "alerts_enabled": getattr(user.profile, "alerts_enabled", False),
+        "alert_latitude": getattr(user.profile, "alert_latitude", None),
+        "alert_longitude": getattr(user.profile, "alert_longitude", None),
+        "alerts_radius": getattr(user.profile, "alerts_radius", None),
+        "profile_image_url": profile_image_url,
+    })
 
 
 @api_view(['POST'])
@@ -562,123 +675,6 @@ def contact_owner(request, announcement_id):
         return Response({'detail': 'Failed to create notification.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
-
-    if request.method == 'PUT':
-        import logging
-        logger = logging.getLogger(__name__)
-
-        new_username = request.data.get('username', user.username)
-        if new_username and new_username.strip():
-            user.username = new_username
-            logger.info(f"Updated username to: {new_username}")
-        else:
-            logger.warning(f"Username cannot be empty! Got: '{new_username}'")
-            return Response(
-                {"error": "Username cannot be empty"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        new_email = request.data.get('email', user.email)
-        if new_email and new_email.strip():
-            user.email = new_email
-        else:
-            return Response(
-                {"error": "Email cannot be empty"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        first_name = request.data.get('first_name', user.first_name)
-        if first_name and first_name.strip():
-            user.first_name = first_name
-        else:
-            return Response(
-                {"error": "First name cannot be empty"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        last_name = request.data.get('last_name', user.last_name)
-        if last_name and last_name.strip():
-            user.last_name = last_name
-        else:
-            return Response(
-                {"error": "Last name cannot be empty"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        user.save()
-
-        phone = request.data.get('phone_number')
-        if phone:
-            user.profile.phone_number = phone
-            user.profile.save()
-        try:
-            alerts_enabled = request.data.get('alerts_enabled')
-            if alerts_enabled is not None:
-                if isinstance(alerts_enabled, str):
-                    alerts_enabled = alerts_enabled.lower() in ('1', 'true', 'yes', 'on')
-                user.profile.alerts_enabled = bool(alerts_enabled)
-
-            alert_lat = request.data.get('alert_latitude')
-            alert_lng = request.data.get('alert_longitude')
-            alerts_radius_val = request.data.get('alerts_radius')
-
-            if alert_lat is not None:
-                try:
-                    user.profile.alert_latitude = float(alert_lat)
-                except Exception:
-                    pass
-            if alert_lng is not None:
-                try:
-                    user.profile.alert_longitude = float(alert_lng)
-                except Exception:
-                    pass
-            if alerts_radius_val is not None:
-                try:
-                    user.profile.alerts_radius = float(alerts_radius_val)
-                except Exception:
-                    pass
-
-            user.profile.save()
-            logger.info(f"Updated alerts settings for user: {user.username}")
-        except Exception:
-            logger.exception("Failed to update alerts settings")
-
-        # Handle profile image
-        if 'profile_image' in request.FILES:
-            logger.info(f"Profile image found in FILES!")
-            profile_image = request.FILES['profile_image']
-            logger.info(f"File name: {profile_image.name}")
-            logger.info(f"File size: {profile_image.size} bytes")
-            logger.info(f"File content type: {profile_image.content_type}")
-
-            try:
-                user.profile.profile_image = profile_image
-                user.profile.save()
-                logger.info(f"Profile image saved successfully!")
-            except Exception as e:
-                logger.error(f"Error saving profile image: {str(e)}")
-                return Response(
-                    {"error": f"Failed to upload profile image: {str(e)}"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        else:
-            logger.info(f"ℹ️ No profile_image in FILES")
-
-        profile_image_url = None
-        if user.profile.profile_image:
-            profile_image_url = request.build_absolute_uri(user.profile.profile_image.url)
-            logger.info(f"🖼️ Profile image URL: {profile_image_url}")
-
-        return Response({
-            "message": "Profile updated successfully",
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "phone_number": getattr(user.profile, "phone_number", ""),
-            "profile_image_url": profile_image_url
-        })
     
     if request.method == 'DELETE':
         try:

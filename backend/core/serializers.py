@@ -6,6 +6,7 @@ from .models import (
     Pet,
     SavedAnnouncement,
     Comment,
+    Photo,
 )
 from .models import Reaction
 from django.contrib.auth.models import User
@@ -42,8 +43,25 @@ class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = '__all__'
+class PhotoSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Photo
+        fields = ['id', 'file']
+
+    def get_file(self, obj):
+        if not obj.file:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.file.url)
+        return obj.file.url
+
+
 class AnnouncementSerializer(serializers.ModelSerializer):
     pet = PetSerializer()
+    photos = PhotoSerializer(many=True, read_only=True)
 
     location = LocationSerializer()
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -73,6 +91,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'pet',
+            'photos',
             'owner',
             'status',
             'location',
@@ -131,8 +150,9 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
         pet = Pet.objects.create(**{k: v for k, v in pet_data.items() if k != 'photo'})
 
+        request = self.context.get('request')
+        additional_files = []
         try:
-            request = self.context.get('request')
             if request is not None and hasattr(request, 'FILES'):
                 photo = None
                 for key in ['pet.photo', 'pet_photo', 'photo', 'pet.photo[0]']:
@@ -143,6 +163,10 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                 if photo:
                     pet.photo = photo
                     pet.save()
+
+                additional_keys = ['photos', 'photos[]', 'pet.photos', 'pet.photos[]']
+                for key in additional_keys:
+                    additional_files.extend(request.FILES.getlist(key))
         except Exception:
             pass
 
@@ -156,6 +180,12 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
+        if additional_files:
+            Photo.objects.bulk_create([
+                Photo(announcement=announcement, file=file_obj)
+                for file_obj in additional_files
+                if file_obj
+            ])
 
         return announcement
 
@@ -179,6 +209,18 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                             break
                     if photo:
                         instance.pet.photo = photo
+
+                    additional_files = []
+                    additional_keys = ['photos', 'photos[]', 'pet.photos', 'pet.photos[]']
+                    for key in additional_keys:
+                        additional_files.extend(request.FILES.getlist(key))
+
+                    if additional_files:
+                        Photo.objects.bulk_create([
+                            Photo(announcement=instance, file=file_obj)
+                            for file_obj in additional_files
+                            if file_obj
+                        ])
                 instance.pet.save()
             except Exception:
                 instance.pet.save()
